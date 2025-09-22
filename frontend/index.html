@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SGPF - MSPAS Huehuetenango</title>
+    
+    <!-- CSS Modular -->
+    <link rel="stylesheet" href="css/base.css">
+    <link rel="stylesheet" href="css/components.css">
+    <link rel="stylesheet" href="css/mobile.css">
+    <link rel="stylesheet" href="css/dashboards.css">
+    
+    <!-- Meta tags para PWA -->
+    <meta name="description" content="Sistema de Gestión de Planificación Familiar - MSPAS Huehuetenango">
+    <meta name="theme-color" content="#6366F1">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+</head>
+<body>
+    <div id="app" class="app-container">
+        <!-- Header dinámico -->
+        <header id="app-header" class="app-header hidden">
+            <div class="header-content">
+                <h1 id="header-title">SGPF - MSPAS</h1>
+                <div class="user-info">
+                    <span id="user-name">Cargando...</span>
+                    <button id="logout-btn" class="btn-logout">Salir</button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Contenedor principal donde se cargan los templates -->
+        <main id="main-content" class="main-content">
+            <!-- Vista inicial mientras carga -->
+            <div id="initial-loading" class="dashboard-hero">
+                <h2>Cargando dashboard...</h2>
+                <p>Preparando tu espacio de trabajo</p>
+            </div>
+        </main>
+
+        <!-- Navegación móvil dinámica -->
+        <nav id="mobile-nav" class="mobile-nav hidden">
+            <!-- Los tabs se generan dinámicamente según el rol del usuario -->
+        </nav>
+
+        <!-- Loading overlay global -->
+        <div id="loading-overlay" class="loading-overlay hidden">
+            <div class="loading-spinner"></div>
+            <p>Cargando...</p>
+        </div>
+
+        <!-- Container para notificaciones toast -->
+        <div id="toast-container" class="toast-container"></div>
+    </div>
+
+    <!-- JavaScript Modular - Orden importante -->
+    <script src="js/shared.js"></script>
+    <script src="js/component-loader.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/app.js"></script>
+    
+    <!-- Inicialización de la aplicación -->
+    <script>
+        // Configuración global para debugging en desarrollo
+        if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+            window.SGPF_DEBUG = true;
+            console.log('🔧 Modo debug activado');
+        }
+        
+        // Inicialización principal
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('🌟 DOM cargado, inicializando SGPF App');
+            
+            // Pequeño delay para evitar condiciones de carrera
+            setTimeout(() => {
+                SGPFApp.init();
+            }, 100);
+        });
+        
+        // Manejar errores JavaScript globales
+        window.addEventListener('error', (event) => {
+            console.error('❌ Error JavaScript global:', {
+                message: event.message,
+                filename: event.filename,
+                lineno: event.lineno,
+                colno: event.colno
+            });
+            
+            // Mostrar error al usuario solo en desarrollo
+            if (window.SGPF_DEBUG) {
+                alert(`Error: ${event.message}\nArchivo: ${event.filename}\nLínea: ${event.lineno}`);
+            }
+        });
+        
+        // Manejar promesas rechazadas
+        window.addEventListener('unhandledrejection', (event) => {
+            console.error('❌ Promesa rechazada:', event.reason);
+            
+            if (window.SGPF_DEBUG) {
+                alert(`Promise rejechada: ${event.reason}`);
+            }
+        });
+    </script>
+</body>
+</html>
