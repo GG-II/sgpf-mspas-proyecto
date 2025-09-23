@@ -117,6 +117,8 @@ setupNavigation(user) {
     }
 }
 
+
+
     // Configuración de tabs por rol
     const navigationConfig = {
         auxiliar: [
