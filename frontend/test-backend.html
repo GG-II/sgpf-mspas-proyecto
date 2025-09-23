@@ -71,11 +71,11 @@
             </div>
             <div>
                 <button onclick="testLogin('aux01@mspas.gob.gt', '123456')">Test Auxiliar</button>
-                <div id="test-aux" class="status warning">⏳ No probado</div>
+                <div id="test-aux01" class="status warning">⏳ No probado</div>
             </div>
             <div>
                 <button onclick="testLogin('asist01@mspas.gob.gt', '123456')">Test Asistente</button>
-                <div id="test-asist" class="status warning">⏳ No probado</div>
+                <div id="test-asist01" class="status warning">⏳ No probado</div>
             </div>
             <div>
                 <button onclick="testLogin('encargado@mspas.gob.gt', '123456')">Test Encargado</button>
@@ -93,27 +93,55 @@
         let testResults = [];
 
         // Test de conectividad básica
-        async function testBackend() {
-            const statusDiv = document.getElementById('backend-status');
-            statusDiv.textContent = '⏳ Probando...';
-            
-            try {
-                const response = await fetch('http://localhost:5000/api/health');
-                
-                if (response.ok) {
-                    const data = await response.json();
-                    statusDiv.className = 'status success';
-                    statusDiv.textContent = `✅ Backend funcionando: ${data.message}`;
-                    addResult('Backend Health', 'success', data);
-                } else {
-                    throw new Error(`HTTP ${response.status}`);
-                }
-            } catch (error) {
-                statusDiv.className = 'status error';
-                statusDiv.textContent = `❌ Error: ${error.message}`;
-                addResult('Backend Health', 'error', error.message);
-            }
+        async function testLogin(email, password) {
+    const testId = email.split('@')[0];
+    const statusDiv = document.getElementById(`test-${testId}`);
+    
+    statusDiv.textContent = '⏳ Probando login...';
+    
+    try {
+        console.log(`🔍 Probando login para: ${email}`);
+        
+        const response = await fetch('http://localhost:5000/api/auth/login', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ email, password })
+        });
+        
+        const data = await response.json();
+        
+        console.log(`📡 Respuesta para ${email}:`, {
+            status: response.status,
+            ok: response.ok,
+            success: data.success,
+            message: data.message,
+            hasUser: !!data.user,
+            hasToken: !!data.token
+        });
+        
+        if (response.ok && data.success) {
+            statusDiv.className = 'status success';
+            statusDiv.textContent = `✅ Login exitoso: ${data.user.nombres}`;
+            addResult(`Login ${email}`, 'success', {
+                user: data.user.nombres + ' ' + data.user.apellidos,
+                rol: data.user.rol,
+                permisos: data.user.permisos
+            });
+        } else {
+            throw new Error(data.message || 'Login failed');
         }
+    } catch (error) {
+        console.error(`❌ Error completo para ${email}:`, error);
+        statusDiv.className = 'status error';
+        statusDiv.textContent = `❌ Error: ${error.message}`;
+        addResult(`Login ${email}`, 'error', {
+            message: error.message,
+            email: email
+        });
+    }
+}
 
         // Test específico del health endpoint
         async function testHealth() {

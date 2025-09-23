@@ -118,10 +118,12 @@
 }
 
 @media (min-width: 768px) {
-  .main-content {
-    padding: var(--spacing-xl);
-    padding-bottom: var(--spacing-xl);
-  }
+    .main-content {
+        padding: var(--spacing-xl);
+        padding-bottom: var(--spacing-xl);
+        margin-top: 0;
+        /* Asegurar que no haya margen extra */
+    }
   
   .stats-grid {
     grid-template-columns: repeat(3, 1fr);
@@ -132,9 +134,21 @@
   }
   
   .mobile-nav {
-    display: none;
+      display: flex;
+      /* Mantener visible en desktop también */
+      position: relative;
+      /* Cambiar de fixed a relative */
+      bottom: auto;
+      /* Resetear posición */
+      box-shadow: var(--shadow-md);
+      /* Cambiar sombra */
+      border-top: none;
+      /* Quitar borde superior */
+      border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+      /* Agregar borde inferior */
+      order: -1;
+      /* Colocar antes del contenido principal */
   }
-  
   /* Mostrar navegación desktop */
   .desktop-nav {
     display: flex;
@@ -171,6 +185,10 @@
   
   .user-info {
     font-size: var(--font-size-base);
+  }
+
+  .app-container {
+    flex-direction: column; /* Asegurar dirección correcta */
   }
 }
 
