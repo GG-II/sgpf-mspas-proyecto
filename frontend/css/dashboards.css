@@ -1,0 +1,235 @@
+/* ===== css/dashboards.css - ESTILOS ESPECÍFICOS DE PANTALLAS ===== */
+
+/* === LOGIN === */
+.login-body {
+  background: linear-gradient(135deg, var(--mspas-gradient-start), var(--mspas-gradient-end));
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--spacing-md);
+}
+
+.login-container {
+  width: 100%;
+  max-width: 400px;
+}
+
+.login-card {
+  background-color: white;
+  border-radius: var(--radius-xl);
+  padding: var(--spacing-2xl);
+  box-shadow: var(--shadow-xl);
+  margin-bottom: var(--spacing-lg);
+}
+
+.logo-section {
+  text-align: center;
+  margin-bottom: var(--spacing-xl);
+}
+
+.logo-section h1 {
+  font-size: var(--font-size-3xl);
+  font-weight: 700;
+  color: var(--mspas-primary);
+  margin-bottom: var(--spacing-sm);
+}
+
+.logo-section p {
+  color: var(--mspas-text-secondary);
+  font-size: var(--font-size-sm);
+  line-height: 1.4;
+}
+
+.login-form {
+  margin-bottom: var(--spacing-lg);
+}
+
+.test-users {
+  background-color: var(--mspas-surface);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-lg);
+}
+
+.test-users h3 {
+  font-size: var(--font-size-base);
+  margin-bottom: var(--spacing-md);
+  color: var(--mspas-text);
+}
+
+.user-grid {
+  display: grid;
+  gap: var(--spacing-sm);
+}
+
+.test-user {
+  padding: var(--spacing-sm) var(--spacing-md);
+  background-color: white;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: background-color var(--transition-fast);
+  font-size: var(--font-size-sm);
+}
+
+.test-user:hover {
+  background-color: rgba(99, 102, 241, 0.1);
+}
+
+/* === DASHBOARD COMPONENTS === */
+.dashboard-hero {
+  background: linear-gradient(135deg, var(--mspas-gradient-start), var(--mspas-gradient-end));
+  color: white;
+  padding: var(--spacing-xl);
+  border-radius: var(--radius-lg);
+  margin-bottom: var(--spacing-xl);
+  text-align: center;
+}
+
+.dashboard-hero h2 {
+  font-size: var(--font-size-2xl);
+  margin-bottom: var(--spacing-sm);
+}
+
+.dashboard-hero p {
+  opacity: 0.9;
+  font-size: var(--font-size-lg);
+}
+
+.section-title {
+  font-size: var(--font-size-xl);
+  font-weight: 600;
+  color: var(--mspas-text);
+  margin-bottom: var(--spacing-lg);
+  padding-bottom: var(--spacing-sm);
+  border-bottom: 2px solid var(--mspas-primary);
+}
+
+/* === REGISTRO DE DATOS === */
+.method-card {
+  background-color: white;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-lg);
+  transition: all var(--transition-base);
+}
+
+.method-card:hover {
+  border-color: var(--mspas-primary);
+  box-shadow: var(--shadow-md);
+}
+
+.method-name {
+  font-size: var(--font-size-base);
+  font-weight: 600;
+  color: var(--mspas-text);
+  margin-bottom: var(--spacing-md);
+}
+
+.quantity-input {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.qty-btn {
+  width: 2rem;
+  height: 2rem;
+  border: none;
+  border-radius: 50%;
+  background-color: var(--mspas-primary);
+  color: white;
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--transition-fast);
+}
+
+.qty-btn:hover {
+  transform: scale(1.1);
+  background-color: var(--mspas-secondary);
+}
+
+.qty-input {
+  flex: 1;
+  text-align: center;
+  font-weight: 600;
+  min-width: 60px;
+}
+
+/* === TABLAS === */
+.table-container {
+  background-color: white;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+  margin-bottom: var(--spacing-xl);
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.table th,
+.table td {
+  padding: var(--spacing-md);
+  text-align: left;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.table th {
+  background-color: var(--mspas-surface);
+  font-weight: 600;
+  color: var(--mspas-text);
+  font-size: var(--font-size-sm);
+}
+
+.table tr:hover {
+  background-color: rgba(99, 102, 241, 0.05);
+}
+
+/* === STATUS BADGES === */
+.status {
+  display: inline-block;
+  padding: var(--spacing-xs) var(--spacing-sm);
+  font-size: var(--font-size-xs);
+  font-weight: 500;
+  border-radius: var(--radius-lg);
+}
+
+.status-registrado {
+  background-color: #fff3e0;
+  color: var(--mspas-warning);
+}
+
+.status-validado {
+  background-color: #e3f2fd;
+  color: var(--mspas-secondary);
+}
+
+.status-aprobado {
+  background-color: #f0fdf4;
+  color: var(--mspas-success);
+}
+
+/* === RESPONSIVE ADJUSTMENTS === */
+@media (max-width: 767px) {
+  .dashboard-hero {
+    padding: var(--spacing-lg);
+  }
+  
+  .dashboard-hero h2 {
+    font-size: var(--font-size-xl);
+  }
+  
+  .table-container {
+    overflow-x: auto;
+  }
+  
+  .table {
+    min-width: 600px;
+  }
+}

@@ -1,0 +1,121 @@
+<!-- ===== DASHBOARD AUXILIAR DE ENFERMERÍA ===== -->
+
+<!-- Header personalizado -->
+<div class="dashboard-hero">
+    <h2>Bienvenida, <span id="auxiliar-nombre">{{userName}}</span></h2>
+    <p id="auxiliar-comunidad">Comunidad: {{comunidadPrincipal}}</p>
+</div>
+
+<!-- Tarjetas de estado (2x2) -->
+<div class="stats-grid">
+    <div class="stat-card">
+        <span class="stat-value" id="registro-mes-estado">❓</span>
+        <div class="stat-label">Registro del Mes</div>
+    </div>
+    
+    <div class="stat-card">
+        <span class="stat-value" id="meta-anual-porcentaje">0%</span>
+        <div class="stat-label">Meta Anual</div>
+    </div>
+    
+    <div class="stat-card">
+        <span class="stat-value" id="ultima-sincronizacion">--</span>
+        <div class="stat-label">Última Sincronización</div>
+    </div>
+    
+    <div class="stat-card">
+        <span class="stat-value" id="metodos-registrados">0</span>
+        <div class="stat-label">Usuarias este Mes</div>
+    </div>
+</div>
+
+<!-- Acciones rápidas -->
+<div class="card">
+    <div class="card-title">Acciones Rápidas</div>
+    <div class="card-body">
+        <button id="btn-nuevo-registro" class="btn btn-primary">
+            📝 Nuevo Registro
+        </button>
+        <button id="btn-ver-historial" class="btn btn-secondary">
+            📚 Ver mi Historial
+        </button>
+        <button id="btn-sincronizar" class="btn btn-secondary">
+            🔄 Sincronizar Datos
+        </button>
+    </div>
+</div>
+
+<!-- Resumen del mes actual -->
+<div class="card">
+    <div class="card-title">Registros de este Mes</div>
+    <div class="card-body">
+        <div id="resumen-mes-actual">
+            <div class="loading">Cargando registros del mes...</div>
+        </div>
+        
+        <!-- Tabla de registros recientes -->
+        <div class="table-container" id="tabla-registros-container" style="display: none;">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Método</th>
+                        <th>Cantidad</th>
+                        <th>Estado</th>
+                        <th>Fecha</th>
+                    </tr>
+                </thead>
+                <tbody id="tabla-registros-body">
+                    <!-- Se llena dinámicamente -->
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Mensaje si no hay registros -->
+        <div id="sin-registros-mensaje" class="card" style="display: none;">
+            <div class="card-body" style="text-align: center; padding: 2rem;">
+                <h3>📝 No tienes registros este mes</h3>
+                <p>Comienza a registrar los datos de planificación familiar de tu comunidad.</p>
+                <button id="btn-primer-registro" class="btn btn-primary">
+                    Hacer mi Primer Registro
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Información de la comunidad -->
+<div class="card">
+    <div class="card-title">Mi Comunidad Asignada</div>
+    <div class="card-body">
+        <div id="info-comunidad">
+            <div class="loading">Cargando información de la comunidad...</div>
+        </div>
+    </div>
+</div>
+
+<!-- Script específico del dashboard auxiliar -->
+<script>
+// Inicializar dashboard del auxiliar cuando se carga el template
+document.addEventListener('DOMContentLoaded', () => {
+    if (typeof AuxiliarDashboard !== 'undefined') {
+        AuxiliarDashboard.init();
+    }
+});
+
+// Event listeners para los botones
+document.getElementById('btn-nuevo-registro')?.addEventListener('click', () => {
+    ComponentLoader.navigateToView('registro');
+});
+
+document.getElementById('btn-ver-historial')?.addEventListener('click', () => {
+    AuxiliarDashboard.mostrarHistorial();
+});
+
+document.getElementById('btn-sincronizar')?.addEventListener('click', () => {
+    AuxiliarDashboard.sincronizarDatos();
+});
+
+document.getElementById('btn-primer-registro')?.addEventListener('click', () => {
+    ComponentLoader.navigateToView('registro');
+});
+</script>

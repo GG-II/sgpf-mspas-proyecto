@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - SGPF MSPAS</title>
+    
+    <!-- CSS Modular -->
+    <link rel="stylesheet" href="css/base.css">
+    <link rel="stylesheet" href="css/components.css">
+    <link rel="stylesheet" href="css/mobile.css">
+    <link rel="stylesheet" href="css/dashboards.css">
+</head>
+<body class="login-body">
+    <div class="login-container">
+        <!-- Card Principal de Login -->
+        <div class="login-card">
+            <!-- Sección del Logo -->
+            <div class="logo-section">
+                <h1>SGPF</h1>
+                <p>Sistema de Gestión de Planificación Familiar<br>MSPAS - Huehuetenango</p>
+            </div>
+            
+            <!-- Formulario de Login -->
+            <form id="login-form" class="login-form">
+                <!-- Mensaje de Error -->
+                <div id="login-error" class="error-message hidden"></div>
+                
+                <!-- Campo Email -->
+                <div class="form-group">
+                    <label for="email" class="form-label">Email</label>
+                    <input 
+                        type="email" 
+                        id="email" 
+                        name="email" 
+                        class="form-input" 
+                        required 
+                        placeholder="usuario@mspas.gob.gt"
+                        autocomplete="email"
+                    >
+                </div>
+                
+                <!-- Campo Contraseña -->
+                <div class="form-group">
+                    <label for="password" class="form-label">Contraseña</label>
+                    <input 
+                        type="password" 
+                        id="password" 
+                        name="password" 
+                        class="form-input" 
+                        required 
+                        placeholder="Ingresa tu contraseña"
+                        autocomplete="current-password"
+                    >
+                </div>
+                
+                <!-- Botón de Login -->
+                <button type="submit" id="login-btn" class="btn btn-primary">
+                    Iniciar Sesión
+                </button>
+            </form>
+        </div>
+        
+        <!-- Card de Usuarios de Prueba -->
+        <div class="test-users">
+            <h3>Usuarios de Prueba:</h3>
+            <div class="user-grid">
+                <div class="test-user" data-email="aux01@mspas.gob.gt" data-password="123456">
+                    <strong>Auxiliar:</strong> aux01@mspas.gob.gt
+                </div>
+                <div class="test-user" data-email="asist01@mspas.gob.gt" data-password="123456">
+                    <strong>Asistente:</strong> asist01@mspas.gob.gt
+                </div>
+                <div class="test-user" data-email="encargado@mspas.gob.gt" data-password="123456">
+                    <strong>Encargado:</strong> encargado@mspas.gob.gt
+                </div>
+                <div class="test-user" data-email="admin@mspas.gob.gt" data-password="123456">
+                    <strong>Coordinador:</strong> admin@mspas.gob.gt
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript Modular -->
+    <script src="js/shared.js"></script>
+    <script src="js/auth.js"></script>
+    
+    <!-- Inicialización específica del login -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('🔐 Inicializando página de login');
+            AuthManager.initLogin();
+        });
+    </script>
+</body>
+</html>
