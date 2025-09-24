@@ -1,0 +1,193 @@
+<!-- Header del formulario -->
+<div class="dashboard-hero">
+    <h2>Registro de Usuarias</h2>
+    <p id="comunidad-registro">Cargando información de comunidad...</p>
+</div>
+
+<!-- Selector de período y comunidad -->
+<div class="card">
+    <div class="card-title">Información del Registro</div>
+    <div class="card-body">
+        <!-- Selector de comunidad -->
+        <div class="input-group" id="comunidad-selector-group" style="margin-bottom: 16px;">
+            <label>Comunidad:</label>
+            <select id="comunidad-registro-select" class="form-select">
+                <option value="">Cargando comunidades...</option>
+            </select>
+        </div>
+        
+        <!-- Selector de período -->
+        <div class="period-selector">
+            <div class="input-group">
+                <label>Mes:</label>
+                <select id="mes-registro" class="form-select">
+                    <option value="1">Enero</option>
+                    <option value="2">Febrero</option>
+                    <option value="3">Marzo</option>
+                    <option value="4">Abril</option>
+                    <option value="5">Mayo</option>
+                    <option value="6">Junio</option>
+                    <option value="7">Julio</option>
+                    <option value="8">Agosto</option>
+                    <option value="9">Septiembre</option>
+                    <option value="10">Octubre</option>
+                    <option value="11">Noviembre</option>
+                    <option value="12">Diciembre</option>
+                </select>
+            </div>
+            <div class="input-group">
+                <label>Año:</label>
+                <select id="año-registro" class="form-select">
+                    <option value="2025">2025</option>
+                    <option value="2024">2024</option>
+                </select>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Formulario de métodos -->
+<div class="card">
+    <div class="card-title">Métodos Anticonceptivos</div>
+    <div class="card-body">
+        
+        <!-- Inyecciones -->
+        <div class="method-category">
+            <h3 class="category-title">💉 Inyecciones</h3>
+            <div class="method-grid">
+                <div class="method-item">
+                    <label>Inyección Mensual</label>
+                    <div class="counter-input">
+                        <button type="button" class="counter-btn minus" data-target="inyeccion-mensual">-</button>
+                        <input type="number" id="inyeccion-mensual" value="0" min="0" max="999">
+                        <button type="button" class="counter-btn plus" data-target="inyeccion-mensual">+</button>
+                    </div>
+                </div>
+                <div class="method-item">
+                    <label>Inyección Bimensual</label>
+                    <div class="counter-input">
+                        <button type="button" class="counter-btn minus" data-target="inyeccion-bimensual">-</button>
+                        <input type="number" id="inyeccion-bimensual" value="0" min="0" max="999">
+                        <button type="button" class="counter-btn plus" data-target="inyeccion-bimensual">+</button>
+                    </div>
+                </div>
+                <div class="method-item">
+                    <label>Inyección Trimestral</label>
+                    <div class="counter-input">
+                        <button type="button" class="counter-btn minus" data-target="inyeccion-trimestral">-</button>
+                        <input type="number" id="inyeccion-trimestral" value="0" min="0" max="999">
+                        <button type="button" class="counter-btn plus" data-target="inyeccion-trimestral">+</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Métodos Orales -->
+        <div class="method-category">
+            <h3 class="category-title">💊 Métodos Orales</h3>
+            <div class="method-grid">
+                <div class="method-item">
+                    <label>Píldoras</label>
+                    <div class="counter-input">
+                        <button type="button" class="counter-btn minus" data-target="pildoras">-</button>
+                        <input type="number" id="pildoras" value="0" min="0" max="999">
+                        <button type="button" class="counter-btn plus" data-target="pildoras">+</button>
+                    </div>
+                </div>
+                <div class="method-item">
+                    <label>Píldora de Emergencia</label>
+                    <div class="counter-input">
+                        <button type="button" class="counter-btn minus" data-target="pildora-emergencia">-</button>
+                        <input type="number" id="pildora-emergencia" value="0" min="0" max="999">
+                        <button type="button" class="counter-btn plus" data-target="pildora-emergencia">+</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Dispositivos -->
+        <div class="method-category">
+            <h3 class="category-title">🔄 Dispositivos</h3>
+            <div class="method-grid">
+                <div class="method-item">
+                    <label>DIU</label>
+                    <div class="counter-input">
+                        <button type="button" class="counter-btn minus" data-target="diu">-</button>
+                        <input type="number" id="diu" value="0" min="0" max="999">
+                        <button type="button" class="counter-btn plus" data-target="diu">+</button>
+                    </div>
+                </div>
+                <div class="method-item">
+                    <label>Implante Subdérmico</label>
+                    <div class="counter-input">
+                        <button type="button" class="counter-btn minus" data-target="implante">-</button>
+                        <input type="number" id="implante" value="0" min="0" max="999">
+                        <button type="button" class="counter-btn plus" data-target="implante">+</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Métodos de Barrera -->
+        <div class="method-category">
+            <h3 class="category-title">🛡️ Métodos de Barrera</h3>
+            <div class="method-grid">
+                <div class="method-item">
+                    <label>Condón Masculino</label>
+                    <div class="counter-input">
+                        <button type="button" class="counter-btn minus" data-target="condon-masculino">-</button>
+                        <input type="number" id="condon-masculino" value="0" min="0" max="999">
+                        <button type="button" class="counter-btn plus" data-target="condon-masculino">+</button>
+                    </div>
+                </div>
+                <div class="method-item">
+                    <label>Condón Femenino</label>
+                    <div class="counter-input">
+                        <button type="button" class="counter-btn minus" data-target="condon-femenino">-</button>
+                        <input type="number" id="condon-femenino" value="0" min="0" max="999">
+                        <button type="button" class="counter-btn plus" data-target="condon-femenino">+</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Métodos Naturales -->
+        <div class="method-category">
+            <h3 class="category-title">🌿 Métodos Naturales</h3>
+            <div class="method-grid">
+                <div class="method-item">
+                    <label>MELA (Lactancia)</label>
+                    <div class="counter-input">
+                        <button type="button" class="counter-btn minus" data-target="mela">-</button>
+                        <input type="number" id="mela" value="0" min="0" max="999">
+                        <button type="button" class="counter-btn plus" data-target="mela">+</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<!-- Resumen y total -->
+<div class="card">
+    <div class="card-title">Resumen</div>
+    <div class="card-body">
+        <div class="total-summary">
+            <span class="total-label">Total de usuarias registradas:</span>
+            <span class="total-value" id="total-usuarias">0</span>
+        </div>
+    </div>
+</div>
+
+<!-- Botones de acción -->
+<div class="action-buttons">
+    <button type="button" class="btn btn-secondary" id="btn-cancelar">Cancelar</button>
+    <button type="button" class="btn btn-primary" id="btn-guardar">Guardar Registro</button>
+</div>
+
+<!-- Loading state -->
+<div id="loading-overlay" class="loading-overlay" style="display: none;">
+    <div class="loading-spinner"></div>
+    <p>Guardando registro...</p>
+</div>
