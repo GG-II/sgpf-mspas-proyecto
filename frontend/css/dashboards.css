@@ -762,3 +762,249 @@
         gap: 4px;
     }
 }
+
+/* ===== ESTILOS PERFIL DE USUARIO ===== */
+
+/* Grid de información personal */
+.perfil-info-grid {
+    display: grid;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+/* Mobile: 1 columna */
+@media (max-width: 768px) {
+    .perfil-info-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Tablet: 2 columnas */
+@media (min-width: 769px) and (max-width: 1024px) {
+    .perfil-info-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+/* Desktop: 3 columnas */
+@media (min-width: 1025px) {
+    .perfil-info-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+/* Campo de perfil */
+.perfil-campo {
+    display: flex;
+    flex-direction: column;
+    padding: 0.75rem;
+    background-color: var(--background-light);
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+}
+
+.perfil-campo label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 0.25rem;
+}
+
+.perfil-valor {
+    font-size: 0.9rem;
+    color: var(--text-primary);
+    font-weight: 500;
+    min-height: 1.2rem;
+}
+
+/* Comunidades asignadas */
+.comunidad-item {
+    padding: 0.75rem;
+    background-color: var(--background-light);
+    border-radius: 6px;
+    border-left: 4px solid var(--mspas-primary);
+    margin-bottom: 0.5rem;
+}
+
+.comunidad-item:last-child {
+    margin-bottom: 0;
+}
+
+.comunidad-item strong {
+    display: block;
+    color: var(--text-primary);
+    font-size: 0.9rem;
+    margin-bottom: 0.25rem;
+}
+
+.comunidad-codigo {
+    display: inline-block;
+    background-color: var(--mspas-primary);
+    color: white;
+    font-size: 0.7rem;
+    padding: 0.125rem 0.5rem;
+    border-radius: 12px;
+    font-weight: 600;
+    margin-left: 0.5rem;
+}
+
+.comunidad-item small {
+    display: block;
+    color: var(--text-secondary);
+    font-size: 0.8rem;
+    margin-top: 0.25rem;
+}
+
+/* Formularios del perfil */
+.form-group {
+    margin-bottom: 1rem;
+}
+
+.form-group:last-child {
+    margin-bottom: 0;
+}
+
+.form-group label {
+    display: block;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
+}
+
+.form-group input {
+    width: 100%;
+    padding: 0.75rem;
+    border: 2px solid var(--border-color);
+    border-radius: 6px;
+    font-size: 0.9rem;
+    transition: border-color 0.2s ease;
+    background-color: var(--background-color);
+}
+
+.form-group input:focus {
+    outline: none;
+    border-color: var(--mspas-primary);
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+}
+
+.form-group input:invalid {
+    border-color: var(--error-color, #ef4444);
+}
+
+.form-hint {
+    display: block;
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    margin-top: 0.25rem;
+}
+
+/* Botones del perfil */
+.btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    border: none;
+    border-radius: 6px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-decoration: none;
+    justify-content: center;
+    min-width: 140px;
+}
+
+.btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, var(--mspas-primary), var(--mspas-secondary));
+    color: white;
+}
+
+.btn-primary:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+}
+
+/* Loading spinner */
+.loading-spinner {
+    width: 16px;
+    height: 16px;
+    border: 2px solid transparent;
+    border-top: 2px solid currentColor;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Estadísticas detalladas del perfil */
+.perfil-detalle-stats {
+    margin-top: 1.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--border-color);
+    display: grid;
+    gap: 1rem;
+}
+
+@media (min-width: 768px) {
+    .perfil-detalle-stats {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+/* Lista de permisos */
+#lista-permisos {
+    font-size: 0.85rem;
+    line-height: 1.4;
+}
+
+/* Responsive para móviles */
+@media (max-width: 480px) {
+    .perfil-campo {
+        padding: 0.5rem;
+    }
+    
+    .form-group input {
+        padding: 0.625rem;
+    }
+    
+    .btn {
+        padding: 0.625rem 1rem;
+        font-size: 0.85rem;
+        min-width: 120px;
+    }
+    
+    .comunidad-item {
+        padding: 0.5rem;
+    }
+}
+
+/* Estados de validación */
+.form-group input:valid {
+    border-color: var(--success-color, #10b981);
+}
+
+.form-group input:invalid:not(:placeholder-shown) {
+    border-color: var(--error-color, #ef4444);
+}
+
+/* Animaciones suaves */
+.card {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+}
