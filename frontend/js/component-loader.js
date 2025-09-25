@@ -20,59 +20,72 @@ const ComponentLoader = {
   },
 
   // ===== INSERTAR EN CONTENEDOR (VERSIÓN FORZADA) =====
-async insertTemplateOnly(templatePath, data = {}) {
+  async insertTemplateOnly(templatePath, data = {}) {
     const container = document.getElementById("main-content");
     if (!container) {
-        console.error(`❌ Contenedor no encontrado: main-content`);
-        return false;
+      console.error(`❌ Contenedor no encontrado: main-content`);
+      return false;
     }
 
     try {
-        console.log(`📂 Cargando template: ${templatePath}`);
-        let html = await this.loadTemplate(templatePath);
+      console.log(`📂 Cargando template: ${templatePath}`);
+      let html = await this.loadTemplate(templatePath);
 
-        console.log(`📏 Longitud del HTML cargado: ${html.length} caracteres`);
-        console.log(`📝 Primeros 200 caracteres del HTML:`, html.substring(0, 200));
+      console.log(`📏 Longitud del HTML cargado: ${html.length} caracteres`);
+      console.log(
+        `📝 Primeros 200 caracteres del HTML:`,
+        html.substring(0, 200)
+      );
 
-        // LIMPIAR COMPLETAMENTE EL CONTAINER PRIMERO
-        container.innerHTML = '';
-        
-        // FORZAR UN REPAINT
-        container.offsetHeight;
-        
-        // INSERTAR EL HTML
-        container.innerHTML = html;
-        
-        // FORZAR OTRO REPAINT
-        container.offsetHeight;
+      // LIMPIAR COMPLETAMENTE EL CONTAINER PRIMERO
+      container.innerHTML = "";
 
-        console.log(`📦 HTML insertado en container`);
-        console.log(`🔍 Elementos después de inserción:`, container.children.length);
+      // FORZAR UN REPAINT
+      container.offsetHeight;
 
-        // ESPERAR UN MOMENTO ANTES DE VERIFICAR
-        await new Promise(resolve => setTimeout(resolve, 50));
+      // INSERTAR EL HTML
+      container.innerHTML = html;
 
-        // Verificar si los elementos específicos del perfil existen
-        const perfilCodigo = document.getElementById("perfil-codigo");
-        console.log(`🎯 perfil-codigo encontrado DESPUÉS de espera:`, !!perfilCodigo);
+      // FORZAR OTRO REPAINT
+      container.offsetHeight;
 
-        if (perfilCodigo) {
-            console.log(`✅ Elemento encontrado, estructura DOM correcta`);
-        } else {
-            console.error(`❌ Elemento aún no encontrado, verificando HTML completo:`);
-            console.log('HTML completo insertado:', container.innerHTML.substring(0, 500));
-        }
+      console.log(`📦 HTML insertado en container`);
+      console.log(
+        `🔍 Elementos después de inserción:`,
+        container.children.length
+      );
 
-        this.executeTemplateScripts(container);
-        console.log(`✅ Template insertado en main-content`);
-        return true;
-        
+      // ESPERAR UN MOMENTO ANTES DE VERIFICAR
+      await new Promise((resolve) => setTimeout(resolve, 50));
+
+      // Verificar si los elementos específicos del perfil existen
+      const perfilCodigo = document.getElementById("perfil-codigo");
+      console.log(
+        `🎯 perfil-codigo encontrado DESPUÉS de espera:`,
+        !!perfilCodigo
+      );
+
+      if (perfilCodigo) {
+        console.log(`✅ Elemento encontrado, estructura DOM correcta`);
+      } else {
+        console.error(
+          `❌ Elemento aún no encontrado, verificando HTML completo:`
+        );
+        console.log(
+          "HTML completo insertado:",
+          container.innerHTML.substring(0, 500)
+        );
+      }
+
+      this.executeTemplateScripts(container);
+      console.log(`✅ Template insertado en main-content`);
+      return true;
     } catch (error) {
-        console.error(`❌ Error insertando template:`, error);
-        container.innerHTML = `<div class="error">Error cargando contenido</div>`;
-        return false;
+      console.error(`❌ Error insertando template:`, error);
+      container.innerHTML = `<div class="error">Error cargando contenido</div>`;
+      return false;
     }
-},
+  },
 
   // ===== INSERTAR EN CONTENEDOR (CON LOADING - MANTENER POR COMPATIBILIDAD) =====
   async insertTemplate(containerId, templatePath, data = {}) {
@@ -201,6 +214,20 @@ async insertTemplateOnly(templatePath, data = {}) {
           const role = SGPF.getNormalizedRole();
           if (role === "auxiliar" && window.AuxiliarDashboard) {
             await window.AuxiliarDashboard.init();
+          } else if (role === "asistente") {
+            // Cargar script del asistente si no existe
+            if (!window.AsistenteDashboard) {
+              const script = document.createElement("script");
+              script.src = "js/dashboards/asistente.js";
+              await new Promise((resolve, reject) => {
+                script.onload = resolve;
+                script.onerror = reject;
+                document.head.appendChild(script);
+              });
+            }
+            if (window.AsistenteDashboard) {
+              await window.AsistenteDashboard.init();
+            }
           }
           break;
 

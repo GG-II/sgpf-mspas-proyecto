@@ -104,16 +104,27 @@ setupNavigation(user) {
     
     if (!mobileNav || !role) return;
 
-    if (role === 'auxiliar') {
-    // Verificar si el script ya existe en el DOM
+    // ===== CARGAR SCRIPT ESPECÍFICO SEGÚN EL ROL =====
+if (role === 'auxiliar') {
+    // Verificar si el script ya existe
     const existingScript = document.querySelector('script[src="js/dashboards/auxiliar.js"]');
-    
     if (!existingScript && typeof window.AuxiliarDashboard === 'undefined') {
         const script = document.createElement('script');
         script.src = 'js/dashboards/auxiliar.js';
         script.onload = () => console.log('✅ Script auxiliar.js cargado');
         script.onerror = () => console.error('❌ Error cargando auxiliar.js');
         document.head.appendChild(script);
+    }
+} else if (role === 'asistente' || role === 'asistente_tecnico') {  // <- Esta línea
+    // Verificar si el script ya existe
+    const existingScript = document.querySelector('script[src="js/dashboards/asistente.js"]');
+    if (!existingScript && typeof window.AsistenteDashboard === 'undefined') {
+        const script = document.createElement('script');
+        script.src = 'js/dashboards/asistente.js';
+        script.onload = () => console.log('✅ Script asistente.js cargado');
+        script.onerror = () => console.error('❌ Error cargando asistente.js');
+        document.head.appendChild(script);
+        
     }
 }
 
@@ -172,6 +183,19 @@ setupNavigation(user) {
         script.onerror = () => console.error('❌ Error cargando auxiliar.js');
         document.head.appendChild(script);
     }
+    // ===== CARGAR SCRIPT DEL ASISTENTE =====
+// ===== CARGAR SCRIPT DEL ASISTENTE =====
+if (role === 'asistente') {
+    const existingScript = document.querySelector('script[src="js/dashboards/asistente.js"]');
+    
+    if (!existingScript && typeof window.AsistenteDashboard === 'undefined') {
+        const script = document.createElement('script');
+        script.src = 'js/dashboards/asistente.js';
+        script.onload = () => console.log('✅ Script asistente.js cargado');
+        script.onerror = () => console.error('❌ Error cargando asistente.js');
+        document.head.appendChild(script);
+    }
+}
 }, // 
 
   // ===== CONFIGURAR LOGOUT =====

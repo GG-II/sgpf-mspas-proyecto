@@ -1,0 +1,116 @@
+<!-- ===== DASHBOARD ASISTENTE TÉCNICO ===== -->
+
+<!-- Header personalizado -->
+<div class="dashboard-hero">
+    <h2>Panel Territorial, <span id="asistente-nombre">{{userName}}</span></h2>
+    <p id="asistente-territorio">Territorio: {{territorioAsignado}}</p>
+</div>
+
+<!-- Tarjetas de estado territorial (2x2) -->
+<div class="stats-grid">
+    <div class="stat-card">
+        <span class="stat-value" id="comunidades-activas">0</span>
+        <div class="stat-label">Comunidades Activas</div>
+    </div>
+    
+    <div class="stat-card">
+        <span class="stat-value" id="registros-pendientes">0</span>
+        <div class="stat-label">Registros Pendientes</div>
+    </div>
+    
+    <div class="stat-card">
+        <span class="stat-value" id="cumplimiento-territorial">0%</span>
+        <div class="stat-label">Cumplimiento Territorial</div>
+    </div>
+    
+    <div class="stat-card">
+        <span class="stat-value" id="auxiliares-activos">0</span>
+        <div class="stat-label">Auxiliares Activos</div>
+    </div>
+</div>
+
+<!-- Acciones rápidas -->
+<div class="card">
+    <div class="card-title">Acciones de Validación</div>
+    <div class="card-body">
+        <button id="btn-validar-pendientes" class="btn btn-primary">
+            ✅ Validar Registros
+        </button>
+        <button id="btn-reportes-territorio" class="btn btn-secondary">
+            📊 Reportes de Territorio
+        </button>
+        <button id="btn-supervisar-auxiliares" class="btn btn-secondary">
+            👥 Supervisar Auxiliares
+        </button>
+    </div>
+</div>
+
+<!-- Registros pendientes de validación -->
+<div class="card">
+    <div class="card-title">Registros Pendientes de Validación</div>
+    <div class="card-body">
+        <div id="resumen-validacion">
+            <div class="loading">Cargando registros pendientes...</div>
+        </div>
+        
+        <!-- Tabla de registros pendientes -->
+        <div class="table-container" id="tabla-pendientes-container" style="display: none;">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Auxiliar</th>
+                        <th>Comunidad</th>
+                        <th>Método</th>
+                        <th>Cantidad</th>
+                        <th>Fecha</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody id="tabla-pendientes-body">
+                    <!-- Se llena dinámicamente -->
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Mensaje si no hay registros pendientes -->
+        <div id="sin-pendientes-mensaje" class="card" style="display: none;">
+            <div class="card-body" style="text-align: center; padding: 2rem;">
+                <h3>✅ No hay registros pendientes</h3>
+                <p>Todos los registros de tu territorio están validados.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Vista territorial -->
+<div class="card">
+    <div class="card-title">Mi Territorio</div>
+    <div class="card-body">
+        <div id="info-territorio">
+            <div class="loading">Cargando información del territorio...</div>
+        </div>
+    </div>
+</div>
+
+<!-- Script específico del dashboard asistente -->
+<script>
+// Inicializar dashboard del asistente cuando se carga el template
+document.addEventListener('DOMContentLoaded', () => {
+    if (typeof AsistenteDashboard !== 'undefined') {
+        AsistenteDashboard.init();
+    }
+});
+
+// Event listeners para los botones
+document.getElementById('btn-validar-pendientes')?.addEventListener('click', () => {
+    ComponentLoader.navigateToView('validacion');
+});
+
+document.getElementById('btn-reportes-territorio')?.addEventListener('click', () => {
+    ComponentLoader.navigateToView('reportes');
+});
+
+document.getElementById('btn-supervisar-auxiliares')?.addEventListener('click', () => {
+    AsistenteDashboard.mostrarAuxiliares();
+});
+</script>
