@@ -1,0 +1,160 @@
+<!-- ===== VISTA DE VALIDACIÓN DE REGISTROS ===== -->
+
+<!-- Header del módulo de validación -->
+<div class="dashboard-hero">
+    <h2>🔍 Validación de Registros</h2>
+    <p id="validacion-territorio">Revisa y valida los registros de tu territorio</p>
+</div>
+
+<!-- Resumen de validación (similar a las tarjetas del formulario) -->
+<div class="card">
+    <div class="card-title">Resumen de Validación</div>
+    <div class="card-body">
+        <div id="validacion-resumen" class="method-grid">
+            <div class="method-item">
+                <label>Pendientes</label>
+                <div class="counter-input">
+                    <span class="total-value" id="total-pendientes">0</span>
+                </div>
+            </div>
+            <div class="method-item">
+                <label>Comunidades</label>
+                <div class="counter-input">
+                    <span class="total-value" id="total-comunidades">0</span>
+                </div>
+            </div>
+            <div class="method-item">
+                <label>Total Usuarias</label>
+                <div class="counter-input">
+                    <span class="total-value" id="total-usuarias">0</span>
+                </div>
+            </div>
+            <div class="method-item">
+                <label>Validados Hoy</label>
+                <div class="counter-input">
+                    <span class="total-value" id="validados-hoy">0</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Filtros de búsqueda -->
+<div class="card">
+    <div class="card-title">Filtros de Búsqueda</div>
+    <div class="card-body">
+        <div class="period-selector">
+            <div class="input-group">
+                <label>Comunidad:</label>
+                <select id="filtro-comunidad" class="form-select">
+                    <option value="">Todas las comunidades</option>
+                    <!-- Se llena dinámicamente -->
+                </select>
+            </div>
+            <div class="input-group">
+                <label>Auxiliar:</label>
+                <select id="filtro-auxiliar" class="form-select">
+                    <option value="">Todos los auxiliares</option>
+                    <!-- Se llena dinámicamente -->
+                </select>
+            </div>
+        </div>
+        
+        <div style="margin-top: 1rem; display: flex; gap: 1rem;">
+            <input type="text" id="buscar-registro" placeholder="Buscar por método, cantidad, etc..." class="form-select" style="flex: 1;">
+            <button id="btn-limpiar-filtros" class="btn btn-secondary">Limpiar</button>
+            <button id="btn-actualizar" class="btn btn-primary">Actualizar</button>
+        </div>
+    </div>
+</div>
+
+<!-- Lista de registros pendientes -->
+<div class="card">
+    <div class="card-title">Registros Pendientes de Validación</div>
+    <div class="card-body">
+        
+        <!-- Loading state -->
+        <div id="validacion-loading" class="loading">Cargando registros pendientes...</div>
+        
+        <!-- Lista de registros (estilo similar a métodos) -->
+        <div id="registros-container" style="display: none;">
+            <!-- Los registros se insertan aquí dinámicamente -->
+        </div>
+        
+        <!-- Mensaje sin registros -->
+        <div id="sin-registros-mensaje" class="card" style="display: none;">
+            <div class="card-body" style="text-align: center; padding: 2rem;">
+                <h3>✅ No hay registros pendientes</h3>
+                <p>Todos los registros de tu territorio están validados.</p>
+            </div>
+        </div>
+        
+    </div>
+</div>
+
+<!-- Acciones rápidas -->
+<div class="action-buttons">
+    <button type="button" class="btn btn-secondary" id="btn-regresar">Regresar al Dashboard</button>
+    <button type="button" class="btn btn-primary" id="btn-validar-todos" style="display: none;">Validar Todos</button>
+</div>
+
+<!-- Modal de confirmación para validaciones masivas -->
+<div id="modal-confirmacion" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000;">
+    <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 2rem; border-radius: 12px; max-width: 400px; width: 90%;">
+        <h3 id="modal-titulo">Confirmar Acción</h3>
+        <p id="modal-mensaje">¿Estás seguro de realizar esta acción?</p>
+        <div style="display: flex; gap: 1rem; justify-content: flex-end; margin-top: 1.5rem;">
+            <button id="modal-cancelar" class="btn btn-secondary">Cancelar</button>
+            <button id="modal-confirmar" class="btn btn-primary">Confirmar</button>
+        </div>
+    </div>
+</div>
+
+<!-- Script específico del módulo de validación -->
+<script>
+// Inicializar módulo de validación cuando se carga el template
+document.addEventListener('DOMContentLoaded', () => {
+    if (typeof ValidacionSystem !== 'undefined') {
+        ValidacionSystem.init();
+    }
+});
+
+// Event listeners para filtros
+document.getElementById('filtro-comunidad')?.addEventListener('change', () => {
+    if (window.ValidacionSystem) ValidacionSystem.aplicarFiltros();
+});
+
+document.getElementById('filtro-auxiliar')?.addEventListener('change', () => {
+    if (window.ValidacionSystem) ValidacionSystem.aplicarFiltros();
+});
+
+document.getElementById('buscar-registro')?.addEventListener('input', () => {
+    if (window.ValidacionSystem) ValidacionSystem.aplicarFiltros();
+});
+
+// Botones de acción
+document.getElementById('btn-limpiar-filtros')?.addEventListener('click', () => {
+    if (window.ValidacionSystem) ValidacionSystem.limpiarFiltros();
+});
+
+document.getElementById('btn-actualizar')?.addEventListener('click', () => {
+    if (window.ValidacionSystem) ValidacionSystem.cargarRegistrosPendientes();
+});
+
+document.getElementById('btn-regresar')?.addEventListener('click', () => {
+    ComponentLoader.navigateToView('dashboard');
+});
+
+document.getElementById('btn-validar-todos')?.addEventListener('click', () => {
+    if (window.ValidacionSystem) ValidacionSystem.validarTodos();
+});
+
+// Modal
+document.getElementById('modal-cancelar')?.addEventListener('click', () => {
+    document.getElementById('modal-confirmacion').style.display = 'none';
+});
+
+document.getElementById('modal-confirmar')?.addEventListener('click', () => {
+    if (window.ValidacionSystem) ValidacionSystem.ejecutarAccionConfirmada();
+});
+</script>

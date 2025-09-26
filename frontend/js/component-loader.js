@@ -254,6 +254,26 @@ const ComponentLoader = {
           }
           break;
 
+        case "validacion":
+          // Cargar script de validación si no existe
+          if (!window.ValidacionSystem) {
+            const script = document.createElement("script");
+            script.src = "js/validacion.js";
+            await new Promise((resolve, reject) => {
+              script.onload = resolve;
+              script.onerror = reject;
+              document.head.appendChild(script);
+            });
+          }
+
+          // Esperar renderizado del DOM y después inicializar
+          await new Promise((resolve) => setTimeout(resolve, 200));
+
+          if (window.ValidacionSystem) {
+            await window.ValidacionSystem.init();
+          }
+          break;
+
         case "perfil":
           if (!window.PerfilUsuario) {
             const script = document.createElement("script");
