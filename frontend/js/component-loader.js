@@ -301,6 +301,26 @@ const ComponentLoader = {
             });
           }
 
+        case "reportes":
+          // Cargar script de reportes si no existe
+          if (!window.ReportesSystem) {
+            const script = document.createElement("script");
+            script.src = "js/reportes.js";
+            await new Promise((resolve, reject) => {
+              script.onload = resolve;
+              script.onerror = reject;
+              document.head.appendChild(script);
+            });
+          }
+
+          // Esperar renderizado del DOM
+          await new Promise((resolve) => setTimeout(resolve, 300));
+
+          if (window.ReportesSystem) {
+            await window.ReportesSystem.init();
+          }
+          break;
+
           // Esperar más tiempo para que el DOM se renderice completamente
           await new Promise((resolve) => setTimeout(resolve, 200));
 
