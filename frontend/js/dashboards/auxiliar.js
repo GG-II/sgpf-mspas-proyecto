@@ -12,11 +12,10 @@ window.AuxiliarDashboard = window.AuxiliarDashboard || {
                 return;
             }
 
-            // Cargar datos en paralelo
+            // Cargar datos en paralelo (eliminadas cargarRegistrosDelMes)
             await Promise.all([
                 this.cargarDatosUsuario(),
                 this.cargarEstadisticasPersonales(),
-                this.cargarRegistrosDelMes(),
                 this.cargarInfoComunidad()
             ]);
 
@@ -119,84 +118,11 @@ window.AuxiliarDashboard = window.AuxiliarDashboard || {
         }
     },
 
-    // ===== CARGAR REGISTROS DEL MES ACTUAL =====
-    async cargarRegistrosDelMes() {
-        try {
-            const currentMonth = new Date().getMonth() + 1;
-            const currentYear = new Date().getFullYear();
-            
-            // Obtener registros del usuario actual
-            const response = await SGPF.apiCall('/registros?limit=50');
-            
-            if (response.success) {
-                // Filtrar registros del mes actual
-                const registrosEsteMes = response.data.registros.filter(registro => {
-                    return registro.año === currentYear && registro.mes === currentMonth;
-                });
-                
-                this.mostrarRegistrosDelMes(registrosEsteMes);
-            }
-            
-        } catch (error) {
-            console.error('❌ Error cargando registros del mes:', error);
-            this.mostrarErrorRegistros();
-        }
-    },
-
-    // ===== MOSTRAR REGISTROS DEL MES =====
-    mostrarRegistrosDelMes(registros) {
-        const resumenElement = document.getElementById('resumen-mes-actual');
-        const tablaContainer = document.getElementById('tabla-registros-container');
-        const sinRegistrosElement = document.getElementById('sin-registros-mensaje');
-        const tablaBody = document.getElementById('tabla-registros-body');
-
-        if (!resumenElement) return;
-
-        // Limpiar loading
-        resumenElement.innerHTML = '';
-
-        if (registros.length === 0) {
-            // Mostrar mensaje de sin registros
-            if (tablaContainer) tablaContainer.style.display = 'none';
-            if (sinRegistrosElement) sinRegistrosElement.style.display = 'block';
-            return;
-        }
-
-        // Mostrar tabla con registros
-        if (sinRegistrosElement) sinRegistrosElement.style.display = 'none';
-        if (tablaContainer) tablaContainer.style.display = 'block';
-
-        // Llenar tabla
-        if (tablaBody) {
-            tablaBody.innerHTML = registros.map(registro => `
-                <tr>
-                    <td>${registro.metodo}</td>
-                    <td><strong>${registro.cantidad_administrada}</strong></td>
-                    <td><span class="status status-${registro.estado}">${this.formatearEstado(registro.estado)}</span></td>
-                    <td>${this.formatearFecha(registro.fecha_registro)}</td>
-                </tr>
-            `).join('');
-        }
-
-        // Mostrar resumen
-        const totalUsuarias = registros.reduce((sum, r) => sum + (r.cantidad_administrada || 0), 0);
-        resumenElement.innerHTML = `
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem; margin-bottom: 1rem;">
-                <div style="text-align: center;">
-                    <div style="font-size: 1.5rem; font-weight: bold; color: var(--mspas-primary);">${registros.length}</div>
-                    <div style="font-size: 0.9rem; color: var(--mspas-text-secondary);">Registros</div>
-                </div>
-                <div style="text-align: center;">
-                    <div style="font-size: 1.5rem; font-weight: bold; color: var(--mspas-primary);">${totalUsuarias}</div>
-                    <div style="font-size: 0.9rem; color: var(--mspas-text-secondary);">Usuarias</div>
-                </div>
-                <div style="text-align: center;">
-                    <div style="font-size: 1.5rem; font-weight: bold; color: var(--mspas-primary);">${new Set(registros.map(r => r.metodo)).size}</div>
-                    <div style="font-size: 0.9rem; color: var(--mspas-text-secondary);">Métodos</div>
-                </div>
-            </div>
-        `;
-    },
+    // ELIMINADA: cargarRegistrosDelMes()
+    // ELIMINADA: mostrarRegistrosDelMes()
+    // ELIMINADA: mostrarHistorial()
+    // ELIMINADA: crearModalHistorial()
+    // ELIMINADA: sincronizarDatos()
 
     // ===== CARGAR INFORMACIÓN DE LA COMUNIDAD =====
     async cargarInfoComunidad() {
@@ -261,120 +187,6 @@ window.AuxiliarDashboard = window.AuxiliarDashboard || {
         `;
     },
 
-    // ===== MOSTRAR HISTORIAL PERSONAL =====
-    async mostrarHistorial() {
-        try {
-            SGPF.showLoading(true);
-            
-            const response = await SGPF.apiCall('/registros?limit=20');
-            
-            if (response.success) {
-                // Crear modal o navegar a vista de historial
-                this.crearModalHistorial(response.data.registros);
-            }
-            
-        } catch (error) {
-            console.error('❌ Error cargando historial:', error);
-            SGPF.showToast('Error cargando historial', 'error');
-        } finally {
-            SGPF.showLoading(false);
-        }
-    },
-
-    // ===== CREAR MODAL DE HISTORIAL =====
-    crearModalHistorial(registros) {
-        // Crear overlay modal
-        const overlay = document.createElement('div');
-        overlay.className = 'loading-overlay';
-        overlay.style.backgroundColor = 'rgba(0, 0, 0, 0.7)';
-        overlay.style.cursor = 'pointer';
-        
-        const modal = document.createElement('div');
-        modal.className = 'card';
-        modal.style.cssText = `
-            max-width: 90vw;
-            max-height: 80vh;
-            overflow-y: auto;
-            margin: 2rem;
-            cursor: default;
-        `;
-        
-        modal.innerHTML = `
-            <div class="card-header">
-                <h3>Mi Historial de Registros</h3>
-                <button id="cerrar-modal" style="float: right; background: none; border: none; font-size: 1.5rem; cursor: pointer;">×</button>
-            </div>
-            <div class="card-body">
-                ${registros.length === 0 ? 
-                    '<p>No tienes registros todavía.</p>' :
-                    `<div class="table-container">
-                        <table class="table">
-                            <thead>
-                                <tr>
-                                    <th>Fecha</th>
-                                    <th>Método</th>
-                                    <th>Cantidad</th>
-                                    <th>Estado</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                ${registros.map(r => `
-                                    <tr>
-                                        <td>${this.formatearFecha(r.fecha_registro)}</td>
-                                        <td>${r.metodo}</td>
-                                        <td><strong>${r.cantidad_administrada}</strong></td>
-                                        <td><span class="status status-${r.estado}">${this.formatearEstado(r.estado)}</span></td>
-                                    </tr>
-                                `).join('')}
-                            </tbody>
-                        </table>
-                    </div>`
-                }
-            </div>
-        `;
-        
-        overlay.appendChild(modal);
-        document.body.appendChild(overlay);
-        
-        // Event listeners
-        overlay.addEventListener('click', (e) => {
-            if (e.target === overlay) {
-                document.body.removeChild(overlay);
-            }
-        });
-        
-        modal.querySelector('#cerrar-modal').addEventListener('click', () => {
-            document.body.removeChild(overlay);
-        });
-        
-        // Prevenir que clicks en el modal cierren el overlay
-        modal.addEventListener('click', (e) => {
-            e.stopPropagation();
-        });
-    },
-
-    // ===== SINCRONIZAR DATOS =====
-    async sincronizarDatos() {
-        try {
-            SGPF.showLoading(true);
-            SGPF.showToast('Sincronizando datos...', 'info');
-            
-            // Simular sincronización y recargar datos
-            await new Promise(resolve => setTimeout(resolve, 2000));
-            
-            // Recargar dashboard
-            await this.init();
-            
-            SGPF.showToast('Datos sincronizados correctamente', 'success');
-            
-        } catch (error) {
-            console.error('❌ Error sincronizando:', error);
-            SGPF.showToast('Error en sincronización', 'error');
-        } finally {
-            SGPF.showLoading(false);
-        }
-    },
-
     // ===== FUNCIONES DE UTILIDAD =====
     formatearFecha(fecha) {
         if (!fecha) return '--';
@@ -424,12 +236,7 @@ window.AuxiliarDashboard = window.AuxiliarDashboard || {
         });
     },
 
-    mostrarErrorRegistros() {
-        const resumenElement = document.getElementById('resumen-mes-actual');
-        if (resumenElement) {
-            resumenElement.innerHTML = '<div class="error">Error cargando registros del mes</div>';
-        }
-    },
+    // ELIMINADA: mostrarErrorRegistros()
 
     mostrarErrorComunidad() {
         const infoElement = document.getElementById('info-comunidad');
@@ -450,4 +257,3 @@ window.AuxiliarDashboard = window.AuxiliarDashboard || {
         }
     }
 };
-

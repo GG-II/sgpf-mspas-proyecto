@@ -29,59 +29,9 @@
     </div>
 </div>
 
-<!-- Acciones rápidas -->
-<div class="card">
-    <div class="card-title">Acciones Rápidas</div>
-    <div class="card-body">
-        <button id="btn-nuevo-registro" class="btn btn-primary">
-            📝 Nuevo Registro
-        </button>
-        <button id="btn-ver-historial" class="btn btn-secondary">
-            📚 Ver mi Historial
-        </button>
-        <button id="btn-sincronizar" class="btn btn-secondary">
-            🔄 Sincronizar Datos
-        </button>
-    </div>
-</div>
+<!-- ELIMINADA: Sección "Acciones Rápidas" -->
 
-<!-- Resumen del mes actual -->
-<div class="card">
-    <div class="card-title">Registros de este Mes</div>
-    <div class="card-body">
-        <div id="resumen-mes-actual">
-            <div class="loading">Cargando registros del mes...</div>
-        </div>
-        
-        <!-- Tabla de registros recientes -->
-        <div class="table-container" id="tabla-registros-container" style="display: none;">
-            <table class="table">
-                <thead>
-                    <tr>
-                        <th>Método</th>
-                        <th>Cantidad</th>
-                        <th>Estado</th>
-                        <th>Fecha</th>
-                    </tr>
-                </thead>
-                <tbody id="tabla-registros-body">
-                    <!-- Se llena dinámicamente -->
-                </tbody>
-            </table>
-        </div>
-        
-        <!-- Mensaje si no hay registros -->
-        <div id="sin-registros-mensaje" class="card" style="display: none;">
-            <div class="card-body" style="text-align: center; padding: 2rem;">
-                <h3>📝 No tienes registros este mes</h3>
-                <p>Comienza a registrar los datos de planificación familiar de tu comunidad.</p>
-                <button id="btn-primer-registro" class="btn btn-primary">
-                    Hacer mi Primer Registro
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
+<!-- ELIMINADA: Sección "Registros de este Mes" -->
 
 <!-- Información de la comunidad -->
 <div class="card">
@@ -102,20 +52,5 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
-// Event listeners para los botones
-document.getElementById('btn-nuevo-registro')?.addEventListener('click', () => {
-    ComponentLoader.navigateToView('registro');
-});
-
-document.getElementById('btn-ver-historial')?.addEventListener('click', () => {
-    AuxiliarDashboard.mostrarHistorial();
-});
-
-document.getElementById('btn-sincronizar')?.addEventListener('click', () => {
-    AuxiliarDashboard.sincronizarDatos();
-});
-
-document.getElementById('btn-primer-registro')?.addEventListener('click', () => {
-    ComponentLoader.navigateToView('registro');
-});
+// ELIMINADOS: Event listeners para botones que ya no existen
 </script>
