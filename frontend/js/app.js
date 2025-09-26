@@ -98,105 +98,138 @@ const SGPFApp = {
   },
 
   // ===== CONFIGURAR NAVEGACIÓN =====
-setupNavigation(user) {
+  setupNavigation(user) {
     const role = SGPF.getNormalizedRole();
-    const mobileNav = document.getElementById('mobile-nav');
-    
+    const mobileNav = document.getElementById("mobile-nav");
+
     if (!mobileNav || !role) return;
 
     // ===== CARGAR SCRIPT ESPECÍFICO SEGÚN EL ROL =====
-if (role === 'auxiliar') {
-    // Verificar si el script ya existe
-    const existingScript = document.querySelector('script[src="js/dashboards/auxiliar.js"]');
-    if (!existingScript && typeof window.AuxiliarDashboard === 'undefined') {
-        const script = document.createElement('script');
-        script.src = 'js/dashboards/auxiliar.js';
-        script.onload = () => console.log('✅ Script auxiliar.js cargado');
-        script.onerror = () => console.error('❌ Error cargando auxiliar.js');
+    if (role === "auxiliar") {
+      // Verificar si el script ya existe
+      const existingScript = document.querySelector(
+        'script[src="js/dashboards/auxiliar.js"]'
+      );
+      if (!existingScript && typeof window.AuxiliarDashboard === "undefined") {
+        const script = document.createElement("script");
+        script.src = "js/dashboards/auxiliar.js";
+        script.onload = () => console.log("✅ Script auxiliar.js cargado");
+        script.onerror = () => console.error("❌ Error cargando auxiliar.js");
         document.head.appendChild(script);
-    }
-} else if (role === 'asistente' || role === 'asistente_tecnico') {  // <- Esta línea
-    // Verificar si el script ya existe
-    const existingScript = document.querySelector('script[src="js/dashboards/asistente.js"]');
-    if (!existingScript && typeof window.AsistenteDashboard === 'undefined') {
-        const script = document.createElement('script');
-        script.src = 'js/dashboards/asistente.js';
-        script.onload = () => console.log('✅ Script asistente.js cargado');
-        script.onerror = () => console.error('❌ Error cargando asistente.js');
+      }
+    } else if (role === "asistente" || role === "asistente_tecnico") {
+      const existingScript = document.querySelector(
+        'script[src="js/dashboards/asistente.js"]'
+      );
+      if (!existingScript && typeof window.AsistenteDashboard === "undefined") {
+        const script = document.createElement("script");
+        script.src = "js/dashboards/asistente.js";
+        script.onload = () => console.log("✅ Script asistente.js cargado");
+        script.onerror = () => console.error("❌ Error cargando asistente.js");
         document.head.appendChild(script);
-        
+      }
+    } // ===== CARGAR SCRIPT DEL ENCARGADO =====
+    else if (role === "encargado") {
+      const existingScript = document.querySelector(
+        'script[src="js/dashboards/encargado.js"]'
+      );
+
+      if (!existingScript && typeof window.EncargadoDashboard === "undefined") {
+        const script = document.createElement("script");
+        script.src = "js/dashboards/encargado.js";
+        script.onload = () => console.log("✅ Script encargado.js cargado");
+        script.onerror = () => console.error("❌ Error cargando encargado.js");
+        document.head.appendChild(script);
+      }
     }
-}
-
-
 
     // Configuración de tabs por rol
     const navigationConfig = {
-        auxiliar: [
-            { view: 'dashboard', label: 'Inicio', icon: '🏠' },
-            { view: 'registro', label: 'Registrar', icon: '📝' },
-            { view: 'perfil', label: 'Perfil', icon: '👤' }
-        ],
-        asistente: [
-            { view: 'dashboard', label: 'Dashboard', icon: '📊' },
-            { view: 'validacion', label: 'Validar', icon: '✅' },
-            { view: 'reportes', label: 'Reportes', icon: '📈' },
-            { view: 'perfil', label: 'Perfil', icon: '👤' }
-        ],
-        encargado: [
-            { view: 'dashboard', label: 'Dashboard', icon: '📊' },
-            { view: 'registro', label: 'Registrar', icon: '📝' },
-            { view: 'validacion', label: 'Aprobar', icon: '✅' },
-            { view: 'reportes', label: 'Reportes', icon: '📈' },
-            { view: 'perfil', label: 'Perfil', icon: '👤' }
-        ],
-        coordinador: [
-            { view: 'dashboard', label: 'Dashboard', icon: '📊' },
-            { view: 'reportes', label: 'Reportes', icon: '📈' },
-            { view: 'perfil', label: 'Configurar', icon: '⚙️' }
-        ]
+      auxiliar: [
+        { view: "dashboard", label: "Inicio", icon: "🏠" },
+        { view: "registro", label: "Registrar", icon: "📝" },
+        { view: "perfil", label: "Perfil", icon: "👤" },
+      ],
+      asistente: [
+        { view: "dashboard", label: "Dashboard", icon: "📊" },
+        { view: "validacion", label: "Validar", icon: "✅" },
+        { view: "reportes", label: "Reportes", icon: "📈" },
+        { view: "perfil", label: "Perfil", icon: "👤" },
+      ],
+      encargado: [
+        { view: "dashboard", label: "Dashboard", icon: "📊" },
+        { view: "registro", label: "Registrar", icon: "📝" },
+        { view: "validacion", label: "Aprobar", icon: "✅" },
+        { view: "reportes", label: "Reportes", icon: "📈" },
+        { view: "perfil", label: "Perfil", icon: "👤" },
+      ],
+      coordinador: [
+        { view: "dashboard", label: "Dashboard", icon: "📊" },
+        { view: "reportes", label: "Reportes", icon: "📈" },
+        { view: "perfil", label: "Configurar", icon: "⚙️" },
+      ],
     };
 
     const tabs = navigationConfig[role] || [];
-    
-    mobileNav.innerHTML = tabs.map(tab => `
+
+    mobileNav.innerHTML = tabs
+      .map(
+        (tab) => `
         <div class="nav-item" data-view="${tab.view}">
             <span class="nav-icon">${tab.icon}</span>
             <span class="nav-label">${tab.label}</span>
         </div>
-    `).join('');
+    `
+      )
+      .join("");
 
     // Agregar event listeners
-    mobileNav.addEventListener('click', (e) => {
-        const navItem = e.target.closest('.nav-item');
-        if (navItem) {
-            const view = navItem.dataset.view;
-            ComponentLoader.navigateToView(view);
-        }
+    mobileNav.addEventListener("click", (e) => {
+      const navItem = e.target.closest(".nav-item");
+      if (navItem) {
+        const view = navItem.dataset.view;
+        ComponentLoader.navigateToView(view);
+      }
     });
 
     // ===== AGREGAR AQUÍ - CARGAR SCRIPT ESPECÍFICO SEGÚN EL ROL =====
-    if (role === 'auxiliar') {
-        const script = document.createElement('script');
-        script.src = 'js/dashboards/auxiliar.js';
-        script.onload = () => console.log('✅ Script auxiliar.js cargado');
-        script.onerror = () => console.error('❌ Error cargando auxiliar.js');
-        document.head.appendChild(script);
+    if (role === "auxiliar") {
+      const script = document.createElement("script");
+      script.src = "js/dashboards/auxiliar.js";
+      script.onload = () => console.log("✅ Script auxiliar.js cargado");
+      script.onerror = () => console.error("❌ Error cargando auxiliar.js");
+      document.head.appendChild(script);
     }
     // ===== CARGAR SCRIPT DEL ASISTENTE =====
-// ===== CARGAR SCRIPT DEL ASISTENTE =====
-if (role === 'asistente') {
-    const existingScript = document.querySelector('script[src="js/dashboards/asistente.js"]');
-    
-    if (!existingScript && typeof window.AsistenteDashboard === 'undefined') {
-        const script = document.createElement('script');
-        script.src = 'js/dashboards/asistente.js';
-        script.onload = () => console.log('✅ Script asistente.js cargado');
-        script.onerror = () => console.error('❌ Error cargando asistente.js');
+    // ===== CARGAR SCRIPT DEL ASISTENTE =====
+    if (role === "asistente") {
+      const existingScript = document.querySelector(
+        'script[src="js/dashboards/asistente.js"]'
+      );
+
+      if (!existingScript && typeof window.AsistenteDashboard === "undefined") {
+        const script = document.createElement("script");
+        script.src = "js/dashboards/asistente.js";
+        script.onload = () => console.log("✅ Script asistente.js cargado");
+        script.onerror = () => console.error("❌ Error cargando asistente.js");
         document.head.appendChild(script);
+      }
     }
-}
-}, // 
+    // ===== CARGAR SCRIPT DEL ENCARGADO =====
+    if (role === "encargado") {
+      const existingScript = document.querySelector(
+        'script[src="js/dashboards/encargado.js"]'
+      );
+
+      if (!existingScript && typeof window.EncargadoDashboard === "undefined") {
+        const script = document.createElement("script");
+        script.src = "js/dashboards/encargado.js";
+        script.onload = () => console.log("✅ Script encargado.js cargado");
+        script.onerror = () => console.error("❌ Error cargando encargado.js");
+        document.head.appendChild(script);
+      }
+    }
+  }, //
 
   // ===== CONFIGURAR LOGOUT =====
   setupLogout() {
@@ -230,11 +263,11 @@ if (role === 'asistente') {
 };
 
 // ===== INICIALIZACIÓN AUTOMÁTICA =====
-document.addEventListener('DOMContentLoaded', () => {
-    console.log('🌟 DOM cargado, inicializando...');
-    
-    // Pequeño delay para evitar condiciones de carrera
-    setTimeout(() => {
-        SGPFApp.init();
-    }, 100);
+document.addEventListener("DOMContentLoaded", () => {
+  console.log("🌟 DOM cargado, inicializando...");
+
+  // Pequeño delay para evitar condiciones de carrera
+  setTimeout(() => {
+    SGPFApp.init();
+  }, 100);
 });

@@ -1,0 +1,290 @@
+<!-- ===== DASHBOARD ENCARGADO DE SALUD REPRODUCTIVA ===== -->
+
+<style>
+/* ===== ESTILOS ESPECÍFICOS DASHBOARD ENCARGADO ===== */
+.territories-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.territory-card {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    border: 2px solid transparent;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.territory-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.territory-card.excelente {
+    border-color: #28a745;
+    background: linear-gradient(135deg, #f0f9f0 0%, #ffffff 100%);
+}
+
+.territory-card.bueno {
+    border-color: #28a745;
+    background: linear-gradient(135deg, #f8fff8 0%, #ffffff 100%);
+}
+
+.territory-card.regular {
+    border-color: #ffc107;
+    background: linear-gradient(135deg, #fff8e1 0%, #ffffff 100%);
+}
+
+.territory-card.critico {
+    border-color: #dc3545;
+    background: linear-gradient(135deg, #ffebee 0%, #ffffff 100%);
+}
+
+.territory-name {
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: #333;
+    margin-bottom: 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.territory-name::before {
+    content: "🗺️";
+    font-size: 1.1rem;
+}
+
+.territory-stats {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.territory-stats .stat {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid #eee;
+    font-size: 0.9rem;
+    color: #666;
+}
+
+.territory-stats .stat:last-child {
+    border-bottom: none;
+}
+
+.badge {
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    font-weight: bold;
+}
+
+.badge-info {
+    background-color: #17a2b8;
+    color: white;
+}
+
+.badge-warning {
+    background-color: #ffc107;
+    color: #212529;
+}
+
+.btn-small {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.8rem;
+    border-radius: 4px;
+    border: none;
+    cursor: pointer;
+    margin: 0 0.25rem;
+}
+
+.btn-info {
+    background-color: #17a2b8;
+    color: white;
+}
+
+.btn-success {
+    background-color: #28a745;
+    color: white;
+}
+
+.btn-warning {
+    background-color: #ffc107;
+    color: #212529;
+}
+
+.btn-danger {
+    background-color: #dc3545;
+    color: white;
+}
+
+.badge-danger {
+    background-color: #dc3545;
+    color: white;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .territories-grid {
+        grid-template-columns: 1fr;
+        gap: 0.75rem;
+    }
+    
+    .territory-card {
+        padding: 1rem;
+    }
+    
+    .territory-name {
+        font-size: 1.1rem;
+    }
+}
+</style>
+
+<!-- Header personalizado -->
+<div class="dashboard-hero">
+    <h2>Dashboard Ejecutivo, <span id="encargado-nombre">{{userName}}</span></h2>
+    <p id="encargado-distrito">Distrito de Salud Norte - Huehuetenango</p>
+</div>
+
+<!-- Tarjetas de métricas estratégicas (2x2) -->
+<div class="stats-grid">
+    <div class="stat-card">
+        <span class="stat-value" id="territorios-supervisados">0</span>
+        <div class="stat-label">Territorios Supervisados</div>
+    </div>
+    
+    <div class="stat-card">
+        <span class="stat-value" id="registros-mes">0</span>
+        <div class="stat-label">Registros del Mes</div>
+    </div>
+    
+    <div class="stat-card">
+        <span class="stat-value" id="cumplimiento-distrito">0%</span>
+        <div class="stat-label">Cumplimiento Distrital</div>
+    </div>
+    
+    <div class="stat-card">
+        <span class="stat-value" id="asistentes-activos">0</span>
+        <div class="stat-label">Asistentes Activos</div>
+    </div>
+</div>
+
+<!-- Acciones ejecutivas -->
+<div class="card">
+    <div class="card-title">Acciones Ejecutivas</div>
+    <div class="card-body">
+        <button id="btn-aprobar-registros" class="btn btn-primary">
+            📊 Aprobar Registros
+        </button>
+        <button id="btn-generar-reportes" class="btn btn-secondary">
+            📈 Generar Reportes
+        </button>
+        <button id="btn-gestionar-usuarios" class="btn btn-secondary">
+            👥 Gestionar Personal
+        </button>
+        <button id="btn-configurar-metas" class="btn btn-secondary">
+            🎯 Configurar Metas
+        </button>
+    </div>
+</div>
+
+<!-- Estado por territorios -->
+<div class="card">
+    <div class="card-title">Estado por Territorios</div>
+    <div class="card-body">
+        <div id="territorios-loading" class="loading">Cargando información territorial...</div>
+        <div id="territorios-grid" class="territories-grid" style="display: none;">
+            <!-- Se llena dinámicamente -->
+        </div>
+    </div>
+</div>
+
+<!-- Registros para supervisión -->
+<div class="card">
+    <div class="card-title">Registros para Supervisión</div>
+    <div class="card-body">
+        <div id="aprobacion-loading" class="loading">Cargando registros para supervisión...</div>
+        
+        <div id="aprobacion-resumen" style="display: none;">
+            <!-- Resumen de registros para supervisar -->
+        </div>
+        
+        <!-- Tabla de registros para supervisar -->
+        <div class="table-container" id="tabla-aprobacion-container" style="display: none;">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Personal</th>
+                        <th>Comunidad</th>
+                        <th>Método</th>
+                        <th>Cantidad</th>
+                        <th>Fecha Registro</th>
+                        <th>Estado</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody id="tabla-aprobacion-body">
+                    <!-- Se llena dinámicamente -->
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Mensaje si no hay registros para supervisar -->
+        <div id="sin-aprobaciones-mensaje" class="card" style="display: none;">
+            <div class="card-body" style="text-align: center; padding: 2rem;">
+                <h3>✅ No hay registros pendientes</h3>
+                <p>Todos los registros han sido procesados.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Vista de gestión administrativa -->
+<div class="card">
+    <div class="card-title">Panel Administrativo</div>
+    <div class="card-body">
+        <div id="admin-panel">
+            <div class="loading">Cargando información administrativa...</div>
+        </div>
+    </div>
+</div>
+
+<!-- Script específico del dashboard encargado -->
+<script>
+// Inicializar dashboard del encargado cuando se carga el template
+document.addEventListener('DOMContentLoaded', () => {
+    if (typeof window.EncargadoDashboard !== 'undefined') {
+        setTimeout(() => {
+            window.EncargadoDashboard.init();
+        }, 100);
+    }
+});
+
+// Event listeners para los botones
+setTimeout(() => {
+    document.getElementById('btn-aprobar-registros')?.addEventListener('click', () => {
+        const elemento = document.getElementById('tabla-aprobacion-container');
+        if (elemento) {
+            elemento.scrollIntoView({ behavior: 'smooth' });
+        }
+    });
+
+    document.getElementById('btn-generar-reportes')?.addEventListener('click', () => {
+        ComponentLoader.navigateToView('reportes');
+    });
+
+    document.getElementById('btn-gestionar-usuarios')?.addEventListener('click', () => {
+        SGPF.showToast('Función de gestión de usuarios en desarrollo', 'info');
+    });
+
+    document.getElementById('btn-configurar-metas')?.addEventListener('click', () => {
+        SGPF.showToast('Función de configuración de metas en desarrollo', 'info');
+    });
+}, 500);
+</script>

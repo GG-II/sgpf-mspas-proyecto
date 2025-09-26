@@ -1049,3 +1049,81 @@
     background-color: #DC2626;
     transform: translateY(-1px);
 }
+
+/* ===== ESTILOS DASHBOARD ENCARGADO ===== */
+.territories-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1rem;
+}
+
+.territory-card {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    border: 2px solid transparent;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.territory-card.excelente { 
+    border-color: #28a745; 
+    background: linear-gradient(135deg, #f0f9f0 0%, #ffffff 100%);
+}
+
+.territory-card.bueno { 
+    border-color: #28a745; 
+}
+
+.territory-card.regular { 
+    border-color: #ffc107; 
+    background: linear-gradient(135deg, #fff8e1 0%, #ffffff 100%);
+}
+
+.territory-card.critico { 
+    border-color: #dc3545; 
+    background: linear-gradient(135deg, #ffebee 0%, #ffffff 100%);
+}
+
+.territory-name {
+    font-size: 1.2rem;
+    font-weight: bold;
+    margin-bottom: 0.75rem;
+    color: #333;
+}
+
+.territory-stats {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.territory-stats .stat {
+    padding: 0.5rem 0;
+    border-bottom: 1px solid #eee;
+    font-size: 0.9rem;
+}
+
+.badge {
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    font-weight: bold;
+}
+
+.badge-info {
+    background-color: #17a2b8;
+    color: white;
+}
+
+.btn-small {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.8rem;
+    border-radius: 4px;
+    border: none;
+    cursor: pointer;
+}
+
+.btn-info {
+    background-color: #17a2b8;
+    color: white;
+}

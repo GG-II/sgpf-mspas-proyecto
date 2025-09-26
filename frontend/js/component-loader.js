@@ -228,7 +228,22 @@ const ComponentLoader = {
             if (window.AsistenteDashboard) {
               await window.AsistenteDashboard.init();
             }
+          } else if (role === "encargado") {
+            // Cargar script del encargado si no existe
+            if (!window.EncargadoDashboard) {
+              const script = document.createElement("script");
+              script.src = "js/dashboards/encargado.js";
+              await new Promise((resolve, reject) => {
+                script.onload = resolve;
+                script.onerror = reject;
+                document.head.appendChild(script);
+              });
+            }
+            if (window.EncargadoDashboard) {
+              await window.EncargadoDashboard.init();
+            }
           }
+
           break;
 
         case "registro":
