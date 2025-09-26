@@ -22,14 +22,22 @@ app.use(cors({
     credentials: true
 }));
 
-// Rate limiting
+// Rate limiting - Configuración para desarrollo
 const limiter = rateLimit({
-    windowMs: 15 * 60 * 1000, // 15 minutos
-    max: 100, // máximo 100 requests por ventana
+    windowMs: 1 * 60 * 1000, // 1 minuto
+    max: 1000, // 1000 requests por minuto
     message: { 
-        error: 'Demasiadas peticiones, intenta de nuevo en 15 minutos' 
+        error: 'Demasiadas peticiones, intenta de nuevo en 1 minuto' 
     }
 });
+
+// Solo aplicar en producción
+if (process.env.NODE_ENV === 'production') {
+    app.use('/api/', limiter);
+    console.log('Rate limiting activado para producción');
+} else {
+    console.log('Rate limiting DESACTIVADO en desarrollo');
+}
 app.use('/api/', limiter);
 
 // Parsers

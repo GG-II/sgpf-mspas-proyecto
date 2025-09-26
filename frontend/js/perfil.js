@@ -8,7 +8,7 @@ async init() {
     console.log('👤 Inicializando perfil de usuario');
     
     // Esperar múltiples ciclos de renderizado del DOM
-    await new Promise(resolve => setTimeout(resolve, 300));
+    await new Promise(resolve => setTimeout(resolve, 600));
     
     // Verificar que los elementos críticos existan antes de continuar
     const maxRetries = 10;
@@ -22,7 +22,7 @@ async init() {
         }
         
         console.log(`⏳ Esperando DOM... intento ${retries + 1}/${maxRetries}`);
-        await new Promise(resolve => setTimeout(resolve, 100));
+        await new Promise(resolve => setTimeout(resolve, 300));
         retries++;
     }
     

@@ -289,17 +289,55 @@ const ComponentLoader = {
           break;
 
         case "perfil":
+          console.log("🔥 INICIANDO CASO PERFIL");
+
           if (!window.PerfilUsuario) {
+            console.log("🔥 Cargando script perfil.js");
             const script = document.createElement("script");
             script.src = "js/perfil.js";
             document.head.appendChild(script);
 
             await new Promise((resolve, reject) => {
-              script.onload = resolve;
-              script.onerror = reject;
-              setTimeout(reject, 5000);
+              script.onload = () => {
+                console.log("🔥 Script perfil.js cargado exitosamente");
+                resolve();
+              };
+              script.onerror = (error) => {
+                console.log("🔥 Error cargando script perfil.js:", error);
+                reject(error);
+              };
+              setTimeout(() => {
+                console.log("🔥 Timeout cargando script perfil.js");
+                reject(new Error("Timeout"));
+              }, 5000);
             });
+          } else {
+            console.log("🔥 Script PerfilUsuario ya existe");
           }
+
+          console.log("🔥 Esperando 500ms para DOM...");
+          await new Promise((resolve) => setTimeout(resolve, 500));
+
+          console.log(
+            "🔥 Verificando window.PerfilUsuario:",
+            !!window.PerfilUsuario
+          );
+
+          if (window.PerfilUsuario) {
+            console.log("🔥 EJECUTANDO PerfilUsuario.init()");
+            try {
+              await window.PerfilUsuario.init();
+              console.log("🔥 PerfilUsuario.init() COMPLETADO EXITOSAMENTE");
+            } catch (error) {
+              console.error("🔥 ERROR EN PerfilUsuario.init():", error);
+              throw error;
+            }
+          } else {
+            console.error("🔥 PerfilUsuario NO DISPONIBLE DESPUÉS DE CARGA");
+            throw new Error("PerfilUsuario no se cargó correctamente");
+          }
+          console.log("🔥 CASO PERFIL TERMINADO");
+          break;
 
         case "reportes":
           // Cargar script de reportes si no existe
@@ -318,16 +356,6 @@ const ComponentLoader = {
 
           if (window.ReportesSystem) {
             await window.ReportesSystem.init();
-          }
-          break;
-
-          // Esperar más tiempo para que el DOM se renderice completamente
-          await new Promise((resolve) => setTimeout(resolve, 200));
-
-          if (window.PerfilUsuario) {
-            await window.PerfilUsuario.init();
-          } else {
-            throw new Error("PerfilUsuario no se cargó correctamente");
           }
           break;
       }
