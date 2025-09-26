@@ -242,6 +242,20 @@ const ComponentLoader = {
             if (window.EncargadoDashboard) {
               await window.EncargadoDashboard.init();
             }
+          } else if (role === "coordinador") {
+            // Cargar script del coordinador si no existe
+            if (!window.CoordinadorDashboard) {
+              const script = document.createElement("script");
+              script.src = "js/dashboards/coordinador.js";
+              await new Promise((resolve, reject) => {
+                script.onload = resolve;
+                script.onerror = reject;
+                document.head.appendChild(script);
+              });
+            }
+            if (window.CoordinadorDashboard) {
+              await window.CoordinadorDashboard.init();
+            }
           }
 
           break;

@@ -142,6 +142,24 @@ const SGPFApp = {
         document.head.appendChild(script);
       }
     }
+    // ===== CARGAR SCRIPT DEL COORDINADOR =====
+    else if (role === "coordinador") {
+      const existingScript = document.querySelector(
+        'script[src="js/dashboards/coordinador.js"]'
+      );
+
+      if (
+        !existingScript &&
+        typeof window.CoordinadorDashboard === "undefined"
+      ) {
+        const script = document.createElement("script");
+        script.src = "js/dashboards/coordinador.js";
+        script.onload = () => console.log("✅ Script coordinador.js cargado");
+        script.onerror = () =>
+          console.error("❌ Error cargando coordinador.js");
+        document.head.appendChild(script);
+      }
+    }
 
     // Configuración de tabs por rol
     const navigationConfig = {

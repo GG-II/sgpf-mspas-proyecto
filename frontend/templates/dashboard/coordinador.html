@@ -1,0 +1,406 @@
+<!-- ===== DASHBOARD COORDINADOR MUNICIPAL ===== -->
+
+<style>
+/* ===== ESTILOS ESPECÍFICOS DASHBOARD COORDINADOR ===== */
+.territorios-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.territory-card-coordinador {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    border: 2px solid transparent;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.territory-card-coordinador:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.territory-card-coordinador.excelente {
+    border-color: #28a745;
+    background: linear-gradient(135deg, #f0f9f0 0%, #ffffff 100%);
+}
+
+.territory-card-coordinador.bueno {
+    border-color: #28a745;
+    background: linear-gradient(135deg, #f8fff8 0%, #ffffff 100%);
+}
+
+.territory-card-coordinador.regular {
+    border-color: #ffc107;
+    background: linear-gradient(135deg, #fff8e1 0%, #ffffff 100%);
+}
+
+.territory-card-coordinador.critico {
+    border-color: #dc3545;
+    background: linear-gradient(135deg, #ffebee 0%, #ffffff 100%);
+}
+
+.territory-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.territory-name {
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: #333;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.territory-name::before {
+    content: "🗺️";
+    font-size: 1.1rem;
+}
+
+.territory-badge {
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+.territory-badge.excelente {
+    background: #28a745;
+    color: white;
+}
+
+.territory-badge.bueno {
+    background: #28a745;
+    color: white;
+}
+
+.territory-badge.regular {
+    background: #ffc107;
+    color: white;
+}
+
+.territory-badge.critico {
+    background: #dc3545;
+    color: white;
+}
+
+.territory-stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+}
+
+.stat {
+    display: flex;
+    align-items: center;
+    font-size: 0.9rem;
+    color: #666;
+}
+
+.stat-icon {
+    margin-right: 0.5rem;
+    font-size: 1rem;
+}
+
+.loading-spinner {
+    width: 40px;
+    height: 40px;
+    border: 4px solid #f3f3f3;
+    border-top: 4px solid var(--mspas-primary);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 1rem;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .territorios-grid {
+        grid-template-columns: 1fr;
+        gap: 0.75rem;
+    }
+    
+    .territory-card-coordinador {
+        padding: 1rem;
+    }
+    
+    .territory-stats {
+        grid-template-columns: 1fr;
+        gap: 0.5rem;
+    }
+}
+</style>
+
+<!-- Header personalizado -->
+<div class="dashboard-hero">
+    <h2>Dashboard Ejecutivo Municipal, <span id="coordinador-nombre">{{userName}}</span></h2>
+    <p id="coordinador-distrito">Coordinación Municipal MSPAS - Huehuetenango</p>
+</div>
+
+<!-- Tarjetas de métricas estratégicas (2x2) -->
+<div class="stats-grid">
+    <div class="stat-card">
+        <span class="stat-value" id="distritos-total">4</span>
+        <div class="stat-label">Distritos</div>
+    </div>
+    
+    <div class="stat-card">
+        <span class="stat-value" id="cobertura-municipal">0%</span>
+        <div class="stat-label">Cobertura Municipal</div>
+    </div>
+    
+    <div class="stat-card">
+        <span class="stat-value" id="usuarias-totales">0</span>
+        <div class="stat-label">Usuarias Totales</div>
+    </div>
+    
+    <div class="stat-card">
+        <span class="stat-value" id="meta-anual-mun">0%</span>
+        <div class="stat-label">Meta Anual</div>
+    </div>
+</div>
+
+<!-- Acciones ejecutivas -->
+<div class="card">
+    <div class="card-title">Herramientas Estratégicas</div>
+    <div class="card-body">
+        <button id="btn-dashboard-ejecutivo" class="btn btn-primary">
+            📊 Dashboard Ejecutivo
+        </button>
+        <button id="btn-configurar-sistema" class="btn btn-secondary">
+            ⚙️ Configurar Sistema
+        </button>
+        <button id="btn-gestionar-usuarios" class="btn btn-secondary">
+            👥 Gestionar Usuarios
+        </button>
+        <button id="btn-reportes-ejecutivos" class="btn btn-secondary">
+            📈 Reportes Ejecutivos
+        </button>
+    </div>
+</div>
+
+<!-- Vista Consolidada Municipal -->
+<div class="card">
+    <div class="card-title">Vista Consolidada Municipal</div>
+    <div class="card-body">
+        <div id="vista-consolidada-loading" class="loading">Cargando información consolidada...</div>
+        <div id="vista-consolidada" style="display: none;">
+            <!-- Se llena dinámicamente -->
+        </div>
+    </div>
+</div>
+
+<!-- Estado por territorios -->
+<div class="card">
+    <div class="card-title">Estado por Territorios</div>
+    <div class="card-body">
+        <div id="territorios-loading" class="loading">Cargando información territorial...</div>
+        <div id="territorios-grid-coordinador" class="territorios-grid" style="display: none;">
+            <!-- Se llena dinámicamente -->
+        </div>
+    </div>
+</div>
+
+<!-- Panel Ejecutivo Municipal -->
+<div class="card">
+    <div class="card-title">Panel Ejecutivo</div>
+    <div class="card-body">
+        <div id="panel-ejecutivo">
+            <div class="loading">Cargando información ejecutiva...</div>
+        </div>
+    </div>
+</div>
+
+<!-- Estilos específicos para el coordinador -->
+<style>
+.territorios-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.territory-card-coordinador {
+    background: white;
+    border-radius: 8px;
+    padding: 1rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    border-left: 4px solid #ddd;
+    transition: all 0.3s ease;
+}
+
+.territory-card-coordinador.excelente {
+    border-left-color: var(--mspas-success);
+    background: linear-gradient(135deg, #e8f5e8 0%, #ffffff 100%);
+}
+
+.territory-card-coordinador.bueno {
+    border-left-color: var(--mspas-primary);
+    background: linear-gradient(135deg, #e3f2fd 0%, #ffffff 100%);
+}
+
+.territory-card-coordinador.regular {
+    border-left-color: var(--mspas-warning);
+    background: linear-gradient(135deg, #fff3e0 0%, #ffffff 100%);
+}
+
+.territory-card-coordinador.critico {
+    border-left-color: var(--mspas-danger);
+    background: linear-gradient(135deg, #ffebee 0%, #ffffff 100%);
+}
+
+.territory-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.territory-name {
+    font-weight: 600;
+    font-size: 1.1rem;
+    color: #333;
+}
+
+.territory-badge {
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+.territory-badge.excelente {
+    background: var(--mspas-success);
+    color: white;
+}
+
+.territory-badge.bueno {
+    background: var(--mspas-primary);
+    color: white;
+}
+
+.territory-badge.regular {
+    background: var(--mspas-warning);
+    color: white;
+}
+
+.territory-badge.critico {
+    background: var(--mspas-danger);
+    color: white;
+}
+
+.territory-stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+}
+
+.stat {
+    display: flex;
+    align-items: center;
+    font-size: 0.9rem;
+    color: #666;
+}
+
+.stat-icon {
+    margin-right: 0.5rem;
+    font-size: 1rem;
+}
+
+.btn-action {
+    background: white;
+    border: 2px solid #e0e0e0;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn-action:hover {
+    border-color: var(--mspas-primary);
+    background: linear-gradient(135deg, #f0f8ff 0%, #ffffff 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.loading-message {
+    text-align: center;
+    padding: 2rem;
+    color: #666;
+    font-style: italic;
+}
+
+.loading-spinner {
+    width: 40px;
+    height: 40px;
+    border: 4px solid #f3f3f3;
+    border-top: 4px solid var(--mspas-primary);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 1rem;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Responsive para móviles */
+@media (max-width: 768px) {
+    .territorios-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .territory-stats {
+        grid-template-columns: 1fr;
+        gap: 0.5rem;
+    }
+    
+    .method-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+</style>
+
+<!-- Script específico del dashboard coordinador -->
+<script>
+// Inicializar dashboard del coordinador cuando se carga el template
+document.addEventListener('DOMContentLoaded', () => {
+    if (typeof window.CoordinadorDashboard !== 'undefined') {
+        setTimeout(() => {
+            window.CoordinadorDashboard.init();
+        }, 100);
+    }
+});
+
+// Event listeners para los botones
+setTimeout(() => {
+    document.getElementById('btn-dashboard-ejecutivo')?.addEventListener('click', () => {
+        const elemento = document.getElementById('vista-consolidada');
+        if (elemento) {
+            elemento.scrollIntoView({ behavior: 'smooth' });
+        }
+    });
+
+    document.getElementById('btn-configurar-sistema')?.addEventListener('click', () => {
+        SGPF.showToast('Función de configuración del sistema en desarrollo', 'info');
+    });
+
+    document.getElementById('btn-gestionar-usuarios')?.addEventListener('click', () => {
+        SGPF.showToast('Accediendo al módulo de gestión de usuarios...', 'info');
+    });
+
+    document.getElementById('btn-reportes-ejecutivos')?.addEventListener('click', () => {
+        ComponentLoader.navigateToView('reportes');
+    });
+}, 500);
+</script>
