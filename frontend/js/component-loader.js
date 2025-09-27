@@ -5,7 +5,8 @@ const ComponentLoader = {
     try {
       console.log(`📂 Cargando template: ${templatePath}`);
 
-      const response = await fetch(templatePath);
+      const templateUrl = `${templatePath}?t=${Date.now()}`;
+      const response = await fetch(templateUrl);
       if (!response.ok) {
         throw new Error(`Template not found: ${templatePath}`);
       }
