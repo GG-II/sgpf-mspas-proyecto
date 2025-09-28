@@ -5,7 +5,7 @@ const jwt = require('jsonwebtoken');
 const { authenticateToken } = require('../middleware/auth');
 
 const router = express.Router();
-const JWT_SECRET = process.env.JWT_SECRET || 'sgpf_mspas_secret_key_desarrollo_2025';
+const JWT_SECRET = process.env.JWT_SECRET || 'sgpf_mspas_huehuetenango_jwt_secret_production_2025_garcia_loaiza';
 
 // ===== LOGIN =====
 router.post('/login', async (req, res) => {

@@ -1,7 +1,7 @@
 // ===== MIDDLEWARE DE AUTENTICACIÓN =====
 const jwt = require('jsonwebtoken');
 
-const JWT_SECRET = process.env.JWT_SECRET || 'sgpf_mspas_secret_key_desarrollo_2025';
+const JWT_SECRET = process.env.JWT_SECRET || 'sgpf_mspas_huehuetenango_jwt_secret_production_2025_garcia_loaiza';
 
 // ===== VERIFICAR TOKEN JWT =====
 const authenticateToken = (req, res, next) => {

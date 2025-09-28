@@ -17,8 +17,12 @@ app.use(helmet({
     crossOriginEmbedderPolicy: false
 }));
 
+const allowedOrigins = process.env.NODE_ENV === 'production' 
+    ? process.env.ALLOWED_ORIGINS?.split(',') || []
+    : ['http://localhost:3000', 'http://127.0.0.1:3000', 'http://localhost:5500', 'http://127.0.0.1:5500'];
+
 app.use(cors({
-    origin: ['http://localhost:3000', 'http://127.0.0.1:3000', 'http://localhost:5500', 'http://127.0.0.1:5500'],
+    origin: allowedOrigins,
     credentials: true
 }));
 
@@ -52,7 +56,9 @@ app.use((req, res, next) => {
 });
 
 // ===== CONEXIÓN A BASE DE DATOS =====
-const dbPath = path.join(__dirname, 'database/sgpf_complete.db');
+const dbPath = process.env.DB_PATH 
+    ? path.resolve(process.env.DB_PATH)
+    : path.join(__dirname, 'database/sgpf_complete.db');
 
 let db;
 try {
