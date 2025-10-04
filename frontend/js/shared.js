@@ -1,7 +1,7 @@
 // ===== js/shared.js - FUNCIONES COMUNES Y API CALLS =====
 const SGPF = {
     // Configuración base
-    API_BASE: 'http://localhost:5000/api',
+    API_BASE: 'http://gerbert.hopitalbarillas.cloud/api',
     
     // Estado global de la aplicación
     state: {

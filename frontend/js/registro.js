@@ -500,7 +500,7 @@ window.RegistroSystem = window.RegistroSystem || {
         throw new Error('No hay sesión activa');
     }
 
-    const response = await fetch('http://localhost:5000/api/registros', {
+    const response = await fetch('http://gerbert.hopitalbarillas.cloud/api/registros', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',

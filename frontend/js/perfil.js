@@ -71,7 +71,7 @@ async cargarPerfilUsuario() {
 
         console.log('🔑 Token encontrado, haciendo petición...');
         
-        const response = await fetch('http://localhost:5000/api/perfil/', {  // ✅ URL completa
+        const response = await fetch('http://gerbert.hopitalbarillas.cloud/api/perfil/', {  // ✅ URL completa
             method: 'GET',
             headers: {
                 'Authorization': `Bearer ${token}`,
@@ -208,7 +208,7 @@ async cargarEstadisticasPersonales() {
             return;
         }
 
-        const response = await fetch('http://localhost:5000/api/perfil/estadisticas', {  // URL completa
+        const response = await fetch('http://gerbert.hopitalbarillas.cloud/api/perfil/estadisticas', {  // URL completa
             method: 'GET',
             headers: {
                 'Authorization': `Bearer ${token}`,
@@ -299,7 +299,7 @@ async actualizarPerfil(event) {
             throw new Error('Nombres y apellidos son requeridos');
         }
 
-        const response = await fetch('http://localhost:5000/api/perfil/', {
+        const response = await fetch('http://gerbert.hopitalbarillas.cloud/api/perfil/', {
             method: 'PUT',
             headers: {
                 'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
@@ -369,7 +369,7 @@ async actualizarPerfil(event) {
                 throw new Error('La nueva contraseña debe tener al menos 6 caracteres');
             }
 
-            const response = await fetch('http://localhost:5000/api/perfil/password', {  // ✅ URL completa
+            const response = await fetch('http://gerbert.hopitalbarillas.cloud/api/perfil/password', {  // ✅ URL completa
                 method: 'PUT',
                 headers: {
                     'Authorization': `Bearer ${localStorage.getItem('authToken')}`,

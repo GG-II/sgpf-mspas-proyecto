@@ -71,7 +71,7 @@ setTimeout(() => {
     console.log('   🔑 123456');
     console.log('');
     console.log('🚀 Ahora puedes ejecutar: npm run dev');
-    console.log('📱 Y abrir: http://localhost:5000/api/health');
+    console.log('📱 Y abrir: http://gerbert.hopitalbarillas.cloud/api/health');
     console.log('');
     
     // Cerrar conexión después del mensaje
