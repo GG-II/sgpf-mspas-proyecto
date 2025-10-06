@@ -1,0 +1,291 @@
+<!-- ===== templates/planificacion/configuracion.html ===== -->
+
+<style>
+/* ===== ESTILOS ESPECÍFICOS PLANIFICACIÓN ===== */
+.filtros-planificacion {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+    padding: 1rem;
+    background: #f8f9fa;
+    border-radius: 8px;
+}
+
+.filtro-grupo {
+    display: flex;
+    flex-direction: column;
+}
+
+.filtro-grupo label {
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    color: #333;
+    font-size: 0.9rem;
+}
+
+.filtro-grupo select,
+.filtro-grupo input {
+    padding: 0.5rem;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 0.9rem;
+}
+
+.plan-tabs {
+    display: flex;
+    background: white;
+    border-radius: 8px;
+    margin-bottom: 1rem;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    overflow: hidden;
+}
+
+.tab-button {
+    flex: 1;
+    padding: 1rem;
+    background: #f8f9fa;
+    border: none;
+    cursor: pointer;
+    font-weight: 600;
+    color: #666;
+    transition: all 0.3s ease;
+    border-bottom: 3px solid transparent;
+}
+
+.tab-button.active {
+    background: white;
+    color: var(--mspas-primary);
+    border-bottom-color: var(--mspas-primary);
+}
+
+.tab-button:hover {
+    background: #e9ecef;
+}
+
+.exportar-botones {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.btn-exportar {
+    padding: 0.5rem 1rem;
+    border: 1px solid #ddd;
+    background: white;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: all 0.3s ease;
+}
+
+.btn-exportar:hover {
+    background: var(--mspas-primary);
+    color: white;
+    border-color: var(--mspas-primary);
+}
+
+.tabla-planificacion {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 1rem;
+    background: white;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.tabla-planificacion th {
+    background: var(--mspas-primary);
+    color: white;
+    padding: 0.75rem 0.5rem;
+    text-align: left;
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+.tabla-planificacion td {
+    padding: 0.75rem 0.5rem;
+    border-bottom: 1px solid #eee;
+    font-size: 0.9rem;
+}
+
+.tabla-planificacion tr:hover {
+    background: #f8f9fa;
+}
+
+.tabla-planificacion .exito {
+    background: #d4edda;
+    color: #155724;
+    font-weight: bold;
+}
+
+.tabla-planificacion .warning {
+    background: #fff3cd;
+    color: #856404;
+    font-weight: bold;
+}
+
+.tabla-planificacion .danger {
+    background: #f8d7da;
+    color: #721c24;
+    font-weight: bold;
+}
+
+.sin-datos {
+    text-align: center;
+    padding: 3rem;
+    color: #666;
+    font-style: italic;
+}
+
+.loading-reportes {
+    text-align: center;
+    padding: 3rem;
+    color: #666;
+}
+
+.loading-reportes::before {
+    content: "";
+    display: block;
+    width: 40px;
+    height: 40px;
+    border: 4px solid #f3f3f3;
+    border-top: 4px solid var(--mspas-primary);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 1rem;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.btn-small {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.85rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn-small.btn-primary {
+    background: var(--mspas-primary);
+    color: white;
+}
+
+.btn-small.btn-primary:hover {
+    opacity: 0.8;
+}
+
+.input-editable {
+    width: 100px;
+    padding: 0.25rem;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 0.9rem;
+}
+
+.input-editable-small {
+    width: 70px;
+    padding: 0.2rem;
+    border: 1px solid #ddd;
+    border-radius: 3px;
+    font-size: 0.85rem;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .filtros-planificacion {
+        grid-template-columns: 1fr;
+    }
+    
+    .plan-tabs {
+        flex-direction: column;
+    }
+    
+    .tabla-planificacion {
+        font-size: 0.75rem;
+    }
+    
+    .tabla-planificacion th,
+    .tabla-planificacion td {
+        padding: 0.5rem 0.25rem;
+    }
+}
+</style>
+
+<!-- Header -->
+<div class="dashboard-hero">
+    <h2>Planificación y Metas</h2>
+    <p>Configuración de población MEF, proyecciones anuales y distribución por métodos</p>
+</div>
+
+<!-- Tarjetas de resumen -->
+<div class="stats-grid">
+    <div class="stat-card">
+        <span class="stat-value" id="total-comunidades-plan">0</span>
+        <div class="stat-label">Comunidades</div>
+    </div>
+    
+    <div class="stat-card">
+        <span class="stat-value" id="total-proyeccion-anual">0</span>
+        <div class="stat-label">Proyección Anual</div>
+    </div>
+    
+    <div class="stat-card">
+        <span class="stat-value" id="total-metodos-plan">11</span>
+        <div class="stat-label">Métodos</div>
+    </div>
+    
+    <div class="stat-card">
+        <span class="stat-value" id="porcentaje-distribucion">100%</span>
+        <div class="stat-label">Distribución</div>
+    </div>
+</div>
+
+<!-- Tabs de vistas -->
+<div class="plan-tabs">
+    <button class="tab-button active" data-tab="configuracion">
+        Configuración MEF
+    </button>
+    <button class="tab-button" data-tab="consolidado">
+        Reporte Consolidado
+    </button>
+    <button class="tab-button" data-tab="comparativo">
+        Planificado vs Ejecutado
+    </button>
+</div>
+
+<!-- Filtros -->
+<div class="card">
+    <div class="card-title">Filtros</div>
+    <div class="card-body">
+        <div class="filtros-planificacion">
+            <div class="filtro-grupo">
+                <label for="filtro-año-plan">Año:</label>
+                <select id="filtro-año-plan">
+                    <option value="2025">2025</option>
+                    <option value="2024">2024</option>
+                    <option value="2026">2026</option>
+                </select>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Contenido dinámico -->
+<div class="card">
+    <div class="card-title">
+        <span id="titulo-planificacion">Planificación y Metas</span>
+    </div>
+    <div class="card-body">
+        <div id="contenido-planificacion">
+            <div class="sin-datos">
+                <div>Seleccione una vista y año para comenzar</div>
+            </div>
+        </div>
+    </div>
+</div>

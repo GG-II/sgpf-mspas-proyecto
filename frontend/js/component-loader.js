@@ -175,6 +175,9 @@ const ComponentLoader = {
         templatePath = "templates/admin/usuarios.html";
         console.log(`🎯 Template path para usuarios: ${templatePath}`);
         break;
+      case "planificacion":
+    templatePath = "templates/planificacion/configuracion.html";
+    break;
       case "perfil":
         templatePath = "templates/perfil/usuario.html";
         console.log(`🎯 Template path para perfil: ${templatePath}`);
@@ -292,6 +295,24 @@ const ComponentLoader = {
             await window.ValidacionSystem.init();
           }
           break;
+
+        case 'planificacion':
+    if (!window.PlanificacionSystem) {
+        const script = document.createElement('script');
+        script.src = 'js/planificacion.js';
+        await new Promise((resolve, reject) => {
+            script.onload = resolve;
+            script.onerror = reject;
+            document.head.appendChild(script);
+        });
+    }
+    
+    await new Promise(resolve => setTimeout(resolve, 300));
+    
+    if (window.PlanificacionSystem) {
+        await window.PlanificacionSystem.init();
+    }
+    break;
 
         case "perfil":
           console.log("🔥 INICIANDO CASO PERFIL");

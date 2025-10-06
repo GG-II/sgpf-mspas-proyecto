@@ -176,6 +176,7 @@ const SGPFApp = {
       ],
       encargado: [
         { view: "dashboard", label: "Dashboard", icon: "📊" },
+        { view: "planificacion", label: "Planificación", icon: "🎯" },
         { view: "usuarios", label: "Usuarios", icon: "👥" }, 
         { view: "validacion", label: "Aprobar", icon: "✅" },
         { view: "reportes", label: "Reportes", icon: "📈" },
@@ -183,6 +184,7 @@ const SGPFApp = {
       ],
       coordinador: [
         { view: "dashboard", label: "Dashboard", icon: "📊" },
+        { view: "planificacion", label: "Planificación", icon: "🎯" },
         { view: "usuarios", label: "Usuarios", icon: "👥" },
         { view: "reportes", label: "Reportes", icon: "📈" },
         { view: "perfil", label: "Configurar", icon: "⚙️" },

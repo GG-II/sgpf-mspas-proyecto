@@ -92,6 +92,7 @@ const validacionRoutes = require('./routes/validacion');
 const reportesRoutes = require('./routes/reportes');
 const dashboardRoutes = require('./routes/dashboard');
 const perfilRoutes = require('./routes/perfil');
+const planificacionRoutes = require('./routes/planificacion');
 
 // Registrar rutas
 app.use('/api/auth', authRoutes);
@@ -101,6 +102,7 @@ app.use('/api/validacion', validacionRoutes);
 app.use('/api/reportes', reportesRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/perfil', perfilRoutes);
+app.use('/api/planificacion', planificacionRoutes);
 
 // ===== RUTAS BÁSICAS (mantener compatibilidad) =====
 // Estas las moveré gradualmente a módulos específicos
