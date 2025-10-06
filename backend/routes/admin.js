@@ -1529,4 +1529,515 @@ router.get(
   }
 );
 
+// ========================================
+// ENDPOINTS PARA GESTIÓN DE PROYECCIONES Y PLANIFICACIÓN MENSUAL
+// ========================================
+
+// ===== CONFIGURAR PROYECCIÓN DE COMUNIDAD =====
+router.post(
+  "/comunidades/:id/proyeccion",
+  authenticateToken,
+  requirePermission("admin"),
+  async (req, res) => {
+    try {
+      const comunidadId = req.params.id;
+      const { año, poblacion_mef, porcentaje_proyeccion, observaciones } = req.body;
+      const db = getDb(req);
+
+      if (!db) {
+        return res.status(500).json({
+          success: false,
+          message: "Base de datos no disponible",
+        });
+      }
+
+      // Validaciones
+      if (!año || !poblacion_mef) {
+        return res.status(400).json({
+          success: false,
+          message: "Año y población MEF son requeridos",
+        });
+      }
+
+      const porcentaje = porcentaje_proyeccion || 0.35;
+
+      if (porcentaje < 0.3 || porcentaje > 0.7) {
+        return res.status(400).json({
+          success: false,
+          message: "El porcentaje de proyección debe estar entre 30% y 70%",
+        });
+      }
+
+      // Verificar que la comunidad existe
+      db.get(
+        "SELECT id, nombre FROM comunidades WHERE id = ?",
+        [comunidadId],
+        (err, comunidad) => {
+          if (err || !comunidad) {
+            return res.status(404).json({
+              success: false,
+              message: "Comunidad no encontrada",
+            });
+          }
+
+          // Desactivar proyecciones anteriores del mismo año
+          db.run(
+            "UPDATE proyecciones_comunidad SET activo = 0 WHERE comunidad_id = ? AND año = ?",
+            [comunidadId, año],
+            (err) => {
+              if (err) {
+                console.error("Error desactivando proyecciones anteriores:", err);
+              }
+
+              // Insertar nueva proyección
+              const insertQuery = `
+                INSERT INTO proyecciones_comunidad 
+                (comunidad_id, año, poblacion_mef, porcentaje_proyeccion, observaciones, configurado_por, activo)
+                VALUES (?, ?, ?, ?, ?, ?, 1)
+              `;
+
+              db.run(
+                insertQuery,
+                [
+                  comunidadId,
+                  año,
+                  poblacion_mef,
+                  porcentaje,
+                  observaciones || null,
+                  req.user.id,
+                ],
+                function (err) {
+                  if (err) {
+                    console.error("Error creando proyección:", err);
+                    return res.status(500).json({
+                      success: false,
+                      message: "Error creando proyección",
+                    });
+                  }
+
+                  const proyeccionAnual = Math.round(poblacion_mef * porcentaje);
+
+                  console.log(
+                    `✅ Proyección creada para ${comunidad.nombre} año ${año}: ${proyeccionAnual} usuarias`
+                  );
+
+                  res.json({
+                    success: true,
+                    message: "Proyección configurada exitosamente",
+                    data: {
+                      id: this.lastID,
+                      comunidad_id: comunidadId,
+                      comunidad_nombre: comunidad.nombre,
+                      año: año,
+                      poblacion_mef: poblacion_mef,
+                      porcentaje_proyeccion: porcentaje,
+                      proyeccion_anual: proyeccionAnual,
+                      configurado_por: req.user.email,
+                    },
+                  });
+                }
+              );
+            }
+          );
+        }
+      );
+    } catch (error) {
+      console.error("❌ Error configurando proyección:", error);
+      res.status(500).json({
+        success: false,
+        message: "Error interno del servidor",
+      });
+    }
+  }
+);
+
+// ===== OBTENER PROYECCIÓN DE COMUNIDAD =====
+router.get(
+  "/comunidades/:id/proyeccion/:year",
+  authenticateToken,
+  requirePermission("admin"),
+  (req, res) => {
+    try {
+      const comunidadId = req.params.id;
+      const year = parseInt(req.params.year);
+      const db = getDb(req);
+
+      if (!db) {
+        return res.status(500).json({
+          success: false,
+          message: "Base de datos no disponible",
+        });
+      }
+
+      const query = `
+        SELECT 
+          p.id, p.comunidad_id, p.año, p.poblacion_mef, 
+          p.porcentaje_proyeccion, p.proyeccion_anual,
+          p.observaciones, p.fecha_configuracion,
+          c.nombre as comunidad_nombre, c.codigo_comunidad,
+          t.nombre as territorio_nombre,
+          u.nombres || ' ' || u.apellidos as configurado_por_nombre
+        FROM proyecciones_comunidad p
+        JOIN comunidades c ON p.comunidad_id = c.id
+        JOIN territorios t ON c.territorio_id = t.id
+        LEFT JOIN usuarios u ON p.configurado_por = u.id
+        WHERE p.comunidad_id = ? AND p.año = ? AND p.activo = 1
+      `;
+
+      db.get(query, [comunidadId, year], (err, proyeccion) => {
+        if (err) {
+          console.error("Error obteniendo proyección:", err);
+          return res.status(500).json({
+            success: false,
+            message: "Error obteniendo proyección",
+          });
+        }
+
+        if (!proyeccion) {
+          return res.status(404).json({
+            success: false,
+            message: `No existe proyección para esta comunidad en ${year}`,
+          });
+        }
+
+        res.json({
+          success: true,
+          data: proyeccion,
+        });
+      });
+    } catch (error) {
+      console.error("❌ Error obteniendo proyección:", error);
+      res.status(500).json({
+        success: false,
+        message: "Error interno del servidor",
+      });
+    }
+  }
+);
+
+// ===== OBTENER TODAS LAS PROYECCIONES DE UN AÑO =====
+router.get(
+  "/proyecciones/:year",
+  authenticateToken,
+  requirePermission("admin"),
+  (req, res) => {
+    try {
+      const year = parseInt(req.params.year);
+      const db = getDb(req);
+
+      if (!db) {
+        return res.status(500).json({
+          success: false,
+          message: "Base de datos no disponible",
+        });
+      }
+
+      const query = `
+        SELECT 
+          p.id, p.comunidad_id, p.año, p.poblacion_mef, 
+          p.porcentaje_proyeccion, p.proyeccion_anual,
+          c.nombre as comunidad_nombre, c.codigo_comunidad,
+          t.nombre as territorio_nombre, t.codigo as territorio_codigo
+        FROM proyecciones_comunidad p
+        JOIN comunidades c ON p.comunidad_id = c.id
+        JOIN territorios t ON c.territorio_id = t.id
+        WHERE p.año = ? AND p.activo = 1
+        ORDER BY t.nombre, c.nombre
+      `;
+
+      db.all(query, [year], (err, proyecciones) => {
+        if (err) {
+          console.error("Error obteniendo proyecciones:", err);
+          return res.status(500).json({
+            success: false,
+            message: "Error obteniendo proyecciones",
+          });
+        }
+
+        console.log(`📊 ${proyecciones.length} proyecciones del año ${year} consultadas`);
+
+        res.json({
+          success: true,
+          data: {
+            año: year,
+            total_comunidades: proyecciones.length,
+            proyecciones: proyecciones || [],
+          },
+        });
+      });
+    } catch (error) {
+      console.error("❌ Error obteniendo proyecciones:", error);
+      res.status(500).json({
+        success: false,
+        message: "Error interno del servidor",
+      });
+    }
+  }
+);
+
+// ===== CONFIGURAR PLANIFICACIÓN MENSUAL =====
+router.post(
+  "/planificacion/:proyeccionId",
+  authenticateToken,
+  requirePermission("admin"),
+  async (req, res) => {
+    try {
+      const proyeccionId = req.params.proyeccionId;
+      const { planificacion } = req.body;
+      const db = getDb(req);
+
+      if (!db) {
+        return res.status(500).json({
+          success: false,
+          message: "Base de datos no disponible",
+        });
+      }
+
+      if (!Array.isArray(planificacion) || planificacion.length === 0) {
+        return res.status(400).json({
+          success: false,
+          message: "Se requiere un array de planificación",
+        });
+      }
+
+      // Verificar que la proyección existe
+      db.get(
+        "SELECT id FROM proyecciones_comunidad WHERE id = ? AND activo = 1",
+        [proyeccionId],
+        (err, proyeccion) => {
+          if (err || !proyeccion) {
+            return res.status(404).json({
+              success: false,
+              message: "Proyección no encontrada",
+            });
+          }
+
+          let processedCount = 0;
+          let errors = [];
+
+          planificacion.forEach((item) => {
+            const { metodo_id, mes, meta_mensual } = item;
+
+            if (!metodo_id || !mes || meta_mensual === undefined) {
+              errors.push("Datos incompletos en planificación");
+              processedCount++;
+              return;
+            }
+
+            if (mes < 1 || mes > 12) {
+              errors.push(`Mes inválido: ${mes}`);
+              processedCount++;
+              return;
+            }
+
+            const upsertQuery = `
+              INSERT INTO planificacion_mensual 
+              (proyeccion_id, metodo_id, mes, meta_mensual, activo)
+              VALUES (?, ?, ?, ?, 1)
+              ON CONFLICT(proyeccion_id, metodo_id, mes) 
+              DO UPDATE SET meta_mensual = excluded.meta_mensual
+            `;
+
+            db.run(
+              upsertQuery,
+              [proyeccionId, metodo_id, mes, meta_mensual],
+              (err) => {
+                if (err) {
+                  console.error(
+                    `Error guardando planificación método ${metodo_id} mes ${mes}:`,
+                    err
+                  );
+                  errors.push(`Error en método ${metodo_id} mes ${mes}`);
+                }
+
+                processedCount++;
+
+                if (processedCount === planificacion.length) {
+                  if (errors.length > 0) {
+                    return res.status(400).json({
+                      success: false,
+                      message: "Errores procesando planificación",
+                      errors: errors,
+                    });
+                  }
+
+                  console.log(
+                    `✅ ${planificacion.length} registros de planificación guardados`
+                  );
+
+                  res.json({
+                    success: true,
+                    message: "Planificación mensual guardada exitosamente",
+                    data: {
+                      proyeccion_id: proyeccionId,
+                      registros_guardados: planificacion.length,
+                    },
+                  });
+                }
+              }
+            );
+          });
+        }
+      );
+    } catch (error) {
+      console.error("❌ Error guardando planificación:", error);
+      res.status(500).json({
+        success: false,
+        message: "Error interno del servidor",
+      });
+    }
+  }
+);
+
+// ===== OBTENER PLANIFICACIÓN MENSUAL =====
+router.get(
+  "/planificacion/:proyeccionId",
+  authenticateToken,
+  requirePermission("admin"),
+  (req, res) => {
+    try {
+      const proyeccionId = req.params.proyeccionId;
+      const db = getDb(req);
+
+      if (!db) {
+        return res.status(500).json({
+          success: false,
+          message: "Base de datos no disponible",
+        });
+      }
+
+      const query = `
+        SELECT 
+          pm.id, pm.proyeccion_id, pm.metodo_id, pm.mes, pm.meta_mensual,
+          mp.nombre as metodo_nombre, mp.codigo_metodo, mp.categoria
+        FROM planificacion_mensual pm
+        JOIN metodos_planificacion mp ON pm.metodo_id = mp.id
+        WHERE pm.proyeccion_id = ? AND pm.activo = 1
+        ORDER BY mp.orden_visualizacion, pm.mes
+      `;
+
+      db.all(query, [proyeccionId], (err, planificacion) => {
+        if (err) {
+          console.error("Error obteniendo planificación:", err);
+          return res.status(500).json({
+            success: false,
+            message: "Error obteniendo planificación",
+          });
+        }
+
+        res.json({
+          success: true,
+          data: {
+            proyeccion_id: proyeccionId,
+            planificacion: planificacion || [],
+          },
+        });
+      });
+    } catch (error) {
+      console.error("❌ Error obteniendo planificación:", error);
+      res.status(500).json({
+        success: false,
+        message: "Error interno del servidor",
+      });
+    }
+  }
+);
+
+// ===== OBTENER REPORTE DE CUMPLIMIENTO =====
+router.get(
+  "/cumplimiento/:comunidadId/:year",
+  authenticateToken,
+  requirePermission("admin"),
+  (req, res) => {
+    try {
+      const comunidadId = req.params.comunidadId;
+      const year = parseInt(req.params.year);
+      const db = getDb(req);
+
+      if (!db) {
+        return res.status(500).json({
+          success: false,
+          message: "Base de datos no disponible",
+        });
+      }
+
+      // Obtener proyección
+      db.get(
+        `SELECT id, proyeccion_anual FROM proyecciones_comunidad 
+         WHERE comunidad_id = ? AND año = ? AND activo = 1`,
+        [comunidadId, year],
+        (err, proyeccion) => {
+          if (err || !proyeccion) {
+            return res.status(404).json({
+              success: false,
+              message: "No existe proyección para esta comunidad",
+            });
+          }
+
+          // Obtener planificación y ejecución
+          const query = `
+            SELECT 
+              mp.id as metodo_id,
+              mp.nombre as metodo_nombre,
+              mp.codigo_metodo,
+              pm.mes,
+              COALESCE(pm.meta_mensual, 0) as planificado,
+              COALESCE(r.cantidad_administrada, 0) as ejecutado
+            FROM metodos_planificacion mp
+            LEFT JOIN planificacion_mensual pm ON mp.id = pm.metodo_id AND pm.proyeccion_id = ?
+            LEFT JOIN registros_mensuales r ON mp.id = r.metodo_id 
+              AND r.comunidad_id = ? 
+              AND r.año = ?
+              AND r.mes = pm.mes
+              AND r.estado IN ('validado', 'aprobado')
+            WHERE mp.activo = 1
+            ORDER BY mp.orden_visualizacion, pm.mes
+          `;
+
+          db.all(
+            query,
+            [proyeccion.id, comunidadId, year],
+            (err, resultados) => {
+              if (err) {
+                console.error("Error obteniendo cumplimiento:", err);
+                return res.status(500).json({
+                  success: false,
+                  message: "Error obteniendo cumplimiento",
+                });
+              }
+
+              // Calcular porcentajes
+              const cumplimiento = resultados.map((r) => ({
+                ...r,
+                porcentaje_cumplimiento:
+                  r.planificado > 0
+                    ? Math.round((r.ejecutado / r.planificado) * 100)
+                    : r.ejecutado > 0
+                    ? 100
+                    : 0,
+              }));
+
+              res.json({
+                success: true,
+                data: {
+                  comunidad_id: comunidadId,
+                  año: year,
+                  proyeccion_anual: proyeccion.proyeccion_anual,
+                  cumplimiento: cumplimiento,
+                },
+              });
+            }
+          );
+        }
+      );
+    } catch (error) {
+      console.error("❌ Error obteniendo cumplimiento:", error);
+      res.status(500).json({
+        success: false,
+        message: "Error interno del servidor",
+      });
+    }
+  }
+);
+
 module.exports = router;

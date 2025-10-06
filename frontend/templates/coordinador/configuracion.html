@@ -1,0 +1,468 @@
+<!-- ===== CONFIGURACIÓN DE METAS Y PLANIFICACIÓN ===== -->
+
+<style>
+.config-section {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.config-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid var(--mspas-primary);
+}
+
+.config-title {
+    font-size: 1.3rem;
+    font-weight: 600;
+    color: var(--mspas-primary);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.year-selector {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.year-selector select {
+    padding: 0.5rem 1rem;
+    border: 2px solid var(--mspas-primary);
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--mspas-primary);
+    cursor: pointer;
+}
+
+.comunidad-selector {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.comunidad-selector select {
+    flex: 1;
+    padding: 0.75rem;
+    border: 2px solid var(--mspas-primary);
+    border-radius: 8px;
+    font-size: 1rem;
+}
+
+.proyeccion-inputs {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin: 1rem 0;
+    padding: 1rem;
+    background: #f8f9fa;
+    border-radius: 8px;
+}
+
+.input-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.input-group label {
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    color: #333;
+}
+
+.input-group input {
+    padding: 0.75rem;
+    border: 2px solid #dee2e6;
+    border-radius: 6px;
+    font-size: 1rem;
+}
+
+.input-group input:focus {
+    outline: none;
+    border-color: var(--mspas-primary);
+}
+
+.planificacion-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 1rem;
+    font-size: 0.9rem;
+}
+
+.planificacion-table thead {
+    background: linear-gradient(135deg, var(--mspas-primary) 0%, var(--mspas-secondary) 100%);
+    color: white;
+}
+
+.planificacion-table th {
+    padding: 0.75rem 0.5rem;
+    text-align: center;
+    font-weight: 600;
+    font-size: 0.85rem;
+}
+
+.planificacion-table tbody tr {
+    border-bottom: 1px solid #e9ecef;
+}
+
+.planificacion-table tbody tr:hover {
+    background: #f8f9fa;
+}
+
+.planificacion-table td {
+    padding: 0.5rem;
+    text-align: center;
+}
+
+.metodo-cell {
+    text-align: left;
+    font-weight: 500;
+    padding-left: 1rem;
+}
+
+.input-meta {
+    width: 50px;
+    padding: 0.25rem;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    text-align: center;
+    font-size: 0.85rem;
+}
+
+.input-meta:focus {
+    outline: none;
+    border-color: var(--mspas-primary);
+}
+
+.total-row {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    font-weight: 700;
+}
+
+.alert-box {
+    padding: 1rem;
+    border-radius: 8px;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.alert-info {
+    background: #e3f2fd;
+    border-left: 4px solid #1976d2;
+    color: #0d47a1;
+}
+
+.alert-warning {
+    background: #fff3e0;
+    border-left: 4px solid #f57c00;
+    color: #e65100;
+}
+
+.alert-success {
+    background: #e8f5e9;
+    border-left: 4px solid #388e3c;
+    color: #1b5e20;
+}
+
+.action-buttons {
+    display: flex;
+    gap: 1rem;
+    margin-top: 1.5rem;
+    justify-content: flex-end;
+}
+
+.tabs {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+    border-bottom: 2px solid #dee2e6;
+}
+
+.tab {
+    padding: 0.75rem 1.5rem;
+    background: transparent;
+    border: none;
+    border-bottom: 3px solid transparent;
+    cursor: pointer;
+    font-weight: 600;
+    color: #666;
+    transition: all 0.3s ease;
+}
+
+.tab:hover {
+    color: var(--mspas-primary);
+}
+
+.tab.active {
+    color: var(--mspas-primary);
+    border-bottom-color: var(--mspas-primary);
+}
+
+.tab-content {
+    display: none;
+}
+
+.tab-content.active {
+    display: block;
+}
+
+@media (max-width: 768px) {
+    .config-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+    
+    .planificacion-table {
+        font-size: 0.75rem;
+    }
+    
+    .planificacion-table th,
+    .planificacion-table td {
+        padding: 0.25rem;
+    }
+    
+    .input-meta {
+        width: 40px;
+    }
+    
+    .action-buttons {
+        flex-direction: column;
+    }
+    
+    .action-buttons button {
+        width: 100%;
+    }
+}
+</style>
+
+<!-- Header -->
+<div class="dashboard-hero">
+    <h2>Configuración del Sistema</h2>
+    <p>Gestión de metas anuales y planificación por comunidad - MSPAS Huehuetenango</p>
+</div>
+
+<!-- Tabs de navegación -->
+<div class="tabs">
+    <button class="tab active" data-tab="metas-globales">Metas Globales</button>
+    <button class="tab" data-tab="planificacion-comunidad">Planificación por Comunidad</button>
+</div>
+
+<!-- Tab: Metas Globales -->
+<div class="tab-content active" id="tab-metas-globales">
+    <div class="config-section">
+        <div class="config-header">
+            <div class="config-title">
+                🎯 Metas Anuales por Método Anticonceptivo
+            </div>
+            <div class="year-selector">
+                <label for="select-year-global" style="font-weight: 600;">Año:</label>
+                <select id="select-year-global">
+                    <option value="2024">2024</option>
+                    <option value="2025" selected>2025</option>
+                    <option value="2026">2026</option>
+                </select>
+            </div>
+        </div>
+
+        <div id="metas-loading" class="loading" style="text-align: center; padding: 2rem;">
+            Cargando metas anuales...
+        </div>
+
+        <div id="metas-content" style="display: none;">
+            <div class="alert-box alert-info">
+                <span style="font-size: 1.5rem;">ℹ️</span>
+                <div>
+                    <strong>Configuración de Porcentajes de Métodos</strong><br>
+                    <small>Estos porcentajes se aplicarán a TODAS las comunidades. El total debe sumar 100%.</small>
+                </div>
+            </div>
+
+            <table class="planificacion-table">
+                <thead>
+                    <tr>
+                        <th>Método</th>
+                        <th>Porcentaje (%)</th>
+                    </tr>
+                </thead>
+                <tbody id="metas-tbody">
+                    <!-- Se llena dinámicamente -->
+                </tbody>
+                <tfoot>
+                    <tr class="total-row">
+                        <td><strong>TOTAL</strong></td>
+                        <td>
+                            <span id="total-porcentaje">0</span>%
+                            <span id="total-status"></span>
+                        </td>
+                    </tr>
+                </tfoot>
+            </table>
+
+            <div class="action-buttons">
+                <button class="btn btn-secondary" id="btn-restablecer">
+                    🔄 Restablecer
+                </button>
+                <button class="btn btn-primary" id="btn-guardar-metas">
+                    💾 Guardar Cambios
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Tab: Planificación por Comunidad -->
+<div class="tab-content" id="tab-planificacion-comunidad">
+    <div class="config-section">
+        <div class="config-header">
+            <div class="config-title">
+                📊 Planificación Mensual por Comunidad
+            </div>
+            <div class="year-selector">
+                <label for="select-year-planif" style="font-weight: 600;">Año:</label>
+                <select id="select-year-planif">
+                    <option value="2024">2024</option>
+                    <option value="2025" selected>2025</option>
+                    <option value="2026">2026</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Selector de comunidad -->
+        <div class="comunidad-selector">
+            <label style="font-weight: 600;">Comunidad:</label>
+            <select id="select-comunidad">
+                <option value="">-- Seleccione una comunidad --</option>
+            </select>
+        </div>
+
+        <div id="planificacion-loading" class="loading" style="text-align: center; padding: 2rem; display: none;">
+            Cargando planificación...
+        </div>
+
+        <div id="planificacion-content" style="display: none;">
+            <!-- Configuración de proyección -->
+            <div class="alert-box alert-info">
+                <span style="font-size: 1.5rem;">📋</span>
+                <div>
+                    <strong>Configuración de Proyección Anual</strong><br>
+                    <small>La proyección anual se calcula automáticamente: MEF × Porcentaje (30%-70%)</small>
+                </div>
+            </div>
+
+            <div class="proyeccion-inputs">
+                <div class="input-group">
+                    <label>Población MEF</label>
+                    <input type="number" id="input-mef" placeholder="Ej: 420">
+                </div>
+                <div class="input-group">
+                    <label>Porcentaje Proyección (%)</label>
+                    <input type="number" id="input-porcentaje" min="30" max="70" step="1" value="35" placeholder="30-70">
+                </div>
+                <div class="input-group">
+                    <label>Proyección Anual Calculada</label>
+                    <input type="number" id="proyeccion-anual-calc" readonly style="background: #e9ecef; font-weight: 700; color: var(--mspas-primary);">
+                </div>
+            </div>
+
+            <button class="btn btn-primary" id="btn-guardar-proyeccion" style="margin-bottom: 1rem;">
+                💾 Guardar Proyección
+            </button>
+
+            <!-- Tabla de planificación mensual -->
+            <div id="planificacion-table-container" style="display: none;">
+                <div class="alert-box alert-success">
+                    <span style="font-size: 1.5rem;">📅</span>
+                    <div>
+                        <strong>Distribución Mensual por Método</strong><br>
+                        <small>Distribuya la meta anual de cada método entre los 12 meses del año</small>
+                    </div>
+                </div>
+
+                <div style="overflow-x: auto;">
+                    <table class="planificacion-table">
+                        <thead>
+                            <tr>
+                                <th style="min-width: 150px;">Método</th>
+                                <th>Meta Anual</th>
+                                <th>Ene</th>
+                                <th>Feb</th>
+                                <th>Mar</th>
+                                <th>Abr</th>
+                                <th>May</th>
+                                <th>Jun</th>
+                                <th>Jul</th>
+                                <th>Ago</th>
+                                <th>Sep</th>
+                                <th>Oct</th>
+                                <th>Nov</th>
+                                <th>Dic</th>
+                                <th>Total Planif.</th>
+                            </tr>
+                        </thead>
+                        <tbody id="planificacion-tbody">
+                            <!-- Se llena dinámicamente -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="action-buttons">
+                    <button class="btn btn-secondary" id="btn-limpiar-planif">
+                        🗑️ Limpiar Todo
+                    </button>
+                    <button class="btn btn-secondary" id="btn-distribuir-auto">
+                        ⚡ Distribuir Automáticamente
+                    </button>
+                    <button class="btn btn-primary" id="btn-guardar-planif">
+                        💾 Guardar Planificación
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Manejo de tabs
+document.querySelectorAll('.tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+        const targetTab = tab.dataset.tab;
+        
+        // Actualizar tabs activos
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        
+        // Actualizar contenido activo
+        document.querySelectorAll('.tab-content').forEach(content => {
+            content.classList.remove('active');
+        });
+        document.getElementById(`tab-${targetTab}`).classList.add('active');
+    });
+});
+
+// Cálculo automático de proyección anual
+document.getElementById('input-mef')?.addEventListener('input', calcularProyeccion);
+document.getElementById('input-porcentaje')?.addEventListener('input', calcularProyeccion);
+
+function calcularProyeccion() {
+    const mef = parseInt(document.getElementById('input-mef')?.value) || 0;
+    const porcentaje = parseInt(document.getElementById('input-porcentaje')?.value) || 35;
+    const proyeccion = Math.round(mef * (porcentaje / 100));
+    
+    const calcField = document.getElementById('proyeccion-anual-calc');
+    if (calcField) {
+        calcField.value = proyeccion;
+    }
+}
+</script>

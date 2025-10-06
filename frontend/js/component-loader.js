@@ -175,6 +175,10 @@ const ComponentLoader = {
         templatePath = "templates/admin/usuarios.html";
         console.log(`🎯 Template path para usuarios: ${templatePath}`);
         break;
+      case "configuracion":
+        templatePath = "templates/coordinador/configuracion.html";
+        console.log(`🎯 Template path para configuración: ${templatePath}`);
+        break;
       case "perfil":
         templatePath = "templates/perfil/usuario.html";
         console.log(`🎯 Template path para perfil: ${templatePath}`);
@@ -291,6 +295,64 @@ const ComponentLoader = {
           if (window.ValidacionSystem) {
             await window.ValidacionSystem.init();
           }
+          break;
+
+        case "configuracion":
+          console.log("⚙️ INICIANDO CASO CONFIGURACIÓN");
+
+          if (!window.ConfiguracionSystem) {
+            console.log("🔥 Cargando script configuracion.js");
+            const script = document.createElement("script");
+            script.src = "js/dashboards/configuracion.js";
+            document.head.appendChild(script);
+
+            await new Promise((resolve, reject) => {
+              script.onload = () => {
+                console.log("🔥 Script configuracion.js cargado exitosamente");
+                resolve();
+              };
+              script.onerror = (error) => {
+                console.log(
+                  "🔥 Error cargando script configuracion.js:",
+                  error
+                );
+                reject(error);
+              };
+              setTimeout(() => {
+                console.log("🔥 Timeout cargando script configuracion.js");
+                reject(new Error("Timeout"));
+              }, 5000);
+            });
+          } else {
+            console.log("🔥 Script ConfiguracionSystem ya existe");
+          }
+
+          console.log("🔥 Esperando 300ms para DOM...");
+          await new Promise((resolve) => setTimeout(resolve, 300));
+
+          console.log(
+            "🔥 Verificando window.ConfiguracionSystem:",
+            !!window.ConfiguracionSystem
+          );
+
+          if (window.ConfiguracionSystem) {
+            console.log("🔥 EJECUTANDO ConfiguracionSystem.init()");
+            try {
+              await window.ConfiguracionSystem.init();
+              console.log(
+                "🔥 ConfiguracionSystem.init() COMPLETADO EXITOSAMENTE"
+              );
+            } catch (error) {
+              console.error("🔥 ERROR EN ConfiguracionSystem.init():", error);
+              throw error;
+            }
+          } else {
+            console.error(
+              "🔥 ConfiguracionSystem NO DISPONIBLE DESPUÉS DE CARGA"
+            );
+            throw new Error("ConfiguracionSystem no se cargó correctamente");
+          }
+          console.log("🔥 CASO CONFIGURACIÓN TERMINADO");
           break;
 
         case "perfil":
@@ -414,7 +476,6 @@ const ComponentLoader = {
           }
           console.log("📥 CASO USUARIOS TERMINADO");
           break;
-          
       }
     } catch (error) {
       console.error("❌ Error inicializando sistema de vista:", error);

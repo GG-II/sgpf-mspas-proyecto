@@ -185,6 +185,7 @@ const SGPFApp = {
         { view: "dashboard", label: "Dashboard", icon: "📊" },
         { view: "usuarios", label: "Usuarios", icon: "👥" },
         { view: "reportes", label: "Reportes", icon: "📈" },
+        { view: "configuracion", label: "Metas", icon: "⚙️" },
         { view: "perfil", label: "Configurar", icon: "⚙️" },
       ],
     };
