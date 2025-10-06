@@ -176,13 +176,14 @@ const SGPFApp = {
       ],
       encargado: [
         { view: "dashboard", label: "Dashboard", icon: "📊" },
-        { view: "registro", label: "Registrar", icon: "📝" },
+        { view: "usuarios", label: "Usuarios", icon: "👥" }, 
         { view: "validacion", label: "Aprobar", icon: "✅" },
         { view: "reportes", label: "Reportes", icon: "📈" },
         { view: "perfil", label: "Perfil", icon: "👤" },
       ],
       coordinador: [
         { view: "dashboard", label: "Dashboard", icon: "📊" },
+        { view: "usuarios", label: "Usuarios", icon: "👥" },
         { view: "reportes", label: "Reportes", icon: "📈" },
         { view: "perfil", label: "Configurar", icon: "⚙️" },
       ],

@@ -396,7 +396,7 @@ setTimeout(() => {
     });
 
     document.getElementById('btn-gestionar-usuarios')?.addEventListener('click', () => {
-        SGPF.showToast('Accediendo al módulo de gestión de usuarios...', 'info');
+        ComponentLoader.navigateToView('usuarios');
     });
 
     document.getElementById('btn-reportes-ejecutivos')?.addEventListener('click', () => {

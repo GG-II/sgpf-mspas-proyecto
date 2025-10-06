@@ -171,6 +171,10 @@ const ComponentLoader = {
       case "reportes":
         templatePath = "templates/reportes/mensual.html";
         break;
+      case "usuarios":
+        templatePath = "templates/admin/usuarios.html";
+        console.log(`🎯 Template path para usuarios: ${templatePath}`);
+        break;
       case "perfil":
         templatePath = "templates/perfil/usuario.html";
         console.log(`🎯 Template path para perfil: ${templatePath}`);
@@ -359,6 +363,58 @@ const ComponentLoader = {
             await window.ReportesSystem.init();
           }
           break;
+
+        case "usuarios": // NUEVO CASO
+          console.log("👥 INICIANDO CASO USUARIOS");
+
+          if (!window.UsuariosAdmin) {
+            console.log("📥 Cargando script usuarios.js");
+            const script = document.createElement("script");
+            script.src = "js/admin/usuarios.js";
+            document.head.appendChild(script);
+
+            await new Promise((resolve, reject) => {
+              script.onload = () => {
+                console.log("📥 Script usuarios.js cargado exitosamente");
+                resolve();
+              };
+              script.onerror = (error) => {
+                console.log("📥 Error cargando script usuarios.js:", error);
+                reject(error);
+              };
+              setTimeout(() => {
+                console.log("📥 Timeout cargando script usuarios.js");
+                reject(new Error("Timeout"));
+              }, 5000);
+            });
+          } else {
+            console.log("📥 Script UsuariosAdmin ya existe");
+          }
+
+          console.log("📥 Esperando 500ms para DOM...");
+          await new Promise((resolve) => setTimeout(resolve, 500));
+
+          console.log(
+            "📥 Verificando window.UsuariosAdmin:",
+            !!window.UsuariosAdmin
+          );
+
+          if (window.UsuariosAdmin) {
+            console.log("📥 EJECUTANDO UsuariosAdmin.init()");
+            try {
+              await window.UsuariosAdmin.init();
+              console.log("📥 UsuariosAdmin.init() COMPLETADO EXITOSAMENTE");
+            } catch (error) {
+              console.error("📥 ERROR EN UsuariosAdmin.init():", error);
+              throw error;
+            }
+          } else {
+            console.error("📥 UsuariosAdmin NO DISPONIBLE DESPUÉS DE CARGA");
+            throw new Error("UsuariosAdmin no se cargó correctamente");
+          }
+          console.log("📥 CASO USUARIOS TERMINADO");
+          break;
+          
       }
     } catch (error) {
       console.error("❌ Error inicializando sistema de vista:", error);

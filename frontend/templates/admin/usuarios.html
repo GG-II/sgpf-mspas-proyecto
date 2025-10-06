@@ -1,0 +1,551 @@
+<!-- ===== GESTIÓN DE USUARIOS - SGPF ===== -->
+
+<style>
+/* Estilos específicos para gestión de usuarios */
+.usuarios-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.usuarios-filtros {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    margin-bottom: 1rem;
+}
+
+.filtro-grupo {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.filtro-grupo label {
+    font-size: 0.85rem;
+    color: var(--mspas-text-secondary);
+    font-weight: 500;
+}
+
+.filtro-grupo input,
+.filtro-grupo select {
+    padding: 0.5rem;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    min-width: 200px;
+}
+
+.usuarios-tabla-container {
+    overflow-x: auto;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.usuarios-tabla {
+    width: 100%;
+    border-collapse: collapse;
+    background: white;
+}
+
+.usuarios-tabla thead {
+    background: linear-gradient(135deg, var(--mspas-primary), var(--mspas-secondary));
+    color: white;
+}
+
+.usuarios-tabla th {
+    padding: 1rem;
+    text-align: left;
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+.usuarios-tabla td {
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid #eee;
+    font-size: 0.9rem;
+}
+
+.usuarios-tabla tbody tr:hover {
+    background-color: #f8f9fa;
+}
+
+.usuario-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--mspas-primary), var(--mspas-secondary));
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 1.1rem;
+}
+
+.usuario-info {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.usuario-nombre {
+    font-weight: 600;
+    color: #333;
+}
+
+.usuario-email {
+    font-size: 0.85rem;
+    color: #666;
+}
+
+.badge-rol {
+    padding: 0.35rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.badge-rol.coordinador {
+    background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+    color: white;
+}
+
+.badge-rol.encargado {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    color: white;
+}
+
+.badge-rol.asistente {
+    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    color: white;
+}
+
+.badge-rol.auxiliar {
+    background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+    color: white;
+}
+
+.badge-estado {
+    padding: 0.35rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.badge-estado.activo {
+    background-color: #d4edda;
+    color: #155724;
+}
+
+.badge-estado.inactivo {
+    background-color: #f8d7da;
+    color: #721c24;
+}
+
+.acciones-usuario {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.btn-accion {
+    padding: 0.4rem 0.75rem;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.btn-accion:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+
+.btn-editar {
+    background-color: #17a2b8;
+    color: white;
+}
+
+.btn-password {
+    background-color: #ffc107;
+    color: #212529;
+}
+
+.btn-toggle-estado {
+    background-color: #6c757d;
+    color: white;
+}
+
+/* Modal styles */
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.6);
+    z-index: 9999;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal.active {
+    display: flex;
+}
+
+.modal-content {
+    background: white;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 600px;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+}
+
+.modal-header {
+    background: linear-gradient(135deg, var(--mspas-primary), var(--mspas-secondary));
+    color: white;
+    padding: 1.5rem;
+    border-radius: 12px 12px 0 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.modal-header h3 {
+    margin: 0;
+    font-size: 1.3rem;
+}
+
+.modal-close {
+    background: rgba(255,255,255,0.2);
+    border: none;
+    color: white;
+    font-size: 1.5rem;
+    cursor: pointer;
+    width: 35px;
+    height: 35px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-body {
+    padding: 1.5rem;
+}
+
+.form-group {
+    margin-bottom: 1.25rem;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    color: #333;
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+.form-group input,
+.form-group select {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-size: 0.95rem;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+    outline: none;
+    border-color: var(--mspas-primary);
+    box-shadow: 0 0 0 3px rgba(0,123,255,0.1);
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+
+.modal-footer {
+    padding: 1rem 1.5rem;
+    border-top: 1px solid #eee;
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.75rem;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 3rem 1rem;
+    color: #666;
+}
+
+.empty-state-icon {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .usuarios-header {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .usuarios-filtros {
+        flex-direction: column;
+    }
+    
+    .filtro-grupo input,
+    .filtro-grupo select {
+        min-width: 100%;
+    }
+    
+    .form-row {
+        grid-template-columns: 1fr;
+    }
+    
+    .usuarios-tabla {
+        font-size: 0.85rem;
+    }
+    
+    .usuarios-tabla th,
+    .usuarios-tabla td {
+        padding: 0.5rem;
+    }
+    
+    .acciones-usuario {
+        flex-direction: column;
+    }
+}
+</style>
+
+<!-- Header -->
+<div class="dashboard-hero">
+    <h2>👥 Gestión de Usuarios</h2>
+    <p>Administración del personal del sistema SGPF</p>
+</div>
+
+<!-- Header con búsqueda y botón crear -->
+<div class="usuarios-header">
+    <div class="usuarios-filtros">
+        <div class="filtro-grupo">
+            <label>🔍 Buscar</label>
+            <input type="text" id="buscar-usuario" placeholder="Nombre, email o DPI...">
+        </div>
+        
+        <div class="filtro-grupo">
+            <label>👔 Rol</label>
+            <select id="filtro-rol">
+                <option value="">Todos los roles</option>
+                <option value="coordinador_municipal">Coordinador</option>
+                <option value="encargado_sr">Encargado SR</option>
+                <option value="asistente_tecnico">Asistente Técnico</option>
+                <option value="auxiliar_enfermeria">Auxiliar Enfermería</option>
+            </select>
+        </div>
+        
+        <div class="filtro-grupo">
+            <label>📊 Estado</label>
+            <select id="filtro-estado">
+                <option value="">Todos</option>
+                <option value="1">Activos</option>
+                <option value="0">Inactivos</option>
+            </select>
+        </div>
+    </div>
+    
+    <button class="btn btn-primary" id="btn-crear-usuario">
+        ➕ Crear Usuario
+    </button>
+</div>
+
+<!-- Resumen estadístico -->
+<div id="usuarios-resumen" class="stats-grid" style="margin-bottom: 1.5rem;">
+    <div class="stat-card">
+        <span class="stat-value" id="total-usuarios">0</span>
+        <div class="stat-label">Total Usuarios</div>
+    </div>
+    <div class="stat-card">
+        <span class="stat-value" id="total-activos">0</span>
+        <div class="stat-label">Activos</div>
+    </div>
+    <div class="stat-card">
+        <span class="stat-value" id="total-auxiliares">0</span>
+        <div class="stat-label">Auxiliares</div>
+    </div>
+    <div class="stat-card">
+        <span class="stat-value" id="total-asistentes">0</span>
+        <div class="stat-label">Asistentes</div>
+    </div>
+</div>
+
+<!-- Loading state -->
+<div id="usuarios-loading" class="loading">
+    Cargando usuarios...
+</div>
+
+<!-- Tabla de usuarios -->
+<div id="usuarios-tabla-wrapper" class="card" style="display: none;">
+    <div class="usuarios-tabla-container">
+        <table class="usuarios-tabla">
+            <thead>
+                <tr>
+                    <th>Usuario</th>
+                    <th>Rol</th>
+                    <th>Territorio/Distrito</th>
+                    <th>Estado</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody id="usuarios-tabla-body">
+                <!-- Se llena dinámicamente -->
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Empty state -->
+<div id="usuarios-empty" class="card" style="display: none;">
+    <div class="empty-state">
+        <div class="empty-state-icon">👥</div>
+        <h3>No se encontraron usuarios</h3>
+        <p>Intenta ajustar los filtros o crear un nuevo usuario</p>
+    </div>
+</div>
+
+<!-- Modal Crear/Editar Usuario -->
+<div id="modal-usuario" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 id="modal-titulo">Crear Nuevo Usuario</h3>
+            <button class="modal-close" onclick="UsuariosAdmin.cerrarModal()">×</button>
+        </div>
+        <div class="modal-body">
+            <form id="form-usuario">
+                <input type="hidden" id="usuario-id" value="">
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Nombres *</label>
+                        <input type="text" id="usuario-nombres" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Apellidos *</label>
+                        <input type="text" id="usuario-apellidos" required>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Email *</label>
+                        <div style="display: flex; align-items: center; gap: 0.25rem;">
+                            <input type="text" id="usuario-email-prefix" required placeholder="nombre.apellido"
+                                style="flex: 1;">
+                            <span style="color: #666; font-weight: 500;">@mspas.gob.gt</span>
+                        </div>
+                        <input type="hidden" id="usuario-email">
+                    </div>
+                    <div class="form-group">
+                        <label>DPI</label>
+                        <input type="text" id="usuario-dpi" maxlength="13">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Teléfono</label>
+                        <input type="tel" id="usuario-telefono">
+                    </div>
+                    <div class="form-group">
+                        <label>Código Empleado <small>(se genera automáticamente)</small></label>
+                        <input type="text" id="usuario-codigo" readonly style="background-color: #f0f0f0;">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Cargo</label>
+                    <input type="text" id="usuario-cargo" placeholder="Ej: Auxiliar de Enfermería">
+                </div>
+
+                <div class="form-group">
+                    <label>Rol *</label>
+                    <select id="usuario-rol" required>
+                        <option value="">Seleccionar rol...</option>
+                        <!-- Se llena dinámicamente según permisos -->
+                    </select>
+                </div>
+
+                <div id="usuario-territorio-group" class="form-group" style="display: none;">
+                    <label>Territorio *</label>
+                    <select id="usuario-territorio">
+                        <option value="">Seleccionar territorio...</option>
+                        <!-- Se llena dinámicamente -->
+                    </select>
+                </div>
+
+
+                <div id="usuario-comunidades-group" class="form-group" style="display: none;">
+                    <label>Comunidades Asignadas *</label>
+                    <div
+                        style="max-height: 250px; overflow-y: auto; border: 1px solid #ddd; border-radius: 6px; padding: 1rem; background: #fafafa;">
+                        <div id="usuario-comunidades-list">
+                            <!-- Se llena dinámicamente con checkboxes -->
+                        </div>
+                    </div>
+                    <small style="color: #666; display: block; margin-top: 0.5rem;">Selecciona las comunidades donde
+                        trabajará</small>
+                </div>
+                <div id="usuario-password-group" class="form-group">
+                    <label>Contraseña * <small>(mínimo 6 caracteres)</small></label>
+                    <input type="password" id="usuario-password" minlength="6">
+                </div>
+                <div id="usuario-password-confirm-group" class="form-group">
+                    <label>Confirmar Contraseña *</label>
+                    <input type="password" id="usuario-password-confirm" minlength="6">
+                </div>
+            </form>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="UsuariosAdmin.cerrarModal()">Cancelar</button>
+            <button class="btn btn-primary" id="btn-guardar-usuario">Guardar Usuario</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Resetear Contraseña -->
+<div id="modal-reset-password" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>🔐 Restablecer Contraseña</h3>
+            <button class="modal-close" onclick="UsuariosAdmin.cerrarModalResetPassword()">×</button>
+        </div>
+        <div class="modal-body">
+            <p>¿Está seguro de restablecer la contraseña para <strong id="reset-usuario-nombre"></strong>?</p>
+            <div class="form-group">
+                <label>Nueva Contraseña * <small>(mínimo 6 caracteres)</small></label>
+                <input type="password" id="reset-nueva-password" minlength="6" placeholder="Nueva contraseña">
+            </div>
+            <div class="form-group">
+                <label>Confirmar Contraseña *</label>
+                <input type="password" id="reset-confirm-password" minlength="6" placeholder="Confirmar contraseña">
+            </div>
+            <input type="hidden" id="reset-usuario-id">
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="UsuariosAdmin.cerrarModalResetPassword()">Cancelar</button>
+            <button class="btn btn-warning" id="btn-confirmar-reset">Restablecer Contraseña</button>
+        </div>
+    </div>
+</div>
