@@ -1,290 +1,114 @@
-<!-- ===== DASHBOARD ENCARGADO DE SALUD REPRODUCTIVA ===== -->
+<!-- ===== DASHBOARD ENCARGADO SR V2.0 - SIMPLIFICADO ===== -->
 
-<style>
-/* ===== ESTILOS ESPECÍFICOS DASHBOARD ENCARGADO ===== */
-.territories-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: 1rem;
-    margin-top: 1rem;
-}
+<div class="max-w-5xl mx-auto p-4 space-y-6">
+  
+  <!-- Header Simple -->
+  <div class="bg-gradient-to-r from-purple-500 to-pink-600 rounded-xl p-6 text-white shadow-lg">
+    <h1 class="text-2xl font-bold">👔 Dashboard Ejecutivo, <span id="encargado-nombre">Cargando...</span></h1>
+    <p class="text-purple-100 mt-1" id="encargado-distrito">Distrito de Salud - Huehuetenango</p>
+  </div>
 
-.territory-card {
-    background: white;
-    border-radius: 12px;
-    padding: 1.5rem;
-    border: 2px solid transparent;
-    transition: all 0.3s ease;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-}
-
-.territory-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-}
-
-.territory-card.excelente {
-    border-color: #28a745;
-    background: linear-gradient(135deg, #f0f9f0 0%, #ffffff 100%);
-}
-
-.territory-card.bueno {
-    border-color: #28a745;
-    background: linear-gradient(135deg, #f8fff8 0%, #ffffff 100%);
-}
-
-.territory-card.regular {
-    border-color: #ffc107;
-    background: linear-gradient(135deg, #fff8e1 0%, #ffffff 100%);
-}
-
-.territory-card.critico {
-    border-color: #dc3545;
-    background: linear-gradient(135deg, #ffebee 0%, #ffffff 100%);
-}
-
-.territory-name {
-    font-size: 1.2rem;
-    font-weight: bold;
-    color: #333;
-    margin-bottom: 0.75rem;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-}
-
-.territory-name::before {
-    content: "🗺️";
-    font-size: 1.1rem;
-}
-
-.territory-stats {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-}
-
-.territory-stats .stat {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 0.5rem 0;
-    border-bottom: 1px solid #eee;
-    font-size: 0.9rem;
-    color: #666;
-}
-
-.territory-stats .stat:last-child {
-    border-bottom: none;
-}
-
-.badge {
-    padding: 0.25rem 0.5rem;
-    border-radius: 4px;
-    font-size: 0.8rem;
-    font-weight: bold;
-}
-
-.badge-info {
-    background-color: #17a2b8;
-    color: white;
-}
-
-.badge-warning {
-    background-color: #ffc107;
-    color: #212529;
-}
-
-.btn-small {
-    padding: 0.25rem 0.5rem;
-    font-size: 0.8rem;
-    border-radius: 4px;
-    border: none;
-    cursor: pointer;
-    margin: 0 0.25rem;
-}
-
-.btn-info {
-    background-color: #17a2b8;
-    color: white;
-}
-
-.btn-success {
-    background-color: #28a745;
-    color: white;
-}
-
-.btn-warning {
-    background-color: #ffc107;
-    color: #212529;
-}
-
-.btn-danger {
-    background-color: #dc3545;
-    color: white;
-}
-
-.badge-danger {
-    background-color: #dc3545;
-    color: white;
-}
-
-/* Responsive */
-@media (max-width: 768px) {
-    .territories-grid {
-        grid-template-columns: 1fr;
-        gap: 0.75rem;
-    }
-    
-    .territory-card {
-        padding: 1rem;
-    }
-    
-    .territory-name {
-        font-size: 1.1rem;
-    }
-}
-</style>
-
-<!-- Header personalizado -->
-<div class="dashboard-hero">
-    <h2>Dashboard Ejecutivo, <span id="encargado-nombre">{{userName}}</span></h2>
-    <p id="encargado-distrito">Distrito de Salud Norte - Huehuetenango</p>
-</div>
-
-<!-- Tarjetas de métricas estratégicas (2x2) -->
-<div class="stats-grid">
-    <div class="stat-card">
-        <span class="stat-value" id="territorios-supervisados">0</span>
-        <div class="stat-label">Territorios Supervisados</div>
+  <!-- 3 Métricas Principales -->
+  <div class="grid grid-cols-3 gap-4">
+    <div class="bg-white rounded-lg p-4 text-center shadow-md hover:shadow-lg transition">
+      <div class="text-4xl font-bold text-orange-600" id="pendientes-aprobar">0</div>
+      <div class="text-sm text-gray-600 mt-2">Pendientes de Aprobar</div>
+      <div class="text-xs text-gray-400 mt-1">Requieren validación</div>
     </div>
     
-    <div class="stat-card">
-        <span class="stat-value" id="registros-mes">0</span>
-        <div class="stat-label">Registros del Mes</div>
+    <div class="bg-white rounded-lg p-4 text-center shadow-md hover:shadow-lg transition">
+      <div class="text-4xl font-bold text-blue-600" id="territorios-activos">0</div>
+      <div class="text-sm text-gray-600 mt-2">Territorios Activos</div>
+      <div class="text-xs text-gray-400 mt-1">Supervisados este mes</div>
     </div>
     
-    <div class="stat-card">
-        <span class="stat-value" id="cumplimiento-distrito">0%</span>
-        <div class="stat-label">Cumplimiento Distrital</div>
+    <div class="bg-white rounded-lg p-4 text-center shadow-md hover:shadow-lg transition">
+      <div class="text-4xl font-bold text-green-600" id="cumplimiento-distrito">0%</div>
+      <div class="text-sm text-gray-600 mt-2">Cumplimiento Distrital</div>
+      <div class="text-xs text-gray-400 mt-1">Meta vs ejecutado</div>
+    </div>
+  </div>
+
+  <!-- Acciones Rápidas -->
+  <div class="grid grid-cols-2 gap-4">
+    <button 
+      onclick="document.getElementById('lista-aprobacion').scrollIntoView({behavior:'smooth'})" 
+      class="bg-orange-600 hover:bg-orange-700 text-white font-semibold py-3 px-6 rounded-lg shadow-lg hover:shadow-xl transition-all">
+      <span class="text-xl">✅</span> Aprobar Registros
+    </button>
+    
+    <button 
+      onclick="ComponentLoader.navigateToView('reportes')" 
+      class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg shadow-lg hover:shadow-xl transition-all">
+      <span class="text-xl">📊</span> Ver Reportes
+    </button>
+  </div>
+
+  <!-- Lista de Registros Pendientes (Simplificada) -->
+  <div class="bg-white rounded-lg shadow-md overflow-hidden" id="lista-aprobacion">
+    <div class="px-6 py-4 border-b bg-gray-50 flex items-center justify-between">
+      <h2 class="font-semibold text-gray-800 flex items-center gap-2">
+        <span class="text-xl">📋</span>
+        Registros Pendientes de Aprobación
+      </h2>
+      <span class="text-sm text-gray-500" id="total-pendientes-texto">Cargando...</span>
     </div>
     
-    <div class="stat-card">
-        <span class="stat-value" id="asistentes-activos">0</span>
-        <div class="stat-label">Asistentes Activos</div>
+    <div id="lista-pendientes-aprobacion">
+      <!-- Loading state -->
+      <div class="px-6 py-8 text-center text-gray-400">
+        <div class="animate-pulse">Cargando registros pendientes...</div>
+      </div>
     </div>
+    
+    <!-- Sin pendientes -->
+    <div id="sin-pendientes-aprobar" class="hidden px-6 py-12 text-center text-gray-400">
+      <div class="text-5xl mb-3">🎉</div>
+      <p class="text-lg font-semibold text-gray-600">¡Todo al día!</p>
+      <p class="text-sm mt-1">No hay registros pendientes de aprobación</p>
+    </div>
+  </div>
+
+  <!-- Estado de Territorios (Colapsable) -->
+  <details class="bg-white rounded-lg shadow-md overflow-hidden">
+    <summary class="px-6 py-4 cursor-pointer hover:bg-gray-50 transition font-semibold text-gray-700 flex items-center justify-between">
+      <span class="flex items-center gap-2">
+        <span class="text-xl">🗺️</span>
+        Estado de Territorios
+      </span>
+      <span class="text-gray-400">▼</span>
+    </summary>
+    
+    <div class="px-6 py-4 border-t bg-gray-50" id="estado-territorios">
+      <div class="animate-pulse text-gray-400">Cargando información territorial...</div>
+    </div>
+  </details>
+
+  <!-- Panel Administrativo (Colapsable) -->
+  <details class="bg-white rounded-lg shadow-md overflow-hidden">
+    <summary class="px-6 py-4 cursor-pointer hover:bg-gray-50 transition font-semibold text-gray-700 flex items-center justify-between">
+      <span class="flex items-center gap-2">
+        <span class="text-xl">👥</span>
+        Panel Administrativo
+      </span>
+      <span class="text-gray-400">▼</span>
+    </summary>
+    
+    <div class="px-6 py-4 border-t bg-gray-50" id="panel-admin">
+      <div class="animate-pulse text-gray-400">Cargando información administrativa...</div>
+    </div>
+  </details>
+
 </div>
 
-<!-- Acciones ejecutivas -->
-<div class="card">
-    <div class="card-title">Acciones Ejecutivas</div>
-    <div class="card-body">
-        <button id="btn-aprobar-registros" class="btn btn-primary">
-            📊 Aprobar Registros
-        </button>
-        <button id="btn-generar-reportes" class="btn btn-secondary">
-            📈 Generar Reportes
-        </button>
-        <button id="btn-gestionar-usuarios" class="btn btn-secondary">
-            👥 Gestionar Personal
-        </button>
-        <button id="btn-configurar-metas" class="btn btn-secondary">
-            🎯 Configurar Metas
-        </button>
-    </div>
-</div>
-
-<!-- Estado por territorios -->
-<div class="card">
-    <div class="card-title">Estado por Territorios</div>
-    <div class="card-body">
-        <div id="territorios-loading" class="loading">Cargando información territorial...</div>
-        <div id="territorios-grid" class="territories-grid" style="display: none;">
-            <!-- Se llena dinámicamente -->
-        </div>
-    </div>
-</div>
-
-<!-- Registros para supervisión -->
-<div class="card">
-    <div class="card-title">Registros para Supervisión</div>
-    <div class="card-body">
-        <div id="aprobacion-loading" class="loading">Cargando registros para supervisión...</div>
-        
-        <div id="aprobacion-resumen" style="display: none;">
-            <!-- Resumen de registros para supervisar -->
-        </div>
-        
-        <!-- Tabla de registros para supervisar -->
-        <div class="table-container" id="tabla-aprobacion-container" style="display: none;">
-            <table class="table">
-                <thead>
-                    <tr>
-                        <th>Personal</th>
-                        <th>Comunidad</th>
-                        <th>Método</th>
-                        <th>Cantidad</th>
-                        <th>Fecha Registro</th>
-                        <th>Estado</th>
-                        <th>Acciones</th>
-                    </tr>
-                </thead>
-                <tbody id="tabla-aprobacion-body">
-                    <!-- Se llena dinámicamente -->
-                </tbody>
-            </table>
-        </div>
-        
-        <!-- Mensaje si no hay registros para supervisar -->
-        <div id="sin-aprobaciones-mensaje" class="card" style="display: none;">
-            <div class="card-body" style="text-align: center; padding: 2rem;">
-                <h3>✅ No hay registros pendientes</h3>
-                <p>Todos los registros han sido procesados.</p>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Vista de gestión administrativa -->
-<div class="card">
-    <div class="card-title">Panel Administrativo</div>
-    <div class="card-body">
-        <div id="admin-panel">
-            <div class="loading">Cargando información administrativa...</div>
-        </div>
-    </div>
-</div>
-
-<!-- Script específico del dashboard encargado -->
+<!-- Script de inicialización -->
 <script>
-// Inicializar dashboard del encargado cuando se carga el template
 document.addEventListener('DOMContentLoaded', () => {
-    if (typeof window.EncargadoDashboard !== 'undefined') {
-        setTimeout(() => {
+    // Delay para asegurar que el DOM esté listo
+    setTimeout(() => {
+        if (typeof window.EncargadoDashboard !== 'undefined') {
             window.EncargadoDashboard.init();
-        }, 100);
-    }
-});
-
-// Event listeners para los botones
-setTimeout(() => {
-    document.getElementById('btn-aprobar-registros')?.addEventListener('click', () => {
-        const elemento = document.getElementById('tabla-aprobacion-container');
-        if (elemento) {
-            elemento.scrollIntoView({ behavior: 'smooth' });
         }
-    });
-
-    document.getElementById('btn-generar-reportes')?.addEventListener('click', () => {
-        ComponentLoader.navigateToView('reportes');
-    });
-
-    document.getElementById('btn-gestionar-usuarios')?.addEventListener('click', () => {
-        SGPF.showToast('Función de gestión de usuarios en desarrollo', 'info');
-    });
-
-    document.getElementById('btn-configurar-metas')?.addEventListener('click', () => {
-        SGPF.showToast('Función de configuración de metas en desarrollo', 'info');
-    });
-}, 500);
+    }, 800);
+});
 </script>

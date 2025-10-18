@@ -2,27 +2,31 @@ window.AuxiliarDashboard = window.AuxiliarDashboard || {
     
     // ===== INICIALIZAR DASHBOARD =====
     async init() {
-        console.log('🏥 Inicializando dashboard auxiliar');
+        console.log('🏥 Inicializando dashboard auxiliar V2.0');
+        
+        // Delay crítico para renderizado DOM
+        await new Promise(resolve => setTimeout(resolve, 300));
         
         try {
-            // Verificar que el usuario sea auxiliar
             const user = SGPF.getCurrentUser();
             if (!user || user.rol !== 'auxiliar_enfermeria') {
                 console.error('❌ Usuario no es auxiliar de enfermería');
+                SGPF.showToast('Acceso no autorizado', 'error');
                 return;
             }
 
-            // Cargar datos en paralelo (eliminadas cargarRegistrosDelMes)
+            // Cargar datos en paralelo
             await Promise.all([
                 this.cargarDatosUsuario(),
-                this.cargarEstadisticasPersonales(),
+                this.cargarEstadisticasMes(),
+                this.cargarUltimasVisitas(),
                 this.cargarInfoComunidad()
             ]);
 
-            console.log('✅ Dashboard auxiliar cargado');
+            console.log('✅ Dashboard auxiliar V2.0 cargado');
             
         } catch (error) {
-            console.error('❌ Error inicializando dashboard auxiliar:', error);
+            console.error('❌ Error inicializando dashboard:', error);
             SGPF.showToast('Error cargando dashboard', 'error');
         }
     },
@@ -31,100 +35,168 @@ window.AuxiliarDashboard = window.AuxiliarDashboard || {
     async cargarDatosUsuario() {
         const user = SGPF.getCurrentUser();
         
-        // Actualizar nombre del usuario
         const nombreElement = document.getElementById('auxiliar-nombre');
         if (nombreElement) {
             nombreElement.textContent = `${user.nombres} ${user.apellidos}`;
         }
 
-        // Mostrar comunidad principal (primera asignada)
         const comunidadElement = document.getElementById('auxiliar-comunidad');
         if (comunidadElement && user.comunidades && user.comunidades.length > 0) {
             comunidadElement.textContent = `Comunidad: ${user.comunidades[0].nombre}`;
-        } else if (comunidadElement) {
-            comunidadElement.textContent = 'Sin comunidades asignadas';
         }
     },
 
-    // ===== CARGAR ESTADÍSTICAS PERSONALES =====
-    async cargarEstadisticasPersonales() {
+    // ===== CARGAR ESTADÍSTICAS DEL MES =====
+    async cargarEstadisticasMes() {
         try {
-            const currentYear = new Date().getFullYear();
-            const currentMonth = new Date().getMonth() + 1;
+            const user = SGPF.getCurrentUser();
+            const hoy = new Date();
+            const primerDia = new Date(hoy.getFullYear(), hoy.getMonth(), 1).toISOString().split('T')[0];
+            const ultimoDia = new Date(hoy.getFullYear(), hoy.getMonth() + 1, 0).toISOString().split('T')[0];
+
+            // Obtener visitas del mes actual filtradas por comunidad del auxiliar
+            const comunidadId = user.comunidades?.[0]?.id;
             
-            // Obtener estadísticas personales
-            const response = await SGPF.apiCall(`/perfil/estadisticas?year=${currentYear}`);
-            
-            if (response.success) {
-                this.actualizarTarjetasEstado(response.data, currentMonth);
+            if (!comunidadId) {
+                this.mostrarEstadisticasVacias();
+                return;
+            }
+
+            // Obtener todas las visitas del mes en mi comunidad
+            const response = await SGPF.apiCall(
+                `/visitas?fecha_desde=${primerDia}&fecha_hasta=${ultimoDia}&comunidad_id=${comunidadId}`
+            );
+
+            if (response.success && response.data.visitas) {
+                this.calcularEstadisticas(response.data.visitas);
+            } else {
+                this.mostrarEstadisticasVacias();
             }
             
         } catch (error) {
-            console.error('❌ Error cargando estadísticas personales:', error);
-            this.mostrarErrorEstadisticas();
+            console.error('❌ Error cargando estadísticas:', error);
+            this.mostrarEstadisticasVacias();
         }
     },
 
-    // ===== ACTUALIZAR TARJETAS DE ESTADO =====
-    actualizarTarjetasEstado(data, currentMonth) {
-        // 1. Estado del registro del mes
-        const registroMesElement = document.getElementById('registro-mes-estado');
-        const tieneRegistroEsteMes = data.actividad_mensual?.some(mes => mes.mes === currentMonth);
+    // ===== CALCULAR ESTADÍSTICAS POR TIPO =====
+    calcularEstadisticas(visitas) {
+        // Agrupar visitas por usuaria para determinar su tipo
+        const usuariasTipos = {};
         
-        if (registroMesElement) {
-            if (tieneRegistroEsteMes) {
-                registroMesElement.textContent = '✅';
-                registroMesElement.style.color = 'var(--mspas-success)';
-            } else {
-                registroMesElement.textContent = '⏳';
-                registroMesElement.style.color = 'var(--mspas-warning)';
+        visitas.forEach(visita => {
+            if (!usuariasTipos[visita.usuaria_id]) {
+                usuariasTipos[visita.usuaria_id] = visita.tipo_usuaria || 'nueva';
             }
-        }
+        });
 
-        // 2. Progreso hacia meta anual (estimado)
-        const metaElement = document.getElementById('meta-anual-porcentaje');
-        if (metaElement) {
-            // Estimación simple: si tiene registros vs meses activos
-            const mesesActivos = data.resumen.meses_activos || 0;
-            const porcentajeProgreso = Math.min((mesesActivos / 12) * 100, 100);
-            metaElement.textContent = `${Math.round(porcentajeProgreso)}%`;
+        // Contar por tipo
+        const conteos = {
+            nueva: 0,
+            reconsulta: 0,
+            activa: 0
+        };
+
+        Object.values(usuariasTipos).forEach(tipo => {
+            if (conteos.hasOwnProperty(tipo)) {
+                conteos[tipo]++;
+            }
+        });
+
+        // Actualizar UI
+        this.actualizarMetricas(conteos);
+    },
+
+    // ===== ACTUALIZAR MÉTRICAS EN UI =====
+    actualizarMetricas(conteos) {
+        const elementos = {
+            'usuarias-nuevas': conteos.nueva,
+            'usuarias-reconsulta': conteos.reconsulta,
+            'usuarias-activas': conteos.activa
+        };
+
+        Object.entries(elementos).forEach(([id, valor]) => {
+            const element = document.getElementById(id);
+            if (element) {
+                element.textContent = valor;
+                // Animación de número
+                element.classList.add('animate-pulse');
+                setTimeout(() => element.classList.remove('animate-pulse'), 500);
+            }
+        });
+
+        console.log('📊 Estadísticas actualizadas:', conteos);
+    },
+
+    // ===== MOSTRAR ESTADÍSTICAS VACÍAS =====
+    mostrarEstadisticasVacias() {
+        ['usuarias-nuevas', 'usuarias-reconsulta', 'usuarias-activas'].forEach(id => {
+            const element = document.getElementById(id);
+            if (element) element.textContent = '0';
+        });
+    },
+
+    // ===== CARGAR ÚLTIMAS VISITAS =====
+    async cargarUltimasVisitas() {
+        try {
+            const user = SGPF.getCurrentUser();
             
-            // Color según progreso
-            if (porcentajeProgreso >= 75) {
-                metaElement.style.color = 'var(--mspas-success)';
-            } else if (porcentajeProgreso >= 50) {
-                metaElement.style.color = 'var(--mspas-warning)';
-            } else {
-                metaElement.style.color = 'var(--mspas-danger)';
-            }
-        }
+            // Obtener mis últimas 5 visitas registradas
+            const response = await SGPF.apiCall('/visitas?limit=5&offset=0');
 
-        // 3. Última sincronización (simulada por última actividad)
-        const sincronElement = document.getElementById('ultima-sincronizacion');
-        if (sincronElement) {
-            if (data.resumen.ultimo_registro) {
-                const fecha = new Date(data.resumen.ultimo_registro);
-                sincronElement.textContent = this.formatearFechaRelativa(fecha);
-            } else {
-                sincronElement.textContent = 'Nunca';
-            }
-        }
+            const container = document.getElementById('ultimas-visitas');
+            const sinVisitas = document.getElementById('sin-visitas');
 
-        // 4. Usuarias registradas este mes
-        const usuariasElement = document.getElementById('metodos-registrados');
-        if (usuariasElement) {
-            const registroEsteMes = data.actividad_mensual?.find(mes => mes.mes === currentMonth);
-            usuariasElement.textContent = registroEsteMes?.usuarias || 0;
+            if (!response.success || !response.data.visitas || response.data.visitas.length === 0) {
+                if (container) container.classList.add('hidden');
+                if (sinVisitas) sinVisitas.classList.remove('hidden');
+                return;
+            }
+
+            if (container) {
+                container.innerHTML = response.data.visitas.map(visita => `
+                    <div class="px-6 py-4 hover:bg-gray-50 transition">
+                        <div class="flex items-start justify-between gap-4">
+                            <div class="flex-1">
+                                <div class="font-semibold text-gray-800">
+                                    ${visita.usuaria_nombres} ${visita.usuaria_apellidos}
+                                </div>
+                                <div class="text-sm text-gray-600 mt-1">
+                                    ${visita.metodo_nombre}
+                                </div>
+                                ${visita.observaciones ? `
+                                    <div class="text-xs text-gray-500 mt-1 italic">
+                                        ${visita.observaciones}
+                                    </div>
+                                ` : ''}
+                            </div>
+                            <div class="text-right text-sm text-gray-500 flex-shrink-0">
+                                <div>${this.formatearFecha(visita.fecha_visita)}</div>
+                                <div class="text-xs mt-1">
+                                    ${this.obtenerBadgeEstado(visita.estado)}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+            }
+
+            console.log(`📋 ${response.data.visitas.length} visitas cargadas`);
+            
+        } catch (error) {
+            console.error('❌ Error cargando visitas:', error);
+            const container = document.getElementById('ultimas-visitas');
+            if (container) {
+                container.innerHTML = `
+                    <div class="px-6 py-4 text-center text-red-600">
+                        Error cargando visitas
+                    </div>
+                `;
+            }
         }
     },
 
-    // ELIMINADA: cargarRegistrosDelMes()
-    // ELIMINADA: mostrarRegistrosDelMes()
-    // ELIMINADA: mostrarHistorial()
-    // ELIMINADA: crearModalHistorial()
-    // ELIMINADA: sincronizarDatos()
-
-    // ===== CARGAR INFORMACIÓN DE LA COMUNIDAD =====
+    // ===== CARGAR INFO COMUNIDAD =====
     async cargarInfoComunidad() {
         try {
             const user = SGPF.getCurrentUser();
@@ -134,55 +206,63 @@ window.AuxiliarDashboard = window.AuxiliarDashboard || {
                 return;
             }
 
-            const comunidad = user.comunidades[0]; // Primera comunidad asignada
+            const comunidad = user.comunidades[0];
             
-            // Obtener métricas específicas de la comunidad
-            const response = await SGPF.apiCall(`/dashboard/comunidades/${comunidad.id}`);
-            
-            if (response.success) {
-                this.mostrarInfoComunidad(comunidad, response.data);
-            } else {
+            // Intentar obtener métricas de la comunidad
+            try {
+                const response = await SGPF.apiCall(`/dashboard/comunidades/${comunidad.id}`);
+                
+                if (response.success) {
+                    this.mostrarInfoComunidadCompleta(comunidad, response.data);
+                } else {
+                    this.mostrarInfoComunidadBasica(comunidad);
+                }
+            } catch {
                 this.mostrarInfoComunidadBasica(comunidad);
             }
             
         } catch (error) {
-            console.error('❌ Error cargando info de comunidad:', error);
+            console.error('❌ Error cargando info comunidad:', error);
             this.mostrarErrorComunidad();
         }
     },
 
-    // ===== MOSTRAR INFORMACIÓN DE LA COMUNIDAD =====
-    mostrarInfoComunidad(comunidad, data) {
+    // ===== MOSTRAR INFO COMUNIDAD COMPLETA =====
+    mostrarInfoComunidadCompleta(comunidad, data) {
         const infoElement = document.getElementById('info-comunidad');
         if (!infoElement) return;
 
         infoElement.innerHTML = `
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                    <h4>${comunidad.nombre}</h4>
-                    <p><strong>Código:</strong> ${comunidad.codigo_comunidad}</p>
-                    <p><strong>Población MEF:</strong> ${data?.comunidad?.poblacion_mef || comunidad.poblacion_mef || 'No disponible'}</p>
+                    <h4 class="font-semibold text-gray-800 mb-2">${comunidad.nombre}</h4>
+                    <div class="space-y-1 text-sm text-gray-600">
+                        <p><span class="font-medium">Código:</span> ${comunidad.codigo_comunidad}</p>
+                        <p><span class="font-medium">Población MEF:</span> ${data?.comunidad?.poblacion_mef || comunidad.poblacion_mef || 'N/D'}</p>
+                    </div>
                 </div>
                 <div>
-                    <h4>Este Año</h4>
-                    <p><strong>Total Usuarias:</strong> ${data?.resumen?.total_usuarias || 0}</p>
-                    <p><strong>Cobertura:</strong> ${data?.resumen?.porcentaje_poblacion_mef || 0}%</p>
-                    <p><strong>Meses Activos:</strong> ${data?.resumen?.meses_con_registros || 0}/12</p>
+                    <h4 class="font-semibold text-gray-800 mb-2">Este Año</h4>
+                    <div class="space-y-1 text-sm text-gray-600">
+                        <p><span class="font-medium">Total Usuarias:</span> ${data?.resumen?.total_usuarias || 0}</p>
+                        <p><span class="font-medium">Cobertura:</span> ${data?.resumen?.porcentaje_poblacion_mef || 0}%</p>
+                        <p><span class="font-medium">Meses Activos:</span> ${data?.resumen?.meses_con_registros || 0}/12</p>
+                    </div>
                 </div>
             </div>
         `;
     },
 
-    // ===== MOSTRAR INFO BÁSICA DE COMUNIDAD =====
+    // ===== MOSTRAR INFO BÁSICA =====
     mostrarInfoComunidadBasica(comunidad) {
         const infoElement = document.getElementById('info-comunidad');
         if (!infoElement) return;
 
         infoElement.innerHTML = `
-            <div>
-                <h4>${comunidad.nombre}</h4>
-                <p><strong>Código:</strong> ${comunidad.codigo_comunidad}</p>
-                <p><em>Información detallada no disponible</em></p>
+            <div class="text-sm text-gray-600">
+                <h4 class="font-semibold text-gray-800 mb-2">${comunidad.nombre}</h4>
+                <p><span class="font-medium">Código:</span> ${comunidad.codigo_comunidad}</p>
+                <p class="text-gray-500 italic mt-2">Información detallada no disponible</p>
             </div>
         `;
     },
@@ -190,68 +270,58 @@ window.AuxiliarDashboard = window.AuxiliarDashboard || {
     // ===== FUNCIONES DE UTILIDAD =====
     formatearFecha(fecha) {
         if (!fecha) return '--';
-        return new Date(fecha).toLocaleDateString('es-GT', {
-            day: '2-digit',
-            month: '2-digit',
-            year: 'numeric'
-        });
-    },
-
-    formatearFechaRelativa(fecha) {
-        const ahora = new Date();
-        const diff = ahora - fecha;
-        const dias = Math.floor(diff / (1000 * 60 * 60 * 24));
+        const date = new Date(fecha);
+        const hoy = new Date();
         
-        if (dias === 0) return 'Hoy';
-        if (dias === 1) return 'Ayer';
-        if (dias < 7) return `Hace ${dias} días`;
-        if (dias < 30) return `Hace ${Math.floor(dias / 7)} semanas`;
-        return this.formatearFecha(fecha);
-    },
-
-    formatearEstado(estado) {
-        const estados = {
-            'registrado': 'Pendiente',
-            'validado': 'Validado',
-            'aprobado': 'Aprobado'
-        };
-        return estados[estado] || estado;
-    },
-
-    // ===== FUNCIONES DE ERROR =====
-    mostrarErrorEstadisticas() {
-        const elements = [
-            'registro-mes-estado',
-            'meta-anual-porcentaje',
-            'ultima-sincronizacion',
-            'metodos-registrados'
-        ];
-        
-        elements.forEach(id => {
-            const element = document.getElementById(id);
-            if (element) {
-                element.textContent = '--';
-                element.style.color = 'var(--mspas-text-secondary)';
-            }
-        });
-    },
-
-    // ELIMINADA: mostrarErrorRegistros()
-
-    mostrarErrorComunidad() {
-        const infoElement = document.getElementById('info-comunidad');
-        if (infoElement) {
-            infoElement.innerHTML = '<div class="error">Error cargando información de la comunidad</div>';
+        // Si es hoy
+        if (date.toDateString() === hoy.toDateString()) {
+            return 'Hoy';
         }
+        
+        // Si es ayer
+        const ayer = new Date(hoy);
+        ayer.setDate(ayer.getDate() - 1);
+        if (date.toDateString() === ayer.toDateString()) {
+            return 'Ayer';
+        }
+        
+        // Formato normal
+        return date.toLocaleDateString('es-GT', {
+            day: '2-digit',
+            month: 'short'
+        });
     },
 
+    obtenerBadgeEstado(estado) {
+        const badges = {
+            'registrado': '<span class="px-2 py-0.5 bg-yellow-100 text-yellow-800 rounded text-xs">Pendiente</span>',
+            'validado': '<span class="px-2 py-0.5 bg-green-100 text-green-800 rounded text-xs">Validado</span>',
+            'rechazado': '<span class="px-2 py-0.5 bg-red-100 text-red-800 rounded text-xs">Rechazado</span>'
+        };
+        return badges[estado] || '';
+    },
+
+    // ===== MENSAJES DE ERROR =====
     mostrarSinComunidades() {
         const infoElement = document.getElementById('info-comunidad');
         if (infoElement) {
             infoElement.innerHTML = `
-                <div style="text-align: center; padding: 2rem;">
-                    <h4>Sin Comunidades Asignadas</h4>
-                    <p>Contacta a tu supervisor para que te asigne comunidades.</p>
+                <div class="text-center py-4 text-gray-500">
+                    <p class="text-2xl mb-2">📍</p>
+                    <p>Sin comunidades asignadas</p>
+                    <p class="text-sm mt-1">Contacta a tu supervisor</p>
+                </div>
+            `;
+        }
+    },
+
+    mostrarErrorComunidad() {
+        const infoElement = document.getElementById('info-comunidad');
+        if (infoElement) {
+            infoElement.innerHTML = `
+                <div class="text-center py-4 text-red-600">
+                    <p class="text-2xl mb-2">⚠️</p>
+                    <p>Error cargando información</p>
                 </div>
             `;
         }
