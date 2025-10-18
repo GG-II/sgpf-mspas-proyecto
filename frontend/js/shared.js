@@ -1,7 +1,7 @@
 // ===== js/shared.js - FUNCIONES COMUNES Y API CALLS =====
 const SGPF = {
     // Configuración base
-    API_BASE: 'http://localhost:5000/api',
+    API_BASE: window.SGPFConfig.getApiUrl(),
     
     // Estado global de la aplicación
     state: {
@@ -13,7 +13,7 @@ const SGPF = {
 
     // ===== API CALLS =====
     async apiCall(endpoint, options = {}) {
-        const token = localStorage.getItem('authToken');
+        const token = localStorage.getItem(window.SGPFConfig.TOKEN_KEY);
         
         const config = {
             headers: {
@@ -25,7 +25,7 @@ const SGPF = {
 
         try {
             console.log(`🌐 API Call: ${config.method || 'GET'} ${endpoint}`);
-            const response = await fetch(`${this.API_BASE}${endpoint}`, config);
+            const response = await fetch(window.SGPFConfig.getEndpoint(endpoint), config);
             const data = await response.json();
             
             if (!response.ok) {

@@ -1,5 +1,7 @@
-// ===== CONFIGURACIÓN COMPLETA DE BASE DE DATOS =====
-// Con datos reales del MSPAS Huehuetenango - Centro Norte
+// ===== CONFIGURACIÓN COMPLETA DE BASE DE DATOS V2.0 =====
+// Sistema Individual: Usuarias + Visitas (no agregado)
+// 45 comunidades correctas en 9 territorios
+// SGPF-MSPAS Huehuetenango
 
 const sqlite3 = require("sqlite3").verbose();
 const bcrypt = require("bcryptjs");
@@ -13,7 +15,8 @@ class DatabaseSetup {
   }
 
   init() {
-    console.log("🗄️ Configurando base de datos completa SGPF-MSPAS...");
+    console.log("🗄️ Configurando base de datos SGPF-MSPAS V2.0...");
+    console.log("📋 CAMBIO PRINCIPAL: Sistema de usuarias individuales");
 
     this.db = new sqlite3.Database(this.dbPath, (err) => {
       if (err) {
@@ -27,201 +30,248 @@ class DatabaseSetup {
   }
 
   createAllTables() {
-    console.log("📋 Creando estructura completa de tablas...");
+    console.log("📋 Creando estructura completa de tablas V2.0...");
 
     // ===== TABLA DE DEPARTAMENTOS =====
     const departamentosTable = `
-            CREATE TABLE IF NOT EXISTS departamentos (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                nombre TEXT NOT NULL,
-                codigo_ine TEXT UNIQUE,
-                activo BOOLEAN DEFAULT 1,
-                created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-            )
-        `;
+      CREATE TABLE IF NOT EXISTS departamentos (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        nombre TEXT NOT NULL,
+        codigo_ine TEXT UNIQUE,
+        activo BOOLEAN DEFAULT 1,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      )
+    `;
 
     // ===== TABLA DE MUNICIPIOS =====
     const municipiosTable = `
-            CREATE TABLE IF NOT EXISTS municipios (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                departamento_id INTEGER NOT NULL,
-                nombre TEXT NOT NULL,
-                codigo_ine TEXT UNIQUE,
-                activo BOOLEAN DEFAULT 1,
-                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-                FOREIGN KEY (departamento_id) REFERENCES departamentos (id)
-            )
-        `;
+      CREATE TABLE IF NOT EXISTS municipios (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        departamento_id INTEGER NOT NULL,
+        nombre TEXT NOT NULL,
+        codigo_ine TEXT UNIQUE,
+        activo BOOLEAN DEFAULT 1,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (departamento_id) REFERENCES departamentos (id)
+      )
+    `;
 
     // ===== TABLA DE DISTRITOS DE SALUD =====
     const distritosTable = `
-            CREATE TABLE IF NOT EXISTS distritos_salud (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                municipio_id INTEGER NOT NULL,
-                nombre TEXT NOT NULL,
-                codigo TEXT UNIQUE,
-                direccion TEXT,
-                telefono TEXT,
-                activo BOOLEAN DEFAULT 1,
-                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-                FOREIGN KEY (municipio_id) REFERENCES municipios (id)
-            )
-        `;
+      CREATE TABLE IF NOT EXISTS distritos_salud (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        municipio_id INTEGER NOT NULL,
+        nombre TEXT NOT NULL,
+        codigo TEXT UNIQUE,
+        direccion TEXT,
+        telefono TEXT,
+        activo BOOLEAN DEFAULT 1,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (municipio_id) REFERENCES municipios (id)
+      )
+    `;
 
-    // ===== TABLA DE TERRITORIOS =====
+    // ===== TABLA DE TERRITORIOS (9 TERRITORIOS NUEVOS) =====
     const territoriosTable = `
-            CREATE TABLE IF NOT EXISTS territorios (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                distrito_id INTEGER NOT NULL,
-                nombre TEXT NOT NULL,
-                codigo TEXT UNIQUE,
-                descripcion TEXT,
-                activo BOOLEAN DEFAULT 1,
-                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-                FOREIGN KEY (distrito_id) REFERENCES distritos_salud (id)
-            )
-        `;
+      CREATE TABLE IF NOT EXISTS territorios (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        distrito_id INTEGER NOT NULL,
+        nombre TEXT NOT NULL,
+        codigo TEXT UNIQUE,
+        descripcion TEXT,
+        activo BOOLEAN DEFAULT 1,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (distrito_id) REFERENCES distritos_salud (id)
+      )
+    `;
 
-    // ===== TABLA DE COMUNIDADES (45 comunidades reales) =====
+    // ===== TABLA DE PUESTOS DE SALUD (NUEVO) =====
+    const puestosTable = `
+      CREATE TABLE IF NOT EXISTS puestos_salud (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        territorio_id INTEGER NOT NULL,
+        nombre TEXT NOT NULL,
+        tipo TEXT CHECK(tipo IN ('centro_salud', 'puesto_salud', 'centro_comunitario', 'sede_sector', 'sede_territorio')) NOT NULL,
+        codigo TEXT UNIQUE,
+        direccion TEXT,
+        activo BOOLEAN DEFAULT 1,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (territorio_id) REFERENCES territorios (id)
+      )
+    `;
+
+    // ===== TABLA DE COMUNIDADES (45 COMUNIDADES CORRECTAS) =====
     const comunidadesTable = `
-            CREATE TABLE IF NOT EXISTS comunidades (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                territorio_id INTEGER NOT NULL,
-                nombre TEXT NOT NULL,
-                codigo_comunidad TEXT UNIQUE,
-                latitud DECIMAL(10, 8),
-                longitud DECIMAL(11, 8),
-                poblacion_total INTEGER DEFAULT 0,
-                poblacion_mef INTEGER DEFAULT 0,
-                acceso_vehicular BOOLEAN DEFAULT 1,
-                distancia_km DECIMAL(6, 2),
-                activa BOOLEAN DEFAULT 1,
-                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-                FOREIGN KEY (territorio_id) REFERENCES territorios (id)
-            )
-        `;
+      CREATE TABLE IF NOT EXISTS comunidades (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        territorio_id INTEGER NOT NULL,
+        puesto_salud_id INTEGER,
+        nombre TEXT NOT NULL,
+        codigo_comunidad TEXT UNIQUE,
+        latitud DECIMAL(10, 8),
+        longitud DECIMAL(11, 8),
+        poblacion_total INTEGER DEFAULT 0,
+        poblacion_mef INTEGER DEFAULT 0,
+        acceso_vehicular BOOLEAN DEFAULT 1,
+        distancia_km DECIMAL(6, 2),
+        activa BOOLEAN DEFAULT 1,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (territorio_id) REFERENCES territorios (id),
+        FOREIGN KEY (puesto_salud_id) REFERENCES puestos_salud (id)
+      )
+    `;
+
+    // ===== TABLA DE USUARIAS (NUEVO - NÚCLEO DEL CAMBIO) =====
+    const usuariasTable = `
+      CREATE TABLE IF NOT EXISTS usuarias (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        dpi TEXT UNIQUE NOT NULL,
+        nombres TEXT NOT NULL,
+        apellidos TEXT NOT NULL,
+        comunidad_id INTEGER NOT NULL,
+        fecha_nacimiento DATE,
+        telefono TEXT,
+        tipo_usuaria TEXT CHECK(tipo_usuaria IN ('nueva', 'reconsulta', 'activa')) DEFAULT 'nueva',
+        fecha_primera_visita DATE NOT NULL,
+        fecha_ultima_visita DATE,
+        total_visitas INTEGER DEFAULT 1,
+        activa BOOLEAN DEFAULT 1,
+        observaciones TEXT,
+        creada_por INTEGER NOT NULL,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (comunidad_id) REFERENCES comunidades (id),
+        FOREIGN KEY (creada_por) REFERENCES usuarios (id)
+      )
+    `;
+
+    // ===== TABLA DE VISITAS (REEMPLAZA registros_mensuales) =====
+    const visitasTable = `
+      CREATE TABLE IF NOT EXISTS visitas (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        usuaria_id INTEGER NOT NULL,
+        metodo_id INTEGER NOT NULL,
+        fecha_visita DATE NOT NULL,
+        observaciones TEXT,
+        estado TEXT DEFAULT 'registrado' CHECK(estado IN ('registrado', 'validado', 'rechazado')),
+        registrado_por INTEGER NOT NULL,
+        fecha_hora_registro DATETIME DEFAULT CURRENT_TIMESTAMP,
+        validado_por INTEGER,
+        fecha_hora_validacion DATETIME,
+        observaciones_validacion TEXT,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (usuaria_id) REFERENCES usuarias (id),
+        FOREIGN KEY (metodo_id) REFERENCES metodos_planificacion (id),
+        FOREIGN KEY (registrado_por) REFERENCES usuarios (id),
+        FOREIGN KEY (validado_por) REFERENCES usuarios (id)
+      )
+    `;
 
     // ===== TABLA DE ROLES =====
     const rolesTable = `
-            CREATE TABLE IF NOT EXISTS roles (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                codigo_rol TEXT UNIQUE NOT NULL,
-                nombre TEXT NOT NULL,
-                descripcion TEXT,
-                nivel_jerarquico INTEGER NOT NULL,
-                puede_registrar BOOLEAN DEFAULT 0,
-                puede_validar BOOLEAN DEFAULT 0,
-                puede_aprobar BOOLEAN DEFAULT 0,
-                puede_generar_reportes BOOLEAN DEFAULT 0,
-                puede_administrar BOOLEAN DEFAULT 0,
-                activo BOOLEAN DEFAULT 1,
-                created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-            )
-        `;
+      CREATE TABLE IF NOT EXISTS roles (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        codigo_rol TEXT UNIQUE NOT NULL,
+        nombre TEXT NOT NULL,
+        descripcion TEXT,
+        nivel_jerarquico INTEGER NOT NULL,
+        puede_registrar BOOLEAN DEFAULT 0,
+        puede_validar BOOLEAN DEFAULT 0,
+        puede_aprobar BOOLEAN DEFAULT 0,
+        puede_generar_reportes BOOLEAN DEFAULT 0,
+        puede_administrar BOOLEAN DEFAULT 0,
+        activo BOOLEAN DEFAULT 1,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      )
+    `;
 
-    // ===== TABLA DE USUARIOS COMPLETA =====
+    // ===== TABLA DE USUARIOS DEL SISTEMA =====
     const usuariosTable = `
-            CREATE TABLE IF NOT EXISTS usuarios (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                codigo_empleado TEXT UNIQUE,
-                dpi TEXT UNIQUE,
-                nombres TEXT NOT NULL,
-                apellidos TEXT NOT NULL,
-                email TEXT UNIQUE NOT NULL,
-                telefono TEXT,
-                password_hash TEXT NOT NULL,
-                rol_id INTEGER NOT NULL,
-                territorio_id INTEGER,
-                distrito_id INTEGER,
-                cargo TEXT,
-                fecha_ingreso DATE,
-                ultimo_acceso DATETIME,
-                intentos_fallidos INTEGER DEFAULT 0,
-                bloqueado BOOLEAN DEFAULT 0,
-                debe_cambiar_password BOOLEAN DEFAULT 1,
-                activo BOOLEAN DEFAULT 1,
-                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-                updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-                FOREIGN KEY (rol_id) REFERENCES roles (id),
-                FOREIGN KEY (territorio_id) REFERENCES territorios (id),
-                FOREIGN KEY (distrito_id) REFERENCES distritos_salud (id)
-            )
-        `;
+      CREATE TABLE IF NOT EXISTS usuarios (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        codigo_empleado TEXT UNIQUE,
+        dpi TEXT UNIQUE,
+        nombres TEXT NOT NULL,
+        apellidos TEXT NOT NULL,
+        email TEXT UNIQUE NOT NULL,
+        telefono TEXT,
+        password_hash TEXT NOT NULL,
+        rol_id INTEGER NOT NULL,
+        territorio_id INTEGER,
+        distrito_id INTEGER,
+        cargo TEXT,
+        fecha_ingreso DATE,
+        ultimo_acceso DATETIME,
+        intentos_fallidos INTEGER DEFAULT 0,
+        bloqueado BOOLEAN DEFAULT 0,
+        debe_cambiar_password BOOLEAN DEFAULT 1,
+        activo BOOLEAN DEFAULT 1,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (rol_id) REFERENCES roles (id),
+        FOREIGN KEY (territorio_id) REFERENCES territorios (id),
+        FOREIGN KEY (distrito_id) REFERENCES distritos_salud (id)
+      )
+    `;
 
     // ===== TABLA DE PERMISOS POR COMUNIDAD =====
     const permisosComunidadTable = `
-            CREATE TABLE IF NOT EXISTS permisos_comunidad (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                usuario_id INTEGER NOT NULL,
-                comunidad_id INTEGER NOT NULL,
-                puede_ver BOOLEAN DEFAULT 1,
-                puede_registrar BOOLEAN DEFAULT 0,
-                puede_editar BOOLEAN DEFAULT 0,
-                fecha_asignacion DATE DEFAULT CURRENT_DATE,
-                activo BOOLEAN DEFAULT 1,
-                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-                FOREIGN KEY (usuario_id) REFERENCES usuarios (id),
-                FOREIGN KEY (comunidad_id) REFERENCES comunidades (id),
-                UNIQUE(usuario_id, comunidad_id)
-            )
-        `;
+      CREATE TABLE IF NOT EXISTS permisos_comunidad (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        usuario_id INTEGER NOT NULL,
+        comunidad_id INTEGER NOT NULL,
+        puede_ver BOOLEAN DEFAULT 1,
+        puede_registrar BOOLEAN DEFAULT 0,
+        puede_editar BOOLEAN DEFAULT 0,
+        fecha_asignacion DATE DEFAULT CURRENT_DATE,
+        activo BOOLEAN DEFAULT 1,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (usuario_id) REFERENCES usuarios (id),
+        FOREIGN KEY (comunidad_id) REFERENCES comunidades (id),
+        UNIQUE(usuario_id, comunidad_id)
+      )
+    `;
 
-    // ===== TABLA DE MÉTODOS DE PLANIFICACIÓN COMPLETA =====
+    // ===== TABLA DE MÉTODOS DE PLANIFICACIÓN =====
     const metodosTable = `
-            CREATE TABLE IF NOT EXISTS metodos_planificacion (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                codigo_metodo TEXT UNIQUE NOT NULL,
-                nombre TEXT NOT NULL,
-                nombre_corto TEXT,
-                categoria TEXT NOT NULL,
-                tipo_administracion TEXT,
-                unidad_medida TEXT DEFAULT 'unidades',
-                dias_efectividad INTEGER,
-                requiere_seguimiento BOOLEAN DEFAULT 0,
-                orden_visualizacion INTEGER DEFAULT 0,
-                activo BOOLEAN DEFAULT 1,
-                created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-            )
-        `;
+      CREATE TABLE IF NOT EXISTS metodos_planificacion (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        codigo_metodo TEXT UNIQUE NOT NULL,
+        nombre TEXT NOT NULL,
+        nombre_corto TEXT,
+        categoria TEXT NOT NULL,
+        tipo_administracion TEXT,
+        unidad_medida TEXT DEFAULT 'unidades',
+        dias_efectividad INTEGER,
+        requiere_seguimiento BOOLEAN DEFAULT 0,
+        orden_visualizacion INTEGER DEFAULT 0,
+        activo BOOLEAN DEFAULT 1,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      )
+    `;
 
-    // ===== TABLA DE CONFIGURACIÓN DE METAS =====
-    const metasTable = `
-            CREATE TABLE IF NOT EXISTS configuracion_metas_anuales (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                año INTEGER NOT NULL,
-                metodo_id INTEGER NOT NULL,
-                porcentaje_meta DECIMAL(5, 2) NOT NULL,
-                observaciones TEXT,
-                fecha_aprobacion DATE,
-                aprobado_por INTEGER,
-                activo BOOLEAN DEFAULT 1,
-                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-                FOREIGN KEY (metodo_id) REFERENCES metodos_planificacion (id),
-                FOREIGN KEY (aprobado_por) REFERENCES usuarios (id),
-                UNIQUE(año, metodo_id)
-            )
-        `;
+    // ===== TABLA DE CONFIGURACIÓN DE METAS ANUALES =====
+    const metasAnualesTable = `
+      CREATE TABLE IF NOT EXISTS configuracion_metas_anuales (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        año INTEGER NOT NULL,
+        metodo_id INTEGER NOT NULL,
+        porcentaje_meta DECIMAL(5, 2) NOT NULL,
+        observaciones TEXT,
+        fecha_aprobacion DATE,
+        aprobado_por INTEGER,
+        activo BOOLEAN DEFAULT 1,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (metodo_id) REFERENCES metodos_planificacion (id),
+        FOREIGN KEY (aprobado_por) REFERENCES usuarios (id),
+        UNIQUE(año, metodo_id)
+      )
+    `;
 
-    // ===== TABLA DE POBLACIÓN MEF =====
-    const poblacionMEFTable = `
-            CREATE TABLE IF NOT EXISTS poblacion_mef (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                comunidad_id INTEGER NOT NULL,
-                año INTEGER NOT NULL,
-                poblacion_total INTEGER NOT NULL,
-                poblacion_mef INTEGER NOT NULL,
-                fuente TEXT DEFAULT 'INE',
-                fecha_actualizacion DATE,
-                observaciones TEXT,
-                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-                FOREIGN KEY (comunidad_id) REFERENCES comunidades (id),
-                UNIQUE(comunidad_id, año)
-            )
-        `;
-
-    // ===== TABLA DE PROYECCIONES ANUALES (CORREGIDA) =====
+    // ===== TABLA DE PROYECCIONES POR COMUNIDAD =====
     const proyeccionesTable = `
-    CREATE TABLE IF NOT EXISTS proyecciones_comunidad (
+      CREATE TABLE IF NOT EXISTS proyecciones_comunidad (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         comunidad_id INTEGER NOT NULL,
         año INTEGER NOT NULL,
@@ -235,13 +285,13 @@ class DatabaseSetup {
         activo BOOLEAN DEFAULT 1,
         FOREIGN KEY (comunidad_id) REFERENCES comunidades(id),
         FOREIGN KEY (configurado_por) REFERENCES usuarios(id),
-        UNIQUE(comunidad_id, año, activo)
-    )
-`;
+        UNIQUE(comunidad_id, año)
+      )
+    `;
 
-    // ===== TABLA DE METAS POR MÉTODO POR COMUNIDAD (NUEVA) =====
+    // ===== TABLA DE METAS POR MÉTODO POR COMUNIDAD =====
     const metasMetodoComunidadTable = `
-    CREATE TABLE IF NOT EXISTS metas_metodo_comunidad (
+      CREATE TABLE IF NOT EXISTS metas_metodo_comunidad (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         proyeccion_id INTEGER NOT NULL,
         metodo_id INTEGER NOT NULL,
@@ -254,59 +304,46 @@ class DatabaseSetup {
         FOREIGN KEY (proyeccion_id) REFERENCES proyecciones_comunidad(id),
         FOREIGN KEY (metodo_id) REFERENCES metodos_planificacion(id),
         UNIQUE(proyeccion_id, metodo_id, año)
-    )
-`;
+      )
+    `;
 
-    // ===== TABLA DE PLANIFICACIÓN MENSUAL =====
-    const planificacionTable = `
-    CREATE TABLE IF NOT EXISTS planificacion_mensual (
+    // ===== TABLA DE PLANIFICACIÓN MENSUAL (para coordinadora) =====
+    const planificacionMensualTable = `
+      CREATE TABLE IF NOT EXISTS planificacion_mensual (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         meta_metodo_comunidad_id INTEGER NOT NULL,
         mes INTEGER NOT NULL CHECK(mes >= 1 AND mes <= 12),
         meta_mensual INTEGER DEFAULT 0,
         observaciones TEXT,
         fecha_creacion DATETIME DEFAULT CURRENT_TIMESTAMP,
+        creado_por INTEGER,
         activo BOOLEAN DEFAULT 1,
         FOREIGN KEY (meta_metodo_comunidad_id) REFERENCES metas_metodo_comunidad(id),
+        FOREIGN KEY (creado_por) REFERENCES usuarios(id),
         UNIQUE(meta_metodo_comunidad_id, mes)
-    )
-`;
+      )
+    `;
 
-    // ===== TABLA DE REGISTROS MENSUALES =====
-    const registrosTable = `
-            CREATE TABLE IF NOT EXISTS registros_mensuales (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                comunidad_id INTEGER NOT NULL,
-                metodo_id INTEGER NOT NULL,
-                año INTEGER NOT NULL,
-                mes INTEGER NOT NULL,
-                cantidad_administrada INTEGER NOT NULL DEFAULT 0,
-                fecha_registro DATE NOT NULL,
-                observaciones TEXT,
-                estado TEXT DEFAULT 'registrado',
-                registrado_por INTEGER NOT NULL,
-                fecha_hora_registro DATETIME DEFAULT CURRENT_TIMESTAMP,
-                validado_por INTEGER,
-                fecha_hora_validacion DATETIME,
-                observaciones_validacion TEXT,
-                aprobado_por INTEGER,
-                fecha_hora_aprobacion DATETIME,
-                observaciones_aprobacion TEXT,
-                origen_registro TEXT DEFAULT 'app',
-                uuid_local TEXT,
-                sincronizado BOOLEAN DEFAULT 1,
-                fecha_sincronizacion DATETIME,
-                version_app TEXT,
-                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-                updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-                FOREIGN KEY (comunidad_id) REFERENCES comunidades (id),
-                FOREIGN KEY (metodo_id) REFERENCES metodos_planificacion (id),
-                FOREIGN KEY (registrado_por) REFERENCES usuarios (id),
-                FOREIGN KEY (validado_por) REFERENCES usuarios (id),
-                FOREIGN KEY (aprobado_por) REFERENCES usuarios (id),
-                UNIQUE(comunidad_id, metodo_id, año, mes)
-            )
-        `;
+    // ===== TABLA HISTÓRICA (mantener registros viejos si es necesario) =====
+    const registrosHistoricosTable = `
+      CREATE TABLE IF NOT EXISTS registros_historicos (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        comunidad_id INTEGER NOT NULL,
+        metodo_id INTEGER NOT NULL,
+        año INTEGER NOT NULL,
+        mes INTEGER NOT NULL,
+        cantidad_administrada INTEGER NOT NULL DEFAULT 0,
+        fecha_registro DATE NOT NULL,
+        observaciones TEXT,
+        estado TEXT DEFAULT 'registrado',
+        registrado_por INTEGER NOT NULL,
+        migrado_desde_v1 BOOLEAN DEFAULT 1,
+        fecha_migracion DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (comunidad_id) REFERENCES comunidades (id),
+        FOREIGN KEY (metodo_id) REFERENCES metodos_planificacion (id),
+        FOREIGN KEY (registrado_por) REFERENCES usuarios (id)
+      )
+    `;
 
     // Ejecutar creación de tablas en orden
     const tables = [
@@ -314,17 +351,19 @@ class DatabaseSetup {
       { name: "municipios", sql: municipiosTable },
       { name: "distritos_salud", sql: distritosTable },
       { name: "territorios", sql: territoriosTable },
+      { name: "puestos_salud", sql: puestosTable },
       { name: "comunidades", sql: comunidadesTable },
+      { name: "usuarias", sql: usuariasTable },
       { name: "roles", sql: rolesTable },
       { name: "usuarios", sql: usuariosTable },
       { name: "permisos_comunidad", sql: permisosComunidadTable },
       { name: "metodos_planificacion", sql: metodosTable },
-      { name: "configuracion_metas_anuales", sql: metasTable },
-      { name: "poblacion_mef", sql: poblacionMEFTable },
+      { name: "configuracion_metas_anuales", sql: metasAnualesTable },
       { name: "proyecciones_comunidad", sql: proyeccionesTable },
       { name: "metas_metodo_comunidad", sql: metasMetodoComunidadTable },
-      { name: "planificacion_mensual", sql: planificacionTable },
-      { name: "registros_mensuales", sql: registrosTable },
+      { name: "planificacion_mensual", sql: planificacionMensualTable },
+      { name: "visitas", sql: visitasTable },
+      { name: "registros_historicos", sql: registrosHistoricosTable },
     ];
 
     let completedTables = 0;
@@ -348,38 +387,24 @@ class DatabaseSetup {
   }
 
   async insertCompleteData() {
-    console.log("📝 Insertando datos completos del MSPAS Huehuetenango...");
+    console.log("📝 Insertando datos completos SGPF V2.0...");
 
     try {
-      // ===== INSERTAR DATOS GEOGRÁFICOS =====
+      // ===== INSERTAR EN ORDEN =====
       await this.insertGeographicData();
-
-      // ===== INSERTAR ROLES =====
       await this.insertRoles();
-
-      // ===== INSERTAR MÉTODOS DE PLANIFICACIÓN =====
       await this.insertMethods();
-
-      // ===== INSERTAR USUARIOS CON ROLES =====
       await this.insertUsers();
-
-      // ===== INSERTAR METAS ANUALES =====
       await this.insertMetas();
 
-      // ===== INSERTAR DATOS DE POBLACIÓN =====
-      await this.insertPoblacionData();
-
-      // ===== INSERTAR REGISTROS DE EJEMPLO =====
-      await this.insertSampleRegistros();
-
-      console.log("🎉 ¡Base de datos completa configurada exitosamente!");
+      console.log("🎉 ¡Base de datos V2.0 configurada exitosamente!");
       console.log("📊 Datos insertados:");
-      console.log("   - 45 comunidades del Centro Norte");
-      console.log("   - 11 métodos de planificación familiar");
-      console.log("   - 4 roles de usuario con permisos");
-      console.log("   - 4 usuarios de prueba (1 por rol)");
-      console.log("   - Datos de población MEF 2025");
-      console.log("   - Registros de ejemplo con estados reales");
+      console.log("   - 45 comunidades correctas");
+      console.log("   - 9 territorios nuevos");
+      console.log("   - 11 métodos de planificación");
+      console.log("   - 4 roles con permisos");
+      console.log("   - 4 usuarios de prueba");
+      console.log("   - Sistema de usuarias individuales listo");
     } catch (error) {
       console.error("❌ Error insertando datos:", error);
     }
@@ -409,9 +434,9 @@ class DatabaseSetup {
                 "INSERT OR IGNORE INTO distritos_salud (municipio_id, nombre, codigo, direccion) VALUES (?, ?, ?, ?)",
                 [
                   1,
-                  "Centro de Salud Norte - Huehuetenango",
-                  "HUE-NORTE-01",
-                  "Zona 1, Huehuetenango, Guatemala",
+                  "Centro de Salud - Huehuetenango",
+                  "HUE-DS-01",
+                  "Huehuetenango, Guatemala",
                 ],
                 (err) => {
                   if (err) console.error("Error insertando distrito:", err);
@@ -426,112 +451,173 @@ class DatabaseSetup {
     });
   }
 
-  // Insertar territorios y comunidades
+  // Insertar 9 territorios y 45 comunidades correctas
   insertTerritorios(callback) {
-    console.log("🏘️ Insertando territorio y comunidades del Centro Norte...");
+    console.log("🗺️ Insertando 9 territorios y 45 comunidades...");
 
-    // Solo 1 territorio: Centro Norte
-    this.db.run(
-      "INSERT OR IGNORE INTO territorios (distrito_id, nombre, codigo, descripcion) VALUES (?, ?, ?, ?)",
-      [1, "Centro Norte", "TER-CN", "Territorio Centro Norte - Huehuetenango"],
-      (err) => {
-        if (err) console.error("Error insertando territorio:", err);
+    const territorios = [
+      {
+        id: 1,
+        nombre: "Territorio 1",
+        codigo: "T1",
+        comunidades: [
+          { nombre: "Minerva", codigo: "T1-001", mef: 1600 },
+          { nombre: "Lo de Hernández", codigo: "T1-002", mef: 1410 },
+          { nombre: "El Eucalipto", codigo: "T1-003", mef: 1700 },
+          { nombre: "Los Aguacatillos", codigo: "T1-004", mef: 1100 },
+          { nombre: "Zona 3 Calvario", codigo: "T1-005", mef: 1150 },
+        ],
+      },
+      {
+        id: 2,
+        nombre: "Territorio 2",
+        codigo: "T2",
+        comunidades: [
+          { nombre: "Carrizal I", codigo: "T2-001", mef: 1050 },
+          { nombre: "Carrizal II", codigo: "T2-002", mef: 1100 },
+          { nombre: "Calvario", codigo: "T2-003", mef: 1150 },
+          { nombre: "Buena Vista", codigo: "T2-004", mef: 130 },
+          { nombre: "Carrizal Arriba", codigo: "T2-005", mef: 1000 },
+        ],
+      },
+      {
+        id: 3,
+        nombre: "Territorio 3",
+        codigo: "T3",
+        comunidades: [
+          { nombre: "La Laguna Chinaca", codigo: "T3-001", mef: 220 },
+          { nombre: "La Laguna Ocubilá", codigo: "T3-002", mef: 180 },
+          { nombre: "Lo de Chavez", codigo: "T3-003", mef: 200 },
+          { nombre: "La Barranca Ocubilá", codigo: "T3-004", mef: 150 },
+          { nombre: "Ocubilá", codigo: "T3-005", mef: 900 },
+        ],
+      },
+      {
+        id: 4,
+        nombre: "Territorio 4",
+        codigo: "T4",
+        comunidades: [
+          { nombre: "Terrero Alto", codigo: "T4-001", mef: 1070 },
+          { nombre: "Terrero", codigo: "T4-002", mef: 1580 },
+          { nombre: "Terrero Bajo", codigo: "T4-003", mef: 1500 },
+          { nombre: "El Terrero", codigo: "T4-004", mef: 1580 },
+          { nombre: "Zona 1 Huehuetenango", codigo: "T4-005", mef: 1400 },
+        ],
+      },
+      {
+        id: 5,
+        nombre: "Territorio 5",
+        codigo: "T5",
+        comunidades: [
+          { nombre: "Chinaca", codigo: "T5-001", mef: 2312 },
+          { nombre: "Posh", codigo: "T5-002", mef: 185 },
+          { nombre: "Tojespaque", codigo: "T5-003", mef: 459 },
+          { nombre: "Llano Grande Chinaca", codigo: "T5-004", mef: 404 },
+          { nombre: "El Llano Chinaca", codigo: "T5-005", mef: 380 },
+        ],
+      },
+      {
+        id: 6,
+        nombre: "Territorio 6",
+        codigo: "T6",
+        comunidades: [
+          { nombre: "San Lorenzo", codigo: "T6-001", mef: 1500 },
+          { nombre: "Ojechejel", codigo: "T6-002", mef: 460 },
+          { nombre: "Tojocaz", codigo: "T6-003", mef: 500 },
+          { nombre: "Chilojá", codigo: "T6-004", mef: 300 },
+          { nombre: "Monte Verde", codigo: "T6-005", mef: 1350 },
+          { nombre: "Jumaj", codigo: "T6-006", mef: 1200 },
+        ],
+      },
+      {
+        id: 7,
+        nombre: "Territorio 7",
+        codigo: "T7",
+        comunidades: [
+          { nombre: "El Llano Ocubilá", codigo: "T7-001", mef: 350 },
+          { nombre: "La Barranca Ocubilá", codigo: "T7-002", mef: 150 },
+          { nombre: "Ocubilá Cabecera", codigo: "T7-003", mef: 900 },
+          { nombre: "Centro de Salud", codigo: "T7-004", mef: 1400 },
+          { nombre: "Lo de Chavez", codigo: "T7-005", mef: 200 },
+        ],
+      },
+      {
+        id: 8,
+        nombre: "Territorio 8",
+        codigo: "T8",
+        comunidades: [
+          { nombre: "Xetenam", codigo: "T8-001", mef: 338 },
+          { nombre: "La Barranca Xétenam", codigo: "T8-002", mef: 90 },
+          { nombre: "Buena Vista Sur", codigo: "T8-003", mef: 130 },
+          { nombre: "Chiquilabaj", codigo: "T8-004", mef: 85 },
+          { nombre: "Suruj", codigo: "T8-005", mef: 415 },
+          { nombre: "Cancelaj", codigo: "T8-006", mef: 385 },
+        ],
+      },
+      {
+        id: 9,
+        nombre: "Territorio 9 - Quiché",
+        codigo: "T9",
+        comunidades: [
+          { nombre: "Llano Grande La Estancia", codigo: "T9-001", mef: 334 },
+          { nombre: "Las Pilas", codigo: "T9-002", mef: 100 },
+          { nombre: "El Valle", codigo: "T9-003", mef: 200 },
+          { nombre: "El Orégano", codigo: "T9-004", mef: 185 },
+          { nombre: "Río Negro", codigo: "T9-005", mef: 155 },
+          { nombre: "Las Florecitas", codigo: "T9-006", mef: 100 },
+          { nombre: "La Estancia", codigo: "T9-007", mef: 270 },
+          { nombre: "Sucuj", codigo: "T9-008", mef: 124 },
+        ],
+      },
+    ];
 
-        // Las 45 comunidades reales del Excel con su población MEF
-        const comunidades = [
-          { nombre: "Centro de Salud", codigo: "CN-001", poblacion_mef: 1400 },
-          { nombre: "Minerva", codigo: "CN-002", poblacion_mef: 1600 },
-          { nombre: "Los Aguacatillos", codigo: "CN-003", poblacion_mef: 1100 },
-          { nombre: "Carrizal II", codigo: "CN-004", poblacion_mef: 1100 },
-          { nombre: "Carrizal I", codigo: "CN-005", poblacion_mef: 1050 },
-          { nombre: "Zona 3 Calvario", codigo: "CN-006", poblacion_mef: 1150 },
-          { nombre: "Carrizal Arriba", codigo: "CN-007", poblacion_mef: 1000 },
-          { nombre: "Lo De Hernández", codigo: "CN-008", poblacion_mef: 1410 },
-          { nombre: "El Eucalipto", codigo: "CN-009", poblacion_mef: 1700 },
-          { nombre: "Brasilia", codigo: "CN-010", poblacion_mef: 900 },
-          { nombre: "Terrero", codigo: "CN-011", poblacion_mef: 1580 },
-          { nombre: "Terrero Bajo", codigo: "CN-012", poblacion_mef: 1500 },
-          { nombre: "Terrero Alto", codigo: "CN-013", poblacion_mef: 1070 },
-          { nombre: "Chinaca", codigo: "CN-014", poblacion_mef: 2312 },
-          { nombre: "Tojespaque", codigo: "CN-015", poblacion_mef: 459 },
-          { nombre: "Posh", codigo: "CN-016", poblacion_mef: 185 },
-          {
-            nombre: "Llano Grande Chinaca",
-            codigo: "CN-017",
-            poblacion_mef: 404,
-          },
-          { nombre: "San Lorenzo", codigo: "CN-018", poblacion_mef: 1500 },
-          { nombre: "Ojechejel", codigo: "CN-019", poblacion_mef: 460 },
-          { nombre: "Tojocaz", codigo: "CN-020", poblacion_mef: 500 },
-          { nombre: "Chilojá", codigo: "CN-021", poblacion_mef: 300 },
-          { nombre: "Jumaj", codigo: "CN-022", poblacion_mef: 1200 },
-          { nombre: "Monte Verde", codigo: "CN-023", poblacion_mef: 1350 },
-          { nombre: "Ocubilá", codigo: "CN-024", poblacion_mef: 900 },
-          {
-            nombre: "La Barranca Ocubilá",
-            codigo: "CN-025",
-            poblacion_mef: 150,
-          },
-          { nombre: "Lo De Chavez", codigo: "CN-026", poblacion_mef: 200 },
-          { nombre: "LA Laguna Chinaca", codigo: "CN-027", poblacion_mef: 220 },
-          { nombre: "La Laguna Ocubilá", codigo: "CN-028", poblacion_mef: 180 },
-          { nombre: "EL Llano Chinaca", codigo: "CN-029", poblacion_mef: 380 },
-          { nombre: "El Llano Ocubilá", codigo: "CN-030", poblacion_mef: 350 },
-          { nombre: "Xetenam", codigo: "CN-031", poblacion_mef: 338 },
-          {
-            nombre: "La Barranca Xétenam",
-            codigo: "CN-032",
-            poblacion_mef: 90,
-          },
-          { nombre: "Buena Vista", codigo: "CN-033", poblacion_mef: 130 },
-          { nombre: "Chiquilabaj", codigo: "CN-034", poblacion_mef: 85 },
-          { nombre: "Suruj", codigo: "CN-035", poblacion_mef: 415 },
-          { nombre: "Cancelaj", codigo: "CN-036", poblacion_mef: 385 },
-          { nombre: "Guisquivac", codigo: "CN-037", poblacion_mef: 58 },
-          {
-            nombre: "Llano Grande la Estancia",
-            codigo: "CN-038",
-            poblacion_mef: 334,
-          },
-          { nombre: "Las Pilas", codigo: "CN-039", poblacion_mef: 100 },
-          { nombre: "El Valle", codigo: "CN-040", poblacion_mef: 200 },
-          { nombre: "El Oregano", codigo: "CN-041", poblacion_mef: 185 },
-          { nombre: "Río Negro", codigo: "CN-042", poblacion_mef: 155 },
-          { nombre: "Las Florecitas", codigo: "CN-043", poblacion_mef: 100 },
-          { nombre: "La Estancia", codigo: "CN-044", poblacion_mef: 270 },
-          { nombre: "Sucuj", codigo: "CN-045", poblacion_mef: 124 },
-        ];
-
-        let insertedCom = 0;
-        comunidades.forEach((comunidad) => {
-          this.db.run(
-            `INSERT OR IGNORE INTO comunidades 
-                        (territorio_id, nombre, codigo_comunidad, poblacion_mef, poblacion_total) 
-                        VALUES (?, ?, ?, ?, ?)`,
-            [
-              1, // Territorio Centro Norte
-              comunidad.nombre,
-              comunidad.codigo,
-              comunidad.poblacion_mef,
-              Math.floor(comunidad.poblacion_mef * 4.2), // Estimación población total
-            ],
-            (err) => {
-              if (err)
-                console.error(
-                  `Error insertando comunidad ${comunidad.nombre}:`,
-                  err
-                );
-
-              insertedCom++;
-              if (insertedCom === comunidades.length) {
-                console.log(`✅ ${comunidades.length} comunidades insertadas`);
-                callback();
-              }
-            }
-          );
-        });
-      }
+    let insertedTerr = 0;
+    let insertedCom = 0;
+    let totalComunidades = territorios.reduce(
+      (sum, t) => sum + t.comunidades.length,
+      0
     );
+
+    territorios.forEach((territorio) => {
+      this.db.run(
+        "INSERT OR IGNORE INTO territorios (distrito_id, nombre, codigo, descripcion) VALUES (?, ?, ?, ?)",
+        [1, territorio.nombre, territorio.codigo, `${territorio.nombre}`],
+        (err) => {
+          if (err)
+            console.error(`Error insertando territorio ${territorio.nombre}:`, err);
+
+          insertedTerr++;
+
+          // Insertar comunidades del territorio
+          territorio.comunidades.forEach((com) => {
+            this.db.run(
+              `INSERT OR IGNORE INTO comunidades 
+               (territorio_id, nombre, codigo_comunidad, poblacion_mef, poblacion_total) 
+               VALUES (?, ?, ?, ?, ?)`,
+              [
+                territorio.id,
+                com.nombre,
+                com.codigo,
+                com.mef,
+                Math.floor(com.mef * 4.2),
+              ],
+              (err) => {
+                if (err)
+                  console.error(`Error insertando comunidad ${com.nombre}:`, err);
+
+                insertedCom++;
+                if (insertedCom === totalComunidades) {
+                  console.log(
+                    `✅ ${insertedTerr} territorios y ${insertedCom} comunidades insertadas`
+                  );
+                  callback();
+                }
+              }
+            );
+          });
+        }
+      );
+    });
   }
 
   // Insertar roles del sistema
@@ -543,8 +629,7 @@ class DatabaseSetup {
         {
           codigo: "auxiliar_enfermeria",
           nombre: "Auxiliar de Enfermería",
-          descripcion:
-            "Personal de campo responsable del registro directo de datos",
+          descripcion: "Personal de campo - registro directo",
           nivel: 1,
           registrar: 1,
           validar: 0,
@@ -554,8 +639,8 @@ class DatabaseSetup {
         },
         {
           codigo: "asistente_tecnico",
-          nombre: "Asistente Técnico de Territorio",
-          descripcion: "Supervisores territoriales encargados de validación",
+          nombre: "Asistente Técnico",
+          descripcion: "Supervisores territoriales - validación",
           nivel: 2,
           registrar: 1,
           validar: 1,
@@ -565,8 +650,8 @@ class DatabaseSetup {
         },
         {
           codigo: "encargado_sr",
-          nombre: "Encargado de Salud Reproductiva",
-          descripcion: "Coordinadores con acceso completo al sistema",
+          nombre: "Encargado SR",
+          descripcion: "Coordinadores con acceso completo",
           nivel: 3,
           registrar: 1,
           validar: 1,
@@ -577,7 +662,7 @@ class DatabaseSetup {
         {
           codigo: "coordinador_municipal",
           nombre: "Coordinador Municipal",
-          descripcion: "Personal ejecutivo con vista estratégica",
+          descripcion: "Personal ejecutivo - vista estratégica",
           nivel: 4,
           registrar: 0,
           validar: 0,
@@ -591,8 +676,8 @@ class DatabaseSetup {
       roles.forEach((rol) => {
         this.db.run(
           `INSERT OR IGNORE INTO roles 
-                    (codigo_rol, nombre, descripcion, nivel_jerarquico, puede_registrar, puede_validar, puede_aprobar, puede_generar_reportes, puede_administrar) 
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+           (codigo_rol, nombre, descripcion, nivel_jerarquico, puede_registrar, puede_validar, puede_aprobar, puede_generar_reportes, puede_administrar) 
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
           [
             rol.codigo,
             rol.nombre,
@@ -729,8 +814,8 @@ class DatabaseSetup {
       metodos.forEach((metodo) => {
         this.db.run(
           `INSERT OR IGNORE INTO metodos_planificacion 
-                    (codigo_metodo, nombre, nombre_corto, categoria, tipo_administracion, dias_efectividad, orden_visualizacion) 
-                    VALUES (?, ?, ?, ?, ?, ?, ?)`,
+           (codigo_metodo, nombre, nombre_corto, categoria, tipo_administracion, dias_efectividad, orden_visualizacion) 
+           VALUES (?, ?, ?, ?, ?, ?, ?)`,
           [
             metodo.codigo,
             metodo.nombre,
@@ -760,17 +845,15 @@ class DatabaseSetup {
     return new Promise(async (resolve) => {
       console.log("👤 Insertando usuarios del sistema...");
 
-      // Hashear contraseñas de manera asíncrona
       const hashPassword = async (password) => {
         return await bcrypt.hash(password, 10);
       };
 
       const usuarios = [
-        // ===== COORDINADOR MUNICIPAL =====
         {
           codigo: "COORD001",
           dpi: "1801199010101",
-          nombres: "Dr. María Elena",
+          nombres: "Dra. María Elena",
           apellidos: "González Morales",
           email: "admin@mspas.gob.gt",
           telefono: "78901234",
@@ -780,8 +863,6 @@ class DatabaseSetup {
           territorio: null,
           distrito: 1,
         },
-
-        // ===== ENCARGADO DE SALUD REPRODUCTIVA =====
         {
           codigo: "ENC001",
           dpi: "1801199020202",
@@ -795,8 +876,6 @@ class DatabaseSetup {
           territorio: null,
           distrito: 1,
         },
-
-        // ===== ASISTENTE TÉCNICO =====
         {
           codigo: "ASIST001",
           dpi: "1801199040404",
@@ -806,12 +885,10 @@ class DatabaseSetup {
           telefono: "78904567",
           password: "123456",
           rol: "asistente_tecnico",
-          cargo: "Asistente Técnico Centro Norte",
+          cargo: "Asistente Técnico Territorio 1",
           territorio: 1,
           distrito: 1,
         },
-
-        // ===== AUXILIAR DE ENFERMERÍA =====
         {
           codigo: "AUX001",
           dpi: "1801199101010",
@@ -833,7 +910,6 @@ class DatabaseSetup {
         try {
           const hashedPassword = await hashPassword(usuario.password);
 
-          // Obtener el ID del rol
           this.db.get(
             "SELECT id FROM roles WHERE codigo_rol = ?",
             [usuario.rol],
@@ -850,8 +926,8 @@ class DatabaseSetup {
 
               this.db.run(
                 `INSERT OR IGNORE INTO usuarios 
-                            (codigo_empleado, dpi, nombres, apellidos, email, telefono, password_hash, rol_id, cargo, territorio_id, distrito_id, fecha_ingreso) 
-                            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                 (codigo_empleado, dpi, nombres, apellidos, email, telefono, password_hash, rol_id, cargo, territorio_id, distrito_id, fecha_ingreso) 
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
                 [
                   usuario.codigo,
                   usuario.dpi,
@@ -900,9 +976,9 @@ class DatabaseSetup {
   // Asignar permisos de comunidades a auxiliares
   assignCommunityPermissions() {
     return new Promise((resolve) => {
-      console.log("🔑 Asignando permisos de comunidades...");
+      console.log("🔐 Asignando permisos de comunidades...");
 
-      // El auxiliar tiene permisos en todas las comunidades del Centro Norte
+      // El auxiliar tiene permisos en todas las comunidades del Territorio 1
       const assignmentQuery = `
         INSERT OR IGNORE INTO permisos_comunidad (usuario_id, comunidad_id, puede_registrar) 
         SELECT u.id, c.id, 1 
@@ -926,17 +1002,17 @@ class DatabaseSetup {
       console.log("🎯 Insertando metas anuales 2025...");
 
       const metas2025 = [
-        { metodo_id: 1, porcentaje: 10.0 }, // Inyección mensual
-        { metodo_id: 2, porcentaje: 10.0 }, // Inyección bimensual
-        { metodo_id: 3, porcentaje: 45.0 }, // Inyección trimestral (principal)
-        { metodo_id: 4, porcentaje: 12.0 }, // Píldora
-        { metodo_id: 5, porcentaje: 2.0 }, // DIU
-        { metodo_id: 6, porcentaje: 8.0 }, // Implante
-        { metodo_id: 7, porcentaje: 6.0 }, // Condón
-        { metodo_id: 8, porcentaje: 1.0 }, // Collar
-        { metodo_id: 9, porcentaje: 5.5 }, // MELA
-        { metodo_id: 10, porcentaje: 0.25 }, // AQV Femenina
-        { metodo_id: 11, porcentaje: 0.25 }, // AQV Masculina
+        { metodo_id: 1, porcentaje: 10.0 },
+        { metodo_id: 2, porcentaje: 10.0 },
+        { metodo_id: 3, porcentaje: 45.0 },
+        { metodo_id: 4, porcentaje: 12.0 },
+        { metodo_id: 5, porcentaje: 2.0 },
+        { metodo_id: 6, porcentaje: 8.0 },
+        { metodo_id: 7, porcentaje: 6.0 },
+        { metodo_id: 8, porcentaje: 1.0 },
+        { metodo_id: 9, porcentaje: 5.5 },
+        { metodo_id: 10, porcentaje: 0.25 },
+        { metodo_id: 11, porcentaje: 0.25 },
       ];
 
       let inserted = 0;
@@ -950,7 +1026,7 @@ class DatabaseSetup {
             inserted++;
             if (inserted === metas2025.length) {
               console.log("✅ Metas anuales 2025 insertadas");
-              resolve();
+              this.insertProyecciones().then(() => resolve());
             }
           }
         );
@@ -958,14 +1034,13 @@ class DatabaseSetup {
     });
   }
 
-  // Insertar datos de población MEF
-  insertPoblacionData() {
+  // Insertar proyecciones para todas las comunidades
+  insertProyecciones() {
     return new Promise((resolve) => {
-      console.log("👥 Insertando datos de población MEF 2025...");
+      console.log("📊 Calculando proyecciones para comunidades...");
 
-      // Generar datos de población MEF para cada comunidad
       this.db.all(
-        "SELECT id, poblacion_mef, poblacion_total FROM comunidades",
+        "SELECT id, poblacion_mef FROM comunidades",
         (err, comunidades) => {
           if (err) {
             console.error("Error obteniendo comunidades:", err);
@@ -975,23 +1050,20 @@ class DatabaseSetup {
 
           let inserted = 0;
           comunidades.forEach((comunidad) => {
+            // NO insertar proyeccion_anual - es columna generada automáticamente
+            // SQLite la calcula: (poblacion_mef * 0.35) - 70
+
             this.db.run(
-              "INSERT OR IGNORE INTO poblacion_mef (comunidad_id, año, poblacion_total, poblacion_mef, fuente, fecha_actualizacion) VALUES (?, ?, ?, ?, ?, ?)",
-              [
-                comunidad.id,
-                2025,
-                comunidad.poblacion_total,
-                comunidad.poblacion_mef,
-                "Excel Centro Norte 2025",
-                "2025-01-01",
-              ],
+              "INSERT OR IGNORE INTO proyecciones_comunidad (comunidad_id, año, poblacion_mef, configurado_por) VALUES (?, ?, ?, ?)",
+              [comunidad.id, 2025, comunidad.poblacion_mef, 1],
               (err) => {
-                if (err) console.error("Error insertando población MEF:", err);
+                if (err)
+                  console.error("Error insertando proyección:", err);
 
                 inserted++;
                 if (inserted === comunidades.length) {
                   console.log(
-                    `✅ Datos de población MEF insertados para ${comunidades.length} comunidades`
+                    `✅ Proyecciones calculadas para ${comunidades.length} comunidades`
                   );
                   resolve();
                 }
@@ -1000,86 +1072,6 @@ class DatabaseSetup {
           });
         }
       );
-    });
-  }
-
-  // Insertar registros de ejemplo con datos realistas
-  insertSampleRegistros() {
-    return new Promise((resolve) => {
-      console.log("📊 Insertando registros de ejemplo...");
-
-      // Generar registros realistas para enero-septiembre 2025
-      const registrosEjemplo = [];
-
-      // Para algunas comunidades, generar registros de ejemplo
-      for (let comunidadId = 1; comunidadId <= 10; comunidadId++) {
-        for (let mes = 1; mes <= 9; mes++) {
-          // Registros más frecuentes para inyección trimestral
-          if (Math.random() > 0.3) {
-            registrosEjemplo.push({
-              comunidad_id: comunidadId,
-              metodo_id: 3, // Inyección trimestral
-              año: 2025,
-              mes: mes,
-              cantidad: Math.floor(Math.random() * 25) + 5, // 5-30 usuarias
-              estado: ["registrado", "validado"][Math.floor(Math.random() * 2)],
-              registrado_por: 4, // ID del auxiliar
-            });
-          }
-
-          // Algunos registros de otros métodos
-          if (Math.random() > 0.7) {
-            registrosEjemplo.push({
-              comunidad_id: comunidadId,
-              metodo_id: Math.floor(Math.random() * 11) + 1,
-              año: 2025,
-              mes: mes,
-              cantidad: Math.floor(Math.random() * 15) + 1,
-              estado: ["registrado", "validado"][Math.floor(Math.random() * 2)],
-              registrado_por: 4,
-            });
-          }
-        }
-      }
-
-      let inserted = 0;
-      if (registrosEjemplo.length === 0) {
-        console.log("✅ No se generaron registros de ejemplo");
-        resolve();
-        return;
-      }
-
-      registrosEjemplo.forEach((registro) => {
-        this.db.run(
-          `INSERT OR IGNORE INTO registros_mensuales 
-                    (comunidad_id, metodo_id, año, mes, cantidad_administrada, fecha_registro, estado, registrado_por, fecha_hora_registro) 
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-          [
-            registro.comunidad_id,
-            registro.metodo_id,
-            registro.año,
-            registro.mes,
-            registro.cantidad,
-            `2025-${registro.mes.toString().padStart(2, "0")}-15`,
-            registro.estado,
-            registro.registrado_por,
-            `2025-${registro.mes.toString().padStart(2, "0")}-15 10:00:00`,
-          ],
-          (err) => {
-            if (err && !err.message.includes("UNIQUE constraint")) {
-              console.error("Error insertando registro:", err);
-            }
-
-            inserted++;
-            if (inserted === registrosEjemplo.length) {
-              console.log(
-                `✅ ${registrosEjemplo.length} registros de ejemplo insertados`
-              );
-              resolve();
-            }
-          }
-        );
-      });
     });
   }
 
@@ -1105,11 +1097,30 @@ module.exports = DatabaseSetup;
 // Si se ejecuta directamente
 if (require.main === module) {
   const setup = new DatabaseSetup();
-  console.log("\n🚀 Configuración completada!");
-  console.log("\n📝 USUARIOS DE PRUEBA:");
-  console.log("====================");
-  console.log("Coordinador: admin@mspas.gob.gt / 123456");
-  console.log("Encargado SR: encargado@mspas.gob.gt / 123456");
-  console.log("Asistente: asist01@mspas.gob.gt / 123456");
-  console.log("Auxiliar: aux01@mspas.gob.gt / 123456");
+  
+  setTimeout(() => {
+    console.log("\n🚀 Configuración V2.0 completada!");
+    console.log("\n📋 CAMBIOS PRINCIPALES:");
+    console.log("====================");
+    console.log("✅ 45 comunidades correctas en 9 territorios");
+    console.log("✅ Sistema de usuarias individuales (tabla usuarias)");
+    console.log("✅ Sistema de visitas 1 a 1 (reemplaza registros agregados)");
+    console.log("✅ Tipos de usuaria: nueva/reconsulta/activa");
+    console.log("✅ Proyecciones calculadas automáticamente");
+    console.log("✅ Base para planificación mensual");
+    
+    console.log("\n🔑 USUARIOS DE PRUEBA:");
+    console.log("====================");
+    console.log("Coordinador: admin@mspas.gob.gt / 123456");
+    console.log("Encargado SR: encargado@mspas.gob.gt / 123456");
+    console.log("Asistente: asist01@mspas.gob.gt / 123456");
+    console.log("Auxiliar: aux01@mspas.gob.gt / 123456");
+    
+    console.log("\n📊 PRÓXIMOS PASOS:");
+    console.log("====================");
+    console.log("1. Crear endpoints para usuarias");
+    console.log("2. Crear endpoints para visitas");
+    console.log("3. Modificar dashboard para mostrar usuarias");
+    console.log("4. Crear nuevo formulario de registro");
+  }, 5000);
 }
