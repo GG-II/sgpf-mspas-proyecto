@@ -1,7 +1,8 @@
-// ===== RUTAS DE USUARIAS (PACIENTES) - NUEVO V2.0 =====
+// ===== RUTAS DE USUARIAS (PACIENTES) - V2.0 CON CONTROL DE ALCANCE =====
 const express = require('express');
 const { authenticateToken } = require('../middleware/auth');
 const { requirePermission } = require('../middleware/permissions');
+const { getComunidadesAccesibles, tieneAccesoComunidad } = require('../services/acceso');
 
 const router = express.Router();
 
@@ -20,10 +21,11 @@ const calcularTipoUsuaria = (fechaPrimeraVisita, totalVisitas) => {
 };
 
 // ===== BUSCAR USUARIA POR DPI =====
-router.get('/buscar/:dpi', authenticateToken, requirePermission('registrar'), (req, res) => {
+router.get('/buscar/:dpi', authenticateToken, requirePermission('registrar'), async (req, res) => {
     try {
         const dpi = req.params.dpi;
         const db = req.app.locals.db;
+        const user = req.user;
 
         if (!db) {
             return res.status(500).json({
@@ -47,7 +49,7 @@ router.get('/buscar/:dpi', authenticateToken, requirePermission('registrar'), (r
                 u.fecha_ultima_visita, u.total_visitas, u.activa,
                 c.id as comunidad_id, c.nombre as comunidad_nombre, 
                 c.codigo_comunidad,
-                t.nombre as territorio_nombre,
+                t.id as territorio_id, t.nombre as territorio_nombre,
                 uc.nombres || ' ' || uc.apellidos as creada_por
             FROM usuarias u
             JOIN comunidades c ON u.comunidad_id = c.id
@@ -56,9 +58,9 @@ router.get('/buscar/:dpi', authenticateToken, requirePermission('registrar'), (r
             WHERE u.dpi = ? AND u.activa = 1
         `;
 
-        db.get(query, [dpi], (err, usuaria) => {
+        db.get(query, [dpi], async (err, usuaria) => {
             if (err) {
-                console.error('Error buscando usuaria:', err);
+                console.error('❌ Error buscando usuaria:', err);
                 return res.status(500).json({
                     success: false,
                     message: 'Error buscando usuaria'
@@ -73,10 +75,22 @@ router.get('/buscar/:dpi', authenticateToken, requirePermission('registrar'), (r
                 });
             }
 
+            // ===== VALIDAR ALCANCE =====
+            const tieneAcceso = await tieneAccesoComunidad(user, usuaria.comunidad_id, db);
+            
+            if (!tieneAcceso) {
+                return res.status(403).json({
+                    success: false,
+                    exists: true,
+                    sin_permisos: true,
+                    message: 'No tiene permisos para ver esta usuaria. Pertenece a una comunidad fuera de su alcance.'
+                });
+            }
+
             // Obtener historial de visitas
             const visitasQuery = `
                 SELECT 
-                    v.id, v.fecha_visita, v.observaciones,
+                    v.id, v.fecha_visita, v.observaciones, v.estado,
                     m.nombre as metodo, m.nombre_corto,
                     u.nombres || ' ' || u.apellidos as registrado_por
                 FROM visitas v
@@ -89,11 +103,11 @@ router.get('/buscar/:dpi', authenticateToken, requirePermission('registrar'), (r
 
             db.all(visitasQuery, [usuaria.id], (err, visitas) => {
                 if (err) {
-                    console.error('Error obteniendo visitas:', err);
+                    console.error('❌ Error obteniendo visitas:', err);
                     visitas = [];
                 }
 
-                console.log(`🔍 Usuaria encontrada: ${usuaria.nombres} ${usuaria.apellidos} (${dpi})`);
+                console.log(`🔍 Usuaria encontrada: ${usuaria.nombres} ${usuaria.apellidos} (${dpi}) - Territorio: ${usuaria.territorio_nombre}`);
 
                 res.json({
                     success: true,
@@ -116,10 +130,11 @@ router.get('/buscar/:dpi', authenticateToken, requirePermission('registrar'), (r
 });
 
 // ===== CREAR NUEVA USUARIA =====
-router.post('/', authenticateToken, requirePermission('registrar'), (req, res) => {
+router.post('/', authenticateToken, requirePermission('registrar'), async (req, res) => {
     try {
         const { dpi, nombres, apellidos, comunidad_id, fecha_nacimiento, telefono } = req.body;
         const db = req.app.locals.db;
+        const user = req.user;
 
         if (!db) {
             return res.status(500).json({
@@ -143,85 +158,71 @@ router.post('/', authenticateToken, requirePermission('registrar'), (req, res) =
             });
         }
 
-        // Verificar permisos del usuario en la comunidad (solo para auxiliares)
-        const verificarPermisos = (callback) => {
-            if (req.user.rol === 'auxiliar_enfermeria') {
-                const permisosQuery = `
-                    SELECT 1 FROM permisos_comunidad 
-                    WHERE usuario_id = ? AND comunidad_id = ? AND puede_registrar = 1 AND activo = 1
-                `;
+        // ===== VALIDAR ALCANCE: Usuario puede registrar en esta comunidad? =====
+        const tieneAcceso = await tieneAccesoComunidad(user, comunidad_id, db);
+        
+        if (!tieneAcceso) {
+            return res.status(403).json({
+                success: false,
+                message: 'No tiene permisos para registrar en esta comunidad. Está fuera de su alcance territorial.'
+            });
+        }
 
-                db.get(permisosQuery, [req.user.id, comunidad_id], (err, permiso) => {
-                    if (err || !permiso) {
-                        return res.status(403).json({
-                            success: false,
-                            message: 'No tienes permisos para registrar en esta comunidad'
-                        });
-                    }
-                    callback();
+        // Verificar que el DPI no exista
+        db.get('SELECT id, nombres, apellidos FROM usuarias WHERE dpi = ?', [dpi], (err, existing) => {
+            if (err) {
+                console.error('❌ Error verificando DPI:', err);
+                return res.status(500).json({
+                    success: false,
+                    message: 'Error verificando DPI'
                 });
-            } else {
-                callback();
             }
-        };
 
-        verificarPermisos(() => {
-            // Verificar que el DPI no exista
-            db.get('SELECT id FROM usuarias WHERE dpi = ?', [dpi], (err, existing) => {
+            if (existing) {
+                return res.status(400).json({
+                    success: false,
+                    message: `Ya existe una usuaria con este DPI: ${existing.nombres} ${existing.apellidos}`
+                });
+            }
+
+            // Insertar nueva usuaria
+            const insertQuery = `
+                INSERT INTO usuarias 
+                (dpi, nombres, apellidos, comunidad_id, fecha_nacimiento, telefono, 
+                 tipo_usuaria, fecha_primera_visita, fecha_ultima_visita, total_visitas, creada_por)
+                VALUES (?, ?, ?, ?, ?, ?, 'nueva', CURRENT_DATE, CURRENT_DATE, 0, ?)
+            `;
+
+            db.run(insertQuery, [
+                dpi, 
+                nombres.trim(), 
+                apellidos.trim(), 
+                comunidad_id,
+                fecha_nacimiento || null,
+                telefono || null,
+                user.id
+            ], function(err) {
                 if (err) {
-                    console.error('Error verificando DPI:', err);
+                    console.error('❌ Error creando usuaria:', err);
                     return res.status(500).json({
                         success: false,
-                        message: 'Error verificando DPI'
+                        message: 'Error guardando usuaria'
                     });
                 }
 
-                if (existing) {
-                    return res.status(400).json({
-                        success: false,
-                        message: 'Ya existe una usuaria con este DPI'
-                    });
-                }
+                console.log(`✅ Usuaria creada: ${nombres} ${apellidos} (${dpi}) por ${user.email} en comunidad ${comunidad_id}`);
 
-                // Insertar nueva usuaria
-                const insertQuery = `
-                    INSERT INTO usuarias 
-                    (dpi, nombres, apellidos, comunidad_id, fecha_nacimiento, telefono, 
-                     tipo_usuaria, fecha_primera_visita, fecha_ultima_visita, total_visitas, creada_por)
-                    VALUES (?, ?, ?, ?, ?, ?, 'nueva', CURRENT_DATE, CURRENT_DATE, 0, ?)
-                `;
-
-                db.run(insertQuery, [
-                    dpi, 
-                    nombres.trim(), 
-                    apellidos.trim(), 
-                    comunidad_id,
-                    fecha_nacimiento || null,
-                    telefono || null,
-                    req.user.id
-                ], function(err) {
-                    if (err) {
-                        console.error('Error creando usuaria:', err);
-                        return res.status(500).json({
-                            success: false,
-                            message: 'Error guardando usuaria'
-                        });
+                res.json({
+                    success: true,
+                    message: 'Usuaria registrada exitosamente',
+                    data: {
+                        id: this.lastID,
+                        dpi: dpi,
+                        nombres: nombres,
+                        apellidos: apellidos,
+                        tipo_usuaria: 'nueva',
+                        comunidad_id: comunidad_id
                     }
-
-                    console.log(`✅ Usuaria creada: ${nombres} ${apellidos} (${dpi}) por ${req.user.email}`);
-
-                    res.json({
-                        success: true,
-                        message: 'Usuaria registrada exitosamente',
-                        data: {
-                            id: this.lastID,
-                            dpi: dpi,
-                            nombres: nombres,
-                            apellidos: apellidos,
-                            tipo_usuaria: 'nueva',
-                            comunidad_id: comunidad_id
-                        }
-                    });
                 });
             });
         });
@@ -235,11 +236,12 @@ router.post('/', authenticateToken, requirePermission('registrar'), (req, res) =
     }
 });
 
-// ===== LISTAR USUARIAS (con filtros) =====
-router.get('/', authenticateToken, requirePermission('registrar'), (req, res) => {
+// ===== LISTAR USUARIAS CON FILTROS Y CONTROL DE ALCANCE =====
+router.get('/', authenticateToken, requirePermission('registrar'), async (req, res) => {
     try {
         const { limit = 20, offset = 0, comunidad_id, tipo_usuaria, buscar } = req.query;
         const db = req.app.locals.db;
+        const user = req.user;
 
         if (!db) {
             return res.status(500).json({
@@ -248,11 +250,28 @@ router.get('/', authenticateToken, requirePermission('registrar'), (req, res) =>
             });
         }
 
-        let whereClause = 'WHERE u.activa = 1';
+        // ===== OBTENER COMUNIDADES ACCESIBLES =====
+        const comunidadesAccesibles = await getComunidadesAccesibles(user, db);
+        
+        if (comunidadesAccesibles.length === 0) {
+            return res.json({
+                success: true,
+                data: {
+                    usuarias: [],
+                    total: 0,
+                    limit: parseInt(limit),
+                    offset: parseInt(offset)
+                },
+                message: 'Sin comunidades asignadas'
+            });
+        }
+
+        // ===== CONSTRUIR QUERY CON FILTROS =====
+        let whereClause = `WHERE u.activa = 1 AND u.comunidad_id IN (${comunidadesAccesibles.join(',')})`;
         let params = [];
 
-        // Filtrar por comunidad
-        if (comunidad_id) {
+        // Filtrar por comunidad específica (si está dentro del alcance)
+        if (comunidad_id && comunidadesAccesibles.includes(parseInt(comunidad_id))) {
             whereClause += ' AND u.comunidad_id = ?';
             params.push(comunidad_id);
         }
@@ -263,36 +282,24 @@ router.get('/', authenticateToken, requirePermission('registrar'), (req, res) =>
             params.push(tipo_usuaria);
         }
 
-        // Buscar por nombre o DPI
+        // Buscar por nombre, apellido o DPI
         if (buscar) {
             whereClause += ` AND (u.nombres LIKE ? OR u.apellidos LIKE ? OR u.dpi LIKE ?)`;
             const searchTerm = `%${buscar}%`;
             params.push(searchTerm, searchTerm, searchTerm);
         }
 
-        // Filtrar por permisos del usuario
-        if (req.user.rol === 'auxiliar_enfermeria') {
-            whereClause += ` AND u.comunidad_id IN (
-                SELECT pc.comunidad_id FROM permisos_comunidad pc 
-                WHERE pc.usuario_id = ? AND pc.activo = 1
-            )`;
-            params.push(req.user.id);
-        } else if (req.user.rol === 'asistente_tecnico') {
-            whereClause += ` AND c.territorio_id = ?`;
-            params.push(req.user.territorio_id);
-        }
-
         const query = `
             SELECT 
                 u.id, u.dpi, u.nombres, u.apellidos, u.tipo_usuaria,
                 u.fecha_primera_visita, u.fecha_ultima_visita, u.total_visitas,
-                c.nombre as comunidad, c.codigo_comunidad,
-                t.nombre as territorio
+                c.id as comunidad_id, c.nombre as comunidad, c.codigo_comunidad,
+                t.id as territorio_id, t.nombre as territorio
             FROM usuarias u
             JOIN comunidades c ON u.comunidad_id = c.id
             JOIN territorios t ON c.territorio_id = t.id
             ${whereClause}
-            ORDER BY u.created_at DESC
+            ORDER BY u.fecha_ultima_visita DESC, u.created_at DESC
             LIMIT ? OFFSET ?
         `;
 
@@ -300,7 +307,7 @@ router.get('/', authenticateToken, requirePermission('registrar'), (req, res) =>
 
         db.all(query, params, (err, usuarias) => {
             if (err) {
-                console.error('Error obteniendo usuarias:', err);
+                console.error('❌ Error obteniendo usuarias:', err);
                 return res.status(500).json({
                     success: false,
                     message: 'Error obteniendo usuarias'
@@ -311,19 +318,18 @@ router.get('/', authenticateToken, requirePermission('registrar'), (req, res) =>
             const countQuery = `
                 SELECT COUNT(*) as total
                 FROM usuarias u
-                JOIN comunidades c ON u.comunidad_id = c.id
                 ${whereClause}
             `;
 
-            const countParams = params.slice(0, -2);
+            const countParams = params.slice(0, -2); // Quitar limit y offset
 
             db.get(countQuery, countParams, (err, countResult) => {
                 if (err) {
-                    console.error('Error contando usuarias:', err);
+                    console.error('❌ Error contando usuarias:', err);
                     countResult = { total: 0 };
                 }
 
-                console.log(`👩‍⚕️ ${usuarias.length} usuarias obtenidas para ${req.user.email}`);
+                console.log(`👩‍⚕️ ${usuarias.length} usuarias obtenidas para ${user.email} (${user.rol}) - Alcance: ${comunidadesAccesibles.length} comunidades`);
 
                 res.json({
                     success: true,
@@ -331,7 +337,8 @@ router.get('/', authenticateToken, requirePermission('registrar'), (req, res) =>
                         usuarias: usuarias || [],
                         total: countResult.total || 0,
                         limit: parseInt(limit),
-                        offset: parseInt(offset)
+                        offset: parseInt(offset),
+                        comunidades_accesibles: comunidadesAccesibles.length
                     }
                 });
             });
@@ -347,10 +354,11 @@ router.get('/', authenticateToken, requirePermission('registrar'), (req, res) =>
 });
 
 // ===== OBTENER USUARIA ESPECÍFICA CON HISTORIAL =====
-router.get('/:id', authenticateToken, requirePermission('registrar'), (req, res) => {
+router.get('/:id', authenticateToken, requirePermission('registrar'), async (req, res) => {
     try {
         const usuariaId = req.params.id;
         const db = req.app.locals.db;
+        const user = req.user;
 
         if (!db) {
             return res.status(500).json({
@@ -362,8 +370,8 @@ router.get('/:id', authenticateToken, requirePermission('registrar'), (req, res)
         const query = `
             SELECT 
                 u.*, 
-                c.nombre as comunidad_nombre, c.codigo_comunidad,
-                t.nombre as territorio_nombre,
+                c.id as comunidad_id, c.nombre as comunidad_nombre, c.codigo_comunidad,
+                t.id as territorio_id, t.nombre as territorio_nombre,
                 uc.nombres || ' ' || uc.apellidos as creada_por
             FROM usuarias u
             JOIN comunidades c ON u.comunidad_id = c.id
@@ -372,9 +380,9 @@ router.get('/:id', authenticateToken, requirePermission('registrar'), (req, res)
             WHERE u.id = ?
         `;
 
-        db.get(query, [usuariaId], (err, usuaria) => {
+        db.get(query, [usuariaId], async (err, usuaria) => {
             if (err) {
-                console.error('Error obteniendo usuaria:', err);
+                console.error('❌ Error obteniendo usuaria:', err);
                 return res.status(500).json({
                     success: false,
                     message: 'Error obteniendo usuaria'
@@ -385,6 +393,16 @@ router.get('/:id', authenticateToken, requirePermission('registrar'), (req, res)
                 return res.status(404).json({
                     success: false,
                     message: 'Usuaria no encontrada'
+                });
+            }
+
+            // ===== VALIDAR ALCANCE =====
+            const tieneAcceso = await tieneAccesoComunidad(user, usuaria.comunidad_id, db);
+            
+            if (!tieneAcceso) {
+                return res.status(403).json({
+                    success: false,
+                    message: 'No tiene permisos para ver esta usuaria'
                 });
             }
 
@@ -404,7 +422,7 @@ router.get('/:id', authenticateToken, requirePermission('registrar'), (req, res)
 
             db.all(visitasQuery, [usuariaId], (err, visitas) => {
                 if (err) {
-                    console.error('Error obteniendo visitas:', err);
+                    console.error('❌ Error obteniendo visitas:', err);
                     visitas = [];
                 }
 
@@ -462,7 +480,7 @@ router.put('/:id/tipo', authenticateToken, (req, res) => {
                     [nuevoTipo, usuariaId],
                     (err) => {
                         if (err) {
-                            console.error('Error actualizando tipo:', err);
+                            console.error('❌ Error actualizando tipo:', err);
                             return res.status(500).json({
                                 success: false,
                                 message: 'Error actualizando tipo de usuaria'
@@ -476,7 +494,6 @@ router.put('/:id/tipo', authenticateToken, (req, res) => {
                             message: 'Tipo de usuaria actualizado',
                             data: {
                                 id: usuariaId,
-                                tipo_anterior: usuaria.tipo_usuaria,
                                 tipo_nuevo: nuevoTipo
                             }
                         });

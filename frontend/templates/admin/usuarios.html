@@ -488,12 +488,14 @@
                 </div>
 
                 <div id="usuario-territorio-group" class="form-group" style="display: none;">
-                    <label>Territorio *</label>
-                    <select id="usuario-territorio">
-                        <option value="">Seleccionar territorio...</option>
-                        <!-- Se llena dinámicamente -->
-                    </select>
-                </div>
+    <label>Territorios Asignados * <small>(puede seleccionar múltiples)</small></label>
+    <div style="max-height: 250px; overflow-y: auto; border: 1px solid #ddd; border-radius: 6px; padding: 1rem; background: #fafafa;">
+        <div id="usuario-territorios-list">
+            <!-- Se llena dinámicamente con checkboxes -->
+        </div>
+    </div>
+    <small style="color: #666; display: block; margin-top: 0.5rem;">Los asistentes técnicos pueden supervisar múltiples territorios</small>
+</div>
 
 
                 <div id="usuario-comunidades-group" class="form-group" style="display: none;">

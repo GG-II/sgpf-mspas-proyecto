@@ -233,6 +233,23 @@ class DatabaseSetup {
       )
     `;
 
+    // ===== TABLA DE ASIGNACIÓN MÚLTIPLE DE TERRITORIOS (NUEVO) =====
+const userTerritoriosTable = `
+  CREATE TABLE IF NOT EXISTS user_territorios (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    usuario_id INTEGER NOT NULL,
+    territorio_id INTEGER NOT NULL,
+    asignado_por INTEGER,
+    fecha_asignacion DATE DEFAULT CURRENT_DATE,
+    activo BOOLEAN DEFAULT 1,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (usuario_id) REFERENCES usuarios (id),
+    FOREIGN KEY (territorio_id) REFERENCES territorios (id),
+    FOREIGN KEY (asignado_por) REFERENCES usuarios (id),
+    UNIQUE(usuario_id, territorio_id)
+  )
+`;
+
     // ===== TABLA DE MÉTODOS DE PLANIFICACIÓN =====
     const metodosTable = `
       CREATE TABLE IF NOT EXISTS metodos_planificacion (
@@ -357,6 +374,7 @@ class DatabaseSetup {
       { name: "roles", sql: rolesTable },
       { name: "usuarios", sql: usuariosTable },
       { name: "permisos_comunidad", sql: permisosComunidadTable },
+      { name: "user_territorios", sql: userTerritoriosTable },
       { name: "metodos_planificacion", sql: metodosTable },
       { name: "configuracion_metas_anuales", sql: metasAnualesTable },
       { name: "proyecciones_comunidad", sql: proyeccionesTable },
@@ -996,6 +1014,56 @@ class DatabaseSetup {
     });
   }
 
+  // Asignar territorios a usuarios según su rol
+assignUserTerritorios() {
+  return new Promise((resolve) => {
+    console.log("🗺️ Asignando territorios a usuarios...");
+
+    // Asistente Técnico: asignar Territorios 1 y 2
+    const assignments = [
+      // Asistente 1 tiene acceso a T1 y T2
+      { usuario_codigo: "ASIST001", territorio_id: 1 },
+      { usuario_codigo: "ASIST001", territorio_id: 2 },
+    ];
+
+    let inserted = 0;
+
+    assignments.forEach((assignment) => {
+      this.db.get(
+        "SELECT id FROM usuarios WHERE codigo_empleado = ?",
+        [assignment.usuario_codigo],
+        (err, usuario) => {
+          if (err || !usuario) {
+            console.error(`Error obteniendo usuario ${assignment.usuario_codigo}:`, err);
+            inserted++;
+            if (inserted === assignments.length) resolve();
+            return;
+          }
+
+          this.db.run(
+            `INSERT OR IGNORE INTO user_territorios (usuario_id, territorio_id, asignado_por) 
+             VALUES (?, ?, ?)`,
+            [usuario.id, assignment.territorio_id, 1], // Asignado por coordinador (id=1)
+            (err) => {
+              if (err) {
+                console.error(`Error asignando territorio ${assignment.territorio_id}:`, err);
+              } else {
+                console.log(`✅ Usuario ${assignment.usuario_codigo} asignado a Territorio ${assignment.territorio_id}`);
+              }
+
+              inserted++;
+              if (inserted === assignments.length) {
+                console.log("✅ Asignación de territorios completada");
+                resolve();
+              }
+            }
+          );
+        }
+      );
+    });
+  });
+}
+
   // Insertar metas anuales para 2025
   insertMetas() {
     return new Promise((resolve) => {
@@ -1026,7 +1094,9 @@ class DatabaseSetup {
             inserted++;
             if (inserted === metas2025.length) {
               console.log("✅ Metas anuales 2025 insertadas");
-              this.insertProyecciones().then(() => resolve());
+              this.insertProyecciones().then(() => {
+  this.assignUserTerritorios().then(() => resolve());
+});
             }
           }
         );

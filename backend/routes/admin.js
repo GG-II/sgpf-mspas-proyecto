@@ -190,6 +190,33 @@ router.post('/usuarios', authenticateToken, requirePermission('admin'), async (r
 
                     console.log(`✅ Usuario creado: ${nombres} ${apellidos} (${rol_codigo}) por ${req.user.email}`);
 
+                    // ===== ASIGNAR TERRITORIOS SI ES ASISTENTE TÉCNICO =====
+                    if (rol_codigo === 'asistente_tecnico' && req.body.territorios_ids && Array.isArray(req.body.territorios_ids)) {
+                        const usuarioId = this.lastID;
+                        const territoriosIds = req.body.territorios_ids;
+                        
+                        console.log(`🗺️ Asignando ${territoriosIds.length} territorios al nuevo asistente...`);
+                        
+                        let insertedTerr = 0;
+                        territoriosIds.forEach(territorioId => {
+                            db.run(
+                                'INSERT INTO user_territorios (usuario_id, territorio_id, asignado_por) VALUES (?, ?, ?)',
+                                [usuarioId, territorioId, req.user.id],
+                                (err) => {
+                                    if (err) {
+                                        console.error(`❌ Error asignando territorio ${territorioId}:`, err);
+                                    }
+                                    
+                                    insertedTerr++;
+                                    if (insertedTerr === territoriosIds.length) {
+                                        console.log(`✅ ${insertedTerr} territorios asignados al asistente`);
+                                    }
+                                }
+                            );
+                        });
+                    }
+
+
                     res.json({
                         success: true,
                         message: 'Usuario creado exitosamente',
@@ -1528,5 +1555,193 @@ router.get(
     }
   }
 );
+
+// ===== VER TERRITORIOS ASIGNADOS A USUARIO =====
+router.get('/usuarios/:id/territorios', authenticateToken, requirePermission('admin'), (req, res) => {
+    try {
+        const userId = req.params.id;
+        const db = getDb(req);
+
+        const query = `
+            SELECT 
+                t.id, t.nombre, t.codigo,
+                ut.created_at as fecha_asignacion
+            FROM user_territorios ut
+            JOIN territorios t ON ut.territorio_id = t.id
+            WHERE ut.usuario_id = ? AND ut.activo = 1
+            ORDER BY t.nombre
+        `;
+
+        db.all(query, [userId], (err, territorios) => {
+            if (err) {
+                console.error('Error obteniendo territorios asignados:', err);
+                return res.status(500).json({
+                    success: false,
+                    message: 'Error obteniendo territorios asignados'
+                });
+            }
+
+            res.json({
+                success: true,
+                data: {
+                    usuario_id: userId,
+                    territorios_asignados: territorios || [],
+                    total_territorios: territorios.length
+                }
+            });
+        });
+
+    } catch (error) {
+        console.error('❌ Error obteniendo territorios asignados:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error interno del servidor'
+        });
+    }
+});
+
+// ===== ASIGNAR TERRITORIOS A USUARIO (MÚLTIPLES) =====
+router.post('/usuarios/:id/territorios', authenticateToken, requirePermission('admin'), (req, res) => {
+    try {
+        const userId = req.params.id;
+        const { territorios_ids } = req.body;
+        const db = getDb(req);
+
+        console.log(`🗺️ Asignando territorios a usuario ${userId}:`, territorios_ids);
+
+        // Validar que territorios_ids exista y sea un array
+        if (!Array.isArray(territorios_ids)) {
+            return res.status(400).json({
+                success: false,
+                message: 'Se requiere un array de IDs de territorios (territorios_ids)'
+            });
+        }
+
+        // Verificar que el usuario existe y es asistente técnico
+        db.get(`
+            SELECT u.id, u.nombres, u.apellidos, r.codigo_rol
+            FROM usuarios u
+            JOIN roles r ON u.rol_id = r.id
+            WHERE u.id = ?
+        `, [userId], (err, usuario) => {
+            if (err || !usuario) {
+                return res.status(404).json({
+                    success: false,
+                    message: 'Usuario no encontrado'
+                });
+            }
+
+            // OPCIONAL: Validar que solo asistentes técnicos tengan múltiples territorios
+            if (usuario.codigo_rol !== 'asistente_tecnico' && territorios_ids.length > 1) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Solo los asistentes técnicos pueden tener múltiples territorios'
+                });
+            }
+
+            // Permitir array vacío para deseleccionar todos
+            if (territorios_ids.length === 0) {
+                db.run('DELETE FROM user_territorios WHERE usuario_id = ?', [userId], (err) => {
+                    if (err) {
+                        console.error('Error eliminando asignaciones:', err);
+                        return res.status(500).json({
+                            success: false,
+                            message: 'Error eliminando asignaciones previas'
+                        });
+                    }
+
+                    console.log(`✅ Territorios desasignados para usuario ${userId}`);
+                    
+                    res.json({
+                        success: true,
+                        message: 'Todos los territorios fueron desasignados',
+                        data: {
+                            usuario_id: userId,
+                            territorios_asignados: 0
+                        }
+                    });
+                });
+                return;
+            }
+
+            // Eliminar asignaciones existentes
+            db.run('DELETE FROM user_territorios WHERE usuario_id = ?', [userId], (err) => {
+                if (err) {
+                    console.error('Error eliminando asignaciones existentes:', err);
+                    return res.status(500).json({
+                        success: false,
+                        message: 'Error actualizando asignaciones'
+                    });
+                }
+
+                // Insertar nuevas asignaciones
+                let insertedCount = 0;
+                let successCount = 0;
+                let errors = [];
+
+                territorios_ids.forEach(territorioId => {
+                    const idNumerico = parseInt(territorioId);
+                    
+                    if (isNaN(idNumerico)) {
+                        console.error(`❌ ID de territorio inválido: ${territorioId}`);
+                        errors.push(`ID inválido: ${territorioId}`);
+                        insertedCount++;
+                        return;
+                    }
+
+                    const insertQuery = `
+                        INSERT INTO user_territorios 
+                        (usuario_id, territorio_id, asignado_por)
+                        VALUES (?, ?, ?)
+                    `;
+
+                    db.run(insertQuery, [userId, idNumerico, req.user.id], function(err) {
+                        if (err) {
+                            console.error(`❌ Error asignando territorio ${idNumerico}:`, err);
+                            errors.push(`Error en territorio ${idNumerico}: ${err.message}`);
+                        } else {
+                            successCount++;
+                        }
+
+                        insertedCount++;
+
+                        // Cuando se hayan procesado todas
+                        if (insertedCount === territorios_ids.length) {
+                            if (errors.length > 0 && successCount === 0) {
+                                return res.status(400).json({
+                                    success: false,
+                                    message: 'Error asignando todos los territorios',
+                                    errors: errors
+                                });
+                            }
+
+                            console.log(`✅ ${successCount}/${territorios_ids.length} territorios asignados a usuario ${userId}`);
+
+                            res.json({
+                                success: true,
+                                message: `${successCount} territorio(s) asignado(s) exitosamente`,
+                                data: {
+                                    usuario_id: userId,
+                                    usuario_nombre: `${usuario.nombres} ${usuario.apellidos}`,
+                                    territorios_asignados: successCount,
+                                    errores: errors.length > 0 ? errors : undefined
+                                }
+                            });
+                        }
+                    });
+                });
+            });
+        });
+
+    } catch (error) {
+        console.error('❌ Error asignando territorios:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error interno del servidor: ' + error.message
+        });
+    }
+});
+
+
 
 module.exports = router;
