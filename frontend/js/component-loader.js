@@ -159,33 +159,42 @@ const ComponentLoader = {
 
     // Mapear vistas a templates según el rol
     switch (viewName) {
-      case "dashboard":
-        templatePath = `templates/dashboard/${role}.html`;
-        break;
-      case "registro":
-        templatePath = "templates/registro/formulario.html";
-        break;
-      case "validacion":
-        templatePath = "templates/validacion/pendientes.html";
-        break;
-      case "reportes":
-        templatePath = "templates/reportes/mensual.html";
-        break;
-      case "usuarios":
-        templatePath = "templates/admin/usuarios.html";
-        console.log(`🎯 Template path para usuarios: ${templatePath}`);
-        break;
-      case "planificacion":
-    templatePath = "templates/planificacion/configuracion.html";
-    break;
-      case "perfil":
-        templatePath = "templates/perfil/usuario.html";
-        console.log(`🎯 Template path para perfil: ${templatePath}`);
-        break;
-      default:
-        console.error(`❌ Vista no reconocida: ${viewName}`);
-        return false;
-    }
+    case "dashboard":
+      templatePath = `templates/dashboard/${role}.html`;
+      break;
+    
+    case "registro":
+      templatePath = "templates/registro/formulario.html";
+      break;
+    
+    case "registro-v2":
+      templatePath = "templates/registro/formulario-v2.html";
+      break;
+    
+    case "validacion":
+      templatePath = "templates/validacion/pendientes.html";
+      break;
+    
+    case "reportes":
+      templatePath = "templates/reportes/mensual.html";
+      break;
+    
+    case "usuarios":
+      templatePath = "templates/admin/usuarios.html";
+      break;
+    
+    case "planificacion":
+      templatePath = "templates/planificacion/configuracion.html";
+      break;
+    
+    case "perfil":
+      templatePath = "templates/perfil/usuario.html";
+      break;
+    
+    default:
+      console.error(`❌ Vista no reconocida: ${viewName}`);
+      return false;
+  }
 
     // MOSTRAR LOADING AL INICIO
     SGPF.showLoading(true);
@@ -275,6 +284,57 @@ const ComponentLoader = {
             await window.RegistroSystem.init();
           }
           break;
+
+        case "registro-v2":
+        console.log("🆕 Inicializando Registro V2");
+        
+        // Cargar script si no existe
+        if (!window.RegistroV2) {
+          console.log("📥 Cargando script registro-v2.js");
+          const script = document.createElement("script");
+          script.src = "js/registro-v2.js";
+          document.head.appendChild(script);
+
+          await new Promise((resolve, reject) => {
+            script.onload = () => {
+              console.log("✅ Script registro-v2.js cargado exitosamente");
+              resolve();
+            };
+            script.onerror = (error) => {
+              console.error("❌ Error cargando script registro-v2.js:", error);
+              reject(error);
+            };
+            setTimeout(() => {
+              console.error("⏱️ Timeout cargando script registro-v2.js");
+              reject(new Error("Timeout"));
+            }, 5000);
+          });
+        } else {
+          console.log("✅ Script RegistroV2 ya existe");
+        }
+
+        // Esperar renderizado del DOM
+        console.log("⏳ Esperando 300ms para DOM...");
+        await new Promise((resolve) => setTimeout(resolve, 300));
+
+        console.log("🔍 Verificando window.RegistroV2:", !!window.RegistroV2);
+
+        if (window.RegistroV2) {
+          console.log("🚀 EJECUTANDO RegistroV2.init()");
+          try {
+            await window.RegistroV2.init();
+            console.log("✅ RegistroV2.init() COMPLETADO EXITOSAMENTE");
+          } catch (error) {
+            console.error("❌ ERROR EN RegistroV2.init():", error);
+            throw error;
+          }
+        } else {
+          console.error("❌ RegistroV2 NO DISPONIBLE DESPUÉS DE CARGA");
+          throw new Error("RegistroV2 no se cargó correctamente");
+        }
+        
+        console.log("✅ CASO REGISTRO-V2 TERMINADO");
+        break;
 
         case "validacion":
           // Cargar script de validación si no existe

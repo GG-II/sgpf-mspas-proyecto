@@ -94,6 +94,7 @@ const dashboardRoutes = require('./routes/dashboard');
 const perfilRoutes = require('./routes/perfil');
 const usuariasRoutes = require('./routes/usuarias');
 const visitasRoutes = require('./routes/visitas');
+const comunidadesRouter = require('./routes/comunidades');
 const planificacionRoutes = require('./routes/planificacion');
 
 // Registrar rutas
@@ -106,6 +107,7 @@ app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/perfil', perfilRoutes);
 app.use('/api/usuarias', usuariasRoutes);
 app.use('/api/visitas', visitasRoutes);
+app.use('/api/comunidades', comunidadesRouter);
 app.use('/api/planificacion', planificacionRoutes);
 
 // ===== RUTAS BÁSICAS (mantener compatibilidad) =====

@@ -163,33 +163,36 @@ const SGPFApp = {
 
     // Configuración de tabs por rol
     const navigationConfig = {
-      auxiliar: [
-        { view: "dashboard", label: "Inicio", icon: "🏠" },
-        { view: "registro", label: "Registrar", icon: "📝" },
-        { view: "perfil", label: "Perfil", icon: "👤" },
-      ],
-      asistente: [
-        { view: "dashboard", label: "Dashboard", icon: "📊" },
-        { view: "validacion", label: "Validar", icon: "✅" },
-        { view: "reportes", label: "Reportes", icon: "📈" },
-        { view: "perfil", label: "Perfil", icon: "👤" },
-      ],
-      encargado: [
-        { view: "dashboard", label: "Dashboard", icon: "📊" },
-        { view: "planificacion", label: "Planificación", icon: "🎯" },
-        { view: "usuarios", label: "Usuarios", icon: "👥" }, 
-        { view: "validacion", label: "Aprobar", icon: "✅" },
-        { view: "reportes", label: "Reportes", icon: "📈" },
-        { view: "perfil", label: "Perfil", icon: "👤" },
-      ],
-      coordinador: [
-        { view: "dashboard", label: "Dashboard", icon: "📊" },
-        { view: "planificacion", label: "Planificación", icon: "🎯" },
-        { view: "usuarios", label: "Usuarios", icon: "👥" },
-        { view: "reportes", label: "Reportes", icon: "📈" },
-        { view: "perfil", label: "Configurar", icon: "⚙️" },
-      ],
-    };
+  auxiliar: [
+    { view: "dashboard", label: "Inicio", icon: "🏠" },
+    { view: "registro-v2", label: "Registrar", icon: "📝" }, // ← CAMBIO: registro → registro-v2
+    { view: "perfil", label: "Perfil", icon: "👤" },
+  ],
+  asistente: [
+    { view: "dashboard", label: "Dashboard", icon: "📊" },
+    { view: "registro-v2", label: "Registrar", icon: "📝" },
+    { view: "validacion", label: "Validar", icon: "✅" },
+    { view: "reportes", label: "Reportes", icon: "📈" },
+    { view: "perfil", label: "Perfil", icon: "👤" },
+  ],
+  encargado: [
+    { view: "dashboard", label: "Dashboard", icon: "📊" },
+    { view: "registro-v2", label: "Registrar", icon: "📝" },
+    { view: "planificacion", label: "Planificación", icon: "🎯" },
+    { view: "usuarios", label: "Usuarios", icon: "👥" }, 
+    { view: "validacion", label: "Aprobar", icon: "✅" },
+    { view: "reportes", label: "Reportes", icon: "📈" },
+    { view: "perfil", label: "Perfil", icon: "👤" },
+  ],
+  coordinador: [
+    { view: "dashboard", label: "Dashboard", icon: "📊" },
+    { view: "registro-v2", label: "Registrar", icon: "📝" },
+    { view: "planificacion", label: "Planificación", icon: "🎯" },
+    { view: "usuarios", label: "Usuarios", icon: "👥" },
+    { view: "reportes", label: "Reportes", icon: "📈" },
+    { view: "perfil", label: "Configurar", icon: "⚙️" },
+  ],
+};
 
     const tabs = navigationConfig[role] || [];
 

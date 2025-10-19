@@ -129,14 +129,22 @@ router.get('/buscar/:dpi', authenticateToken, requirePermission('registrar'), as
     }
 });
 
-// ===== CREAR NUEVA USUARIA =====
+// ===== REEMPLAZAR TODO EL ENDPOINT POST / (líneas ~140-235) =====
+
 router.post('/', authenticateToken, requirePermission('registrar'), async (req, res) => {
+    console.log('🟢🟢🟢 [POST /usuarias] EJECUTÁNDOSE');
+    console.log('🟢 Method:', req.method);
+    console.log('🟢 URL:', req.url);
+    console.log('🟢 Body:', req.body);
     try {
         const { dpi, nombres, apellidos, comunidad_id, fecha_nacimiento, telefono } = req.body;
         const db = req.app.locals.db;
         const user = req.user;
 
+        console.log('🔵 [POST USUARIA] Inicio - DPI:', dpi, 'Comunidad:', comunidad_id);
+
         if (!db) {
+            console.error('❌ [POST USUARIA] BD no disponible');
             return res.status(500).json({
                 success: false,
                 message: 'Base de datos no disponible'
@@ -145,6 +153,7 @@ router.post('/', authenticateToken, requirePermission('registrar'), async (req, 
 
         // Validaciones
         if (!dpi || !nombres || !apellidos || !comunidad_id) {
+            console.error('❌ [POST USUARIA] Faltan campos requeridos');
             return res.status(400).json({
                 success: false,
                 message: 'Campos requeridos: dpi, nombres, apellidos, comunidad_id'
@@ -152,26 +161,34 @@ router.post('/', authenticateToken, requirePermission('registrar'), async (req, 
         }
 
         if (!/^\d{13}$/.test(dpi)) {
+            console.error('❌ [POST USUARIA] DPI inválido:', dpi);
             return res.status(400).json({
                 success: false,
                 message: 'DPI inválido. Debe contener 13 dígitos'
             });
         }
 
-        // ===== VALIDAR ALCANCE: Usuario puede registrar en esta comunidad? =====
+        console.log('🔵 [POST USUARIA] Validando alcance...');
+
+        // ===== VALIDAR ALCANCE =====
         const tieneAcceso = await tieneAccesoComunidad(user, comunidad_id, db);
         
         if (!tieneAcceso) {
+            console.error('❌ [POST USUARIA] Sin acceso a comunidad:', comunidad_id);
             return res.status(403).json({
                 success: false,
-                message: 'No tiene permisos para registrar en esta comunidad. Está fuera de su alcance territorial.'
+                message: 'No tiene permisos para registrar en esta comunidad'
             });
         }
 
-        // Verificar que el DPI no exista
+        console.log('✅ [POST USUARIA] Alcance validado correctamente');
+
+        // Verificar DPI duplicado
+        console.log('🔵 [POST USUARIA] Verificando DPI duplicado...');
+        
         db.get('SELECT id, nombres, apellidos FROM usuarias WHERE dpi = ?', [dpi], (err, existing) => {
             if (err) {
-                console.error('❌ Error verificando DPI:', err);
+                console.error('❌ [POST USUARIA] Error verificando DPI:', err);
                 return res.status(500).json({
                     success: false,
                     message: 'Error verificando DPI'
@@ -179,13 +196,16 @@ router.post('/', authenticateToken, requirePermission('registrar'), async (req, 
             }
 
             if (existing) {
+                console.error('❌ [POST USUARIA] DPI ya existe:', existing);
                 return res.status(400).json({
                     success: false,
                     message: `Ya existe una usuaria con este DPI: ${existing.nombres} ${existing.apellidos}`
                 });
             }
 
-            // Insertar nueva usuaria
+            console.log('✅ [POST USUARIA] DPI disponible, procediendo a insertar...');
+
+            // ===== INSERTAR USUARIA =====
             const insertQuery = `
                 INSERT INTO usuarias 
                 (dpi, nombres, apellidos, comunidad_id, fecha_nacimiento, telefono, 
@@ -193,7 +213,7 @@ router.post('/', authenticateToken, requirePermission('registrar'), async (req, 
                 VALUES (?, ?, ?, ?, ?, ?, 'nueva', CURRENT_DATE, CURRENT_DATE, 0, ?)
             `;
 
-            db.run(insertQuery, [
+            const insertParams = [
                 dpi, 
                 nombres.trim(), 
                 apellidos.trim(), 
@@ -201,43 +221,133 @@ router.post('/', authenticateToken, requirePermission('registrar'), async (req, 
                 fecha_nacimiento || null,
                 telefono || null,
                 user.id
-            ], function(err) {
+            ];
+
+            console.log('🔵 [POST USUARIA] Ejecutando INSERT con params:', insertParams);
+
+            db.run(insertQuery, insertParams, function(err) {
                 if (err) {
-                    console.error('❌ Error creando usuaria:', err);
+                    console.error('❌ [POST USUARIA] Error en INSERT:', err);
                     return res.status(500).json({
                         success: false,
-                        message: 'Error guardando usuaria'
+                        message: 'Error guardando usuaria: ' + err.message
                     });
                 }
 
-                console.log(`✅ Usuaria creada: ${nombres} ${apellidos} (${dpi}) por ${user.email} en comunidad ${comunidad_id}`);
+                // ✅ CRÍTICO: Capturar lastID INMEDIATAMENTE
+                const usuariaId = this.lastID;
+                
+                console.log('🟢 [POST USUARIA] INSERT exitoso - lastID:', usuariaId);
+                console.log('🟢 [POST USUARIA] this.lastID:', this.lastID);
+                console.log('🟢 [POST USUARIA] this.changes:', this.changes);
 
-                res.json({
-                    success: true,
-                    message: 'Usuaria registrada exitosamente',
-                    data: {
-                        id: this.lastID,
-                        dpi: dpi,
-                        nombres: nombres,
-                        apellidos: apellidos,
-                        tipo_usuaria: 'nueva',
-                        comunidad_id: comunidad_id
-                    }
-                });
+                // ⚠️ VERIFICACIÓN DE SEGURIDAD
+                if (!usuariaId || usuariaId === undefined || usuariaId === null) {
+                    console.error('❌ [POST USUARIA] CRÍTICO: lastID es undefined/null!');
+                    console.error('❌ [POST USUARIA] this completo:', this);
+                    
+                    // Intentar obtener el último ID insertado manualmente
+                    db.get('SELECT last_insert_rowid() as id', [], (err, row) => {
+                        if (err || !row) {
+                            console.error('❌ [POST USUARIA] No se pudo recuperar last_insert_rowid');
+                            return res.status(500).json({
+                                success: false,
+                                message: 'Error: No se pudo obtener ID de usuaria creada'
+                            });
+                        }
+
+                        const recoveredId = row.id;
+                        console.log('🟡 [POST USUARIA] ID recuperado manualmente:', recoveredId);
+                        
+                        // Continuar con el ID recuperado
+                        finalizarCreacion(recoveredId);
+                    });
+                } else {
+                    // ID válido, continuar normalmente
+                    finalizarCreacion(usuariaId);
+                }
+
+                // ===== FUNCIÓN PARA FINALIZAR CREACIÓN =====
+                function finalizarCreacion(idFinal) {
+                    console.log('🔵 [POST USUARIA] Consultando datos completos para ID:', idFinal);
+
+                    db.get(
+                        `SELECT u.*, c.nombre as comunidad_nombre 
+                         FROM usuarias u 
+                         JOIN comunidades c ON u.comunidad_id = c.id 
+                         WHERE u.id = ?`,
+                        [idFinal],
+                        (err, usuaria) => {
+                            if (err) {
+                                console.error('❌ [POST USUARIA] Error obteniendo datos completos:', err);
+                                
+                                // Fallback: enviar respuesta mínima
+                                return res.json({
+                                    success: true,
+                                    message: 'Usuaria registrada exitosamente',
+                                    data: {
+                                        id: idFinal,
+                                        dpi: dpi,
+                                        nombres: nombres,
+                                        apellidos: apellidos,
+                                        tipo_usuaria: 'nueva',
+                                        comunidad_id: comunidad_id,
+                                        comunidad_nombre: 'N/A',
+                                        total_visitas: 0
+                                    }
+                                });
+                            }
+
+                            if (!usuaria) {
+                                console.error('❌ [POST USUARIA] Usuaria no encontrada después de INSERT');
+                                return res.status(500).json({
+                                    success: false,
+                                    message: 'Error: Usuaria creada pero no encontrada'
+                                });
+                            }
+
+                            console.log('✅ [POST USUARIA] Datos completos obtenidos:', usuaria);
+
+                            // ✅ RESPUESTA FINAL
+                            res.json({
+                                success: true,
+                                message: 'Usuaria registrada exitosamente',
+                                data: {
+                                    id: usuaria.id,
+                                    dpi: usuaria.dpi,
+                                    nombres: usuaria.nombres,
+                                    apellidos: usuaria.apellidos,
+                                    tipo_usuaria: usuaria.tipo_usuaria,
+                                    comunidad_id: usuaria.comunidad_id,
+                                    comunidad_nombre: usuaria.comunidad_nombre,
+                                    total_visitas: usuaria.total_visitas || 0,
+                                    fecha_primera_visita: usuaria.fecha_primera_visita,
+                                    activa: usuaria.activa
+                                }
+                            });
+
+                            console.log('✅ [POST USUARIA] Respuesta enviada con ID:', usuaria.id);
+                        }
+                    );
+                }
             });
         });
 
     } catch (error) {
-        console.error('❌ Error creando usuaria:', error);
+        console.error('❌ [POST USUARIA] Error general:', error);
         res.status(500).json({
             success: false,
-            message: 'Error interno del servidor'
+            message: 'Error interno del servidor: ' + error.message
         });
     }
 });
 
 // ===== LISTAR USUARIAS CON FILTROS Y CONTROL DE ALCANCE =====
 router.get('/', authenticateToken, requirePermission('registrar'), async (req, res) => {
+    console.log('🔵🔵🔵 [GET /usuarias] EJECUTÁNDOSE');
+    console.log('🔵 Method:', req.method);
+    console.log('🔵 URL:', req.url);
+    console.log('🔵 Query:', req.query);
     try {
         const { limit = 20, offset = 0, comunidad_id, tipo_usuaria, buscar } = req.query;
         const db = req.app.locals.db;

@@ -12,33 +12,61 @@ const SGPF = {
     },
 
     // ===== API CALLS =====
-    async apiCall(endpoint, options = {}) {
-        const token = localStorage.getItem(window.SGPFConfig.TOKEN_KEY);
-        
-        const config = {
-            headers: {
-                'Content-Type': 'application/json',
-                ...(token && { 'Authorization': `Bearer ${token}` })
-            },
-            ...options
-        };
+    async apiCall(endpoint, methodOrOptions = 'GET', bodyData = null) {
+    const token = localStorage.getItem(window.SGPFConfig.TOKEN_KEY);
+    
+    // ✅ Detectar si se usa la firma antigua o nueva
+    let method, body, extraOptions;
+    
+    if (typeof methodOrOptions === 'string') {
+        // ✅ FIRMA NUEVA: apiCall(endpoint, method, data)
+        method = methodOrOptions.toUpperCase();
+        body = bodyData;
+        extraOptions = {};
+    } else {
+        // ✅ FIRMA ANTIGUA: apiCall(endpoint, {method, body, ...})
+        method = methodOrOptions.method?.toUpperCase() || 'GET';
+        body = methodOrOptions.body;
+        extraOptions = { ...methodOrOptions };
+        delete extraOptions.method;
+        delete extraOptions.body;
+        delete extraOptions.headers;
+    }
+    
+    const config = {
+        method: method,
+        headers: {
+            'Content-Type': 'application/json',
+            ...(token && { 'Authorization': `Bearer ${token}` }),
+            ...(typeof methodOrOptions === 'object' && methodOrOptions.headers)
+        },
+        ...extraOptions
+    };
 
-        try {
-            console.log(`🌐 API Call: ${config.method || 'GET'} ${endpoint}`);
-            const response = await fetch(window.SGPFConfig.getEndpoint(endpoint), config);
-            const data = await response.json();
-            
-            if (!response.ok) {
-                throw new Error(data.message || `HTTP ${response.status}`);
-            }
-            
-            return data;
-        } catch (error) {
-            console.error(`❌ API Error en ${endpoint}:`, error);
-            this.showToast(`Error: ${error.message}`, 'error');
-            throw error;
+    // ✅ Solo agregar body si no es GET y hay datos
+    if (body && method !== 'GET') {
+        config.body = JSON.stringify(body);
+    }
+
+    try {
+        console.log(`🌐 API Call: ${method} ${endpoint}`);
+        if (body) console.log('📦 Body:', body);
+        
+        const response = await fetch(window.SGPFConfig.getEndpoint(endpoint), config);
+        const data = await response.json();
+        
+        if (!response.ok) {
+            console.error(`❌ HTTP ${response.status}:`, data);
+            throw new Error(data.message || `HTTP ${response.status}`);
         }
-    },
+        
+        return data;
+    } catch (error) {
+        console.error(`❌ API Error en ${endpoint}:`, error);
+        this.showToast(`Error: ${error.message}`, 'error');
+        throw error;
+    }
+},
 
     // ===== GESTIÓN DE USUARIO =====
     getCurrentUser() {
