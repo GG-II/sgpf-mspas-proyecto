@@ -3,14 +3,12 @@ window.PerfilUsuario = window.PerfilUsuario || {
     // Estado del perfil
     perfilData: null,
     
-// ===== INICIALIZACIÓN (VERSIÓN CORREGIDA) =====
+// ===== INICIALIZACIÓN (VERSIÓN ACTUALIZADA) =====
 async init() {
     console.log('👤 Inicializando perfil de usuario');
     
-    // Esperar múltiples ciclos de renderizado del DOM
     await new Promise(resolve => setTimeout(resolve, 600));
     
-    // Verificar que los elementos críticos existan antes de continuar
     const maxRetries = 10;
     let retries = 0;
     
@@ -34,7 +32,6 @@ async init() {
     
     try {
         await this.cargarPerfilUsuario();
-        await this.cargarEstadisticasPersonales();
         await this.configurarEventListeners();
         
         console.log('✅ Perfil de usuario cargado exitosamente');
@@ -182,73 +179,34 @@ mostrarPermisos(permisos) {
 },
 
     // ===== MOSTRAR COMUNIDADES ASIGNADAS =====
-    mostrarComunidadesAsignadas(comunidades) {
-        const container = document.getElementById('comunidades-container');
-        const listaComunidades = document.getElementById('lista-comunidades');
-        
-        container.style.display = 'block';
-        
-        const html = comunidades.map(com => `
-            <div class="comunidad-item">
-                <strong>${com.nombre}</strong>
-                <span class="comunidad-codigo">(${com.codigo_comunidad})</span>
-                <small>Población MEF: ${com.poblacion_mef || 'N/D'}</small>
+mostrarComunidadesAsignadas(comunidades) {
+    const container = document.getElementById('comunidades-container');
+    const listaComunidades = document.getElementById('lista-comunidades');
+    
+    if (!container || !listaComunidades) return;
+    
+    container.classList.remove('hidden');
+    
+    const html = comunidades.map(com => `
+        <div class="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-4 border border-blue-200 hover:shadow-md transition-all">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="font-bold text-gray-900 text-lg">${com.nombre}</p>
+                    <p class="text-sm text-gray-600 mt-1">
+                        <span class="font-semibold">Código:</span> ${com.codigo_comunidad}
+                    </p>
+                </div>
+                <div class="text-right">
+                    <p class="text-sm text-gray-500">Población MEF</p>
+                    <p class="text-2xl font-bold text-indigo-600">${com.poblacion_mef || 'N/D'}</p>
+                </div>
             </div>
-        `).join('');
-        
-        listaComunidades.innerHTML = html;
-    },
-
-    // ===== CARGAR ESTADÍSTICAS PERSONALES (VERSIÓN CORREGIDA) =====
-async cargarEstadisticasPersonales() {
-    try {
-        const token = localStorage.getItem('authToken');
-        if (!token) {
-            console.log('⚠️ No hay token, omitiendo estadísticas');
-            return;
-        }
-
-        const response = await fetch('http://localhost:5000/api/perfil/estadisticas', {  // URL completa
-            method: 'GET',
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
-            }
-        });
-
-        if (response.ok) {
-            const result = await response.json();
-            if (result.success && result.data) {
-                this.mostrarEstadisticas(result.data);
-            }
-        } else {
-            console.log('⚠️ No se pudieron cargar estadísticas:', response.status);
-        }
-        
-    } catch (error) {
-        console.error('❌ Error cargando estadísticas personales:', error);
-        // No mostrar error porque las estadísticas son opcionales
-    }
+        </div>
+    `).join('');
+    
+    listaComunidades.innerHTML = html;
 },
 
-    // ===== MOSTRAR ESTADÍSTICAS (VERSIÓN CORREGIDA) =====
-mostrarEstadisticas(data) {
-    const stats = data.resumen;
-    
-    const setStatContent = (id, content) => {
-        const element = document.getElementById(id);
-        if (element) {
-            element.textContent = content || 0;
-        }
-    };
-    
-    setStatContent('stat-registros', stats.total_registros);
-    setStatContent('stat-usuarias', stats.total_usuarias);
-    setStatContent('stat-comunidades', stats.comunidades_registradas);
-    setStatContent('stat-meses', stats.meses_activos);
-    setStatContent('primer-registro', this.formatearFechaHora(stats.primer_registro) || 'Sin registros');
-    setStatContent('ultimo-registro', this.formatearFechaHora(stats.ultimo_registro) || 'Sin registros');
-},
 
     // ===== CONFIGURAR EVENT LISTENERS =====
     configurarEventListeners() {
@@ -284,6 +242,7 @@ async actualizarPerfil(event) {
     
     try {
         btnActualizar.disabled = true;
+        document.getElementById('loading-actualizar').classList.remove('hidden');
         loadingActualizar.style.display = 'inline-block';
         
         const formData = new FormData(event.target);
@@ -333,6 +292,7 @@ async actualizarPerfil(event) {
         this.mostrarToast(error.message || 'Error actualizando perfil', 'error');
     } finally {
         btnActualizar.disabled = false;
+document.getElementById('loading-actualizar').classList.add('hidden');
         loadingActualizar.style.display = 'none';
     }
 },
@@ -347,6 +307,7 @@ async actualizarPerfil(event) {
         try {
             // Mostrar loading
             btnPassword.disabled = true;
+document.getElementById('loading-password').classList.remove('hidden');
             loadingPassword.style.display = 'inline-block';
             
             const formData = new FormData(event.target);
@@ -395,6 +356,7 @@ async actualizarPerfil(event) {
             this.mostrarToast(error.message || 'Error cambiando contraseña', 'error');
         } finally {
             btnPassword.disabled = false;
+document.getElementById('loading-password').classList.add('hidden');
             loadingPassword.style.display = 'none';
         }
     },

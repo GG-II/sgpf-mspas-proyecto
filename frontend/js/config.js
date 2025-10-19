@@ -349,7 +349,38 @@ const SGPFConfig = {
         });
 
         return this;
-    }
+    },
+    // ========================================
+// 🔄 CACHE BUSTING SYSTEM
+// ========================================
+
+/**
+ * Versión del sistema para cache busting
+ */
+VERSION: '2.1.0',
+
+/**
+ * Timestamp para desarrollo (invalida caché en cada recarga)
+ */
+CACHE_BUST: new Date().getTime(),
+
+/**
+ * Obtiene el parámetro de versión según el ambiente
+ * @returns {string} Versión o timestamp
+ */
+getCacheBuster() {
+    return this.isDevelopment() ? this.CACHE_BUST : this.VERSION;
+},
+
+/**
+ * Agrega cache busting a una URL de script
+ * @param {string} scriptPath - Ruta del script
+ * @returns {string} URL con parámetro de versión
+ */
+getVersionedScript(scriptPath) {
+    const separator = scriptPath.includes('?') ? '&' : '?';
+    return `${scriptPath}${separator}v=${this.getCacheBuster()}`;
+}
 };
 
 // ========================================

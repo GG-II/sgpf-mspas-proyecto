@@ -235,7 +235,7 @@ const ComponentLoader = {
             // Cargar script del asistente si no existe
             if (!window.AsistenteDashboard) {
               const script = document.createElement("script");
-              script.src = "js/dashboards/asistente.js";
+              script.src = SGPFConfig.getVersionedScript("js/dashboards/asistente.js");
               await new Promise((resolve, reject) => {
                 script.onload = resolve;
                 script.onerror = reject;
@@ -249,7 +249,7 @@ const ComponentLoader = {
             // Cargar script del encargado si no existe
             if (!window.EncargadoDashboard) {
               const script = document.createElement("script");
-              script.src = "js/dashboards/encargado.js";
+              script.src = SGPFConfig.getVersionedScript("js/dashboards/encargado.js");
               await new Promise((resolve, reject) => {
                 script.onload = resolve;
                 script.onerror = reject;
@@ -263,7 +263,7 @@ const ComponentLoader = {
             // Cargar script del coordinador si no existe
             if (!window.CoordinadorDashboard) {
               const script = document.createElement("script");
-              script.src = "js/dashboards/coordinador.js";
+              script.src = SGPFConfig.getVersionedScript("js/dashboards/coordinador.js");
               await new Promise((resolve, reject) => {
                 script.onload = resolve;
                 script.onerror = reject;
@@ -292,7 +292,7 @@ const ComponentLoader = {
         if (!window.RegistroV2) {
           console.log("📥 Cargando script registro-v2.js");
           const script = document.createElement("script");
-          script.src = "js/registro-v2.js";
+          script.src = SGPFConfig.getVersionedScript("js/registro-v2.js");
           document.head.appendChild(script);
 
           await new Promise((resolve, reject) => {
@@ -340,7 +340,7 @@ const ComponentLoader = {
           // Cargar script de validación si no existe
           if (!window.ValidacionSystem) {
             const script = document.createElement("script");
-            script.src = "js/validacion.js";
+            script.src = SGPFConfig.getVersionedScript("js/validacion.js");
             await new Promise((resolve, reject) => {
               script.onload = resolve;
               script.onerror = reject;
@@ -359,7 +359,7 @@ const ComponentLoader = {
         case 'planificacion':
     if (!window.PlanificacionSystem) {
         const script = document.createElement('script');
-        script.src = 'js/planificacion.js';
+        script.src = SGPFConfig.getVersionedScript("js/planificacion.js");
         await new Promise((resolve, reject) => {
             script.onload = resolve;
             script.onerror = reject;
@@ -380,7 +380,7 @@ const ComponentLoader = {
           if (!window.PerfilUsuario) {
             console.log("🔥 Cargando script perfil.js");
             const script = document.createElement("script");
-            script.src = "js/perfil.js";
+            script.src = SGPFConfig.getVersionedScript("js/perfil.js");
             document.head.appendChild(script);
 
             await new Promise((resolve, reject) => {
@@ -429,7 +429,7 @@ const ComponentLoader = {
           // Cargar script de reportes si no existe
           if (!window.ReportesSystem) {
             const script = document.createElement("script");
-            script.src = "js/reportes.js";
+            script.src = SGPFConfig.getVersionedScript("js/reportes.js");
             await new Promise((resolve, reject) => {
               script.onload = resolve;
               script.onerror = reject;
@@ -451,7 +451,7 @@ const ComponentLoader = {
           if (!window.UsuariosAdmin) {
             console.log("📥 Cargando script usuarios.js");
             const script = document.createElement("script");
-            script.src = "js/admin/usuarios.js";
+            script.src = SGPFConfig.getVersionedScript("js/admin/usuarios.js");
             document.head.appendChild(script);
 
             await new Promise((resolve, reject) => {
@@ -536,7 +536,7 @@ const ComponentLoader = {
 
       // Cargar script dinámicamente
       const script = document.createElement("script");
-      script.src = "js/registro.js";
+      script.src = SGPFConfig.getVersionedScript("js/registro.js");
       script.onload = () => {
         console.log("✅ Script registro.js descargado");
         // Dar tiempo para que se ejecute completamente

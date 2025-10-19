@@ -60,11 +60,12 @@ async cargarRegistrosPendientes() {
         const containerElement = document.getElementById('registros-container');
         const sinRegistrosElement = document.getElementById('sin-registros-mensaje');
         
-        if (loadingElement) loadingElement.style.display = 'block';
-        if (containerElement) containerElement.style.display = 'none';
-        if (sinRegistrosElement) sinRegistrosElement.style.display = 'none';
+        // MOSTRAR LOADING
+        if (loadingElement) loadingElement.classList.remove('hidden');
+        if (containerElement) containerElement.classList.add('hidden');
+        if (sinRegistrosElement) sinRegistrosElement.classList.add('hidden');
 
-        // ✅ SOLUCIÓN TEMPORAL: Usar endpoint de visitas con filtro de estado
+        // ✅ Usar endpoint de visitas con filtro de estado
         const response = await SGPF.apiCall('/visitas?estado=registrado&limit=100');
 
         if (response && response.success && response.data.visitas) {
@@ -78,7 +79,7 @@ async cargarRegistrosPendientes() {
                 territorio: v.territorio,
                 registrado_por: v.registrado_por,
                 cargo_registrador: 'Auxiliar de Enfermería',
-                cantidad_administrada: 1, // V2.0: 1 visita = 1 usuaria
+                cantidad_administrada: 1,
                 fecha_hora_registro: v.fecha_hora_registro,
                 usuaria_nombre: v.usuaria_nombre,
                 tipo_usuaria: v.tipo_usuaria,
@@ -89,149 +90,204 @@ async cargarRegistrosPendientes() {
             
             console.log(`✅ ${this.registrosPendientes.length} visitas pendientes cargadas`);
             
+            // OCULTAR LOADING ANTES DE MOSTRAR
+            if (loadingElement) loadingElement.classList.add('hidden');
+            
             this.actualizarResumen();
             this.mostrarRegistros();
         } else {
+            // OCULTAR LOADING ANTES DE MOSTRAR MENSAJE
+            if (loadingElement) loadingElement.classList.add('hidden');
             this.mostrarSinRegistros();
         }
     } catch (error) {
         console.error('❌ Error cargando visitas:', error);
-        this.mostrarError('Error cargando visitas pendientes');
-    } finally {
+        
+        // OCULTAR LOADING EN CASO DE ERROR
         const loadingElement = document.getElementById('validacion-loading');
-        if (loadingElement) loadingElement.style.display = 'none';
+        if (loadingElement) loadingElement.classList.add('hidden');
+        
+        this.mostrarError('Error cargando visitas pendientes');
     }
 },
 
     // ===== ACTUALIZAR RESUMEN =====
-    actualizarResumen() {
-        const registros = this.registrosFiltrados;
-        
-        // Total pendientes
-        const totalElement = document.getElementById('total-pendientes');
-        if (totalElement) totalElement.textContent = registros.length;
+actualizarResumen() {
+    const registros = this.registrosFiltrados;
+    
+    // Total pendientes
+    const totalElement = document.getElementById('total-pendientes');
+    if (totalElement) totalElement.textContent = registros.length;
 
-        // Comunidades únicas
-        const comunidadesUnicas = new Set(registros.map(r => r.comunidad || 'N/A')).size;
-        const comunidadesElement = document.getElementById('total-comunidades');
-        if (comunidadesElement) comunidadesElement.textContent = comunidadesUnicas;
+    // Comunidades únicas
+    const comunidadesUnicas = new Set(registros.map(r => r.comunidad || 'N/A')).size;
+    const comunidadesElement = document.getElementById('total-comunidades');
+    if (comunidadesElement) comunidadesElement.textContent = comunidadesUnicas;
 
-        // Total usuarias
-        const totalUsuarias = registros.reduce((sum, r) => sum + (parseInt(r.cantidad_administrada) || 0), 0);
-        const usuariasElement = document.getElementById('total-usuarias');
-        if (usuariasElement) usuariasElement.textContent = totalUsuarias;
-
-        // Validados hoy (simulado por ahora)
-        const validadosHoyElement = document.getElementById('validados-hoy');
-        if (validadosHoyElement) validadosHoyElement.textContent = '0';
-    },
+    // Total usuarias
+    const totalUsuarias = registros.reduce((sum, r) => sum + (parseInt(r.cantidad_administrada) || 0), 0);
+    const usuariasElement = document.getElementById('total-usuarias');
+    if (usuariasElement) usuariasElement.textContent = totalUsuarias;
+},
 
     // ===== MOSTRAR REGISTROS =====
-    mostrarRegistros() {
-        const containerElement = document.getElementById('registros-container');
-        const sinRegistrosElement = document.getElementById('sin-registros-mensaje');
-        
-        if (!containerElement) return;
+mostrarRegistros() {
+    const containerElement = document.getElementById('registros-container');
+    const sinRegistrosElement = document.getElementById('sin-registros-mensaje');
+    const loadingElement = document.getElementById('validacion-loading');
+    
+    if (!containerElement) {
+        console.error('❌ Container de registros no encontrado');
+        return;
+    }
 
-        if (this.registrosFiltrados.length === 0) {
-            containerElement.style.display = 'none';
-            if (sinRegistrosElement) sinRegistrosElement.style.display = 'block';
-            return;
+    console.log(`📦 Mostrando ${this.registrosFiltrados.length} registros`);
+
+    // ASEGURAR QUE LOADING ESTÉ OCULTO
+    if (loadingElement) loadingElement.classList.add('hidden');
+
+    if (this.registrosFiltrados.length === 0) {
+        containerElement.classList.add('hidden');
+        if (sinRegistrosElement) {
+            sinRegistrosElement.classList.remove('hidden');
         }
+        return;
+    }
 
-        containerElement.style.display = 'block';
-        if (sinRegistrosElement) sinRegistrosElement.style.display = 'none';
-
-        // Crear HTML para cada registro con estilo similar al formulario
-        const registrosHtml = this.registrosFiltrados.map(registro => `
-            <div class="method-category" data-registro-id="${registro.id}">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-                    <h3 class="category-title">📋 ${registro.metodo || 'Método Desconocido'}</h3>
-                    <span class="badge badge-warning">Pendiente</span>
-                </div>
-                
-                <div class="method-grid">
-                    <div class="method-item">
-                        <label>Auxiliar</label>
-                        <div class="counter-input">
-                            <strong>${registro.registrado_por || 'N/A'}</strong><br>
-                            <small>${registro.cargo_registrador || ''}</small>
-                        </div>
-                    </div>
-                    
-                    <div class="method-item">
-                        <label>Comunidad</label>
-                        <div class="counter-input">
-                            <strong>${registro.comunidad || 'N/A'}</strong><br>
-                            <small>${registro.codigo_comunidad || ''}</small>
-                        </div>
-                    </div>
-                    
-                    <div class="method-item">
-                        <label>Cantidad</label>
-                        <div class="counter-input">
-                            <span class="total-value">${registro.cantidad_administrada || 0}</span><br>
-                            <small>usuarias</small>
-                        </div>
-                    </div>
-                    
-                    <div class="method-item">
-                        <label>Fecha Registro</label>
-                        <div class="counter-input">
-                            <strong>${this.formatearFecha(registro.fecha_hora_registro)}</strong>
+    // CREAR HTML PRIMERO
+    const registrosHtml = this.registrosFiltrados.map(registro => {
+        const badgeColor = registro.tipo_usuaria === 'nueva' ? 'bg-blue-100 text-blue-800' :
+                          registro.tipo_usuaria === 'reconsulta' ? 'bg-yellow-100 text-yellow-800' :
+                          'bg-green-100 text-green-800';
+        
+        return `
+            <div class="bg-white rounded-xl shadow-lg hover:shadow-xl transition-all border border-gray-200 overflow-hidden" data-registro-id="${registro.id}">
+                <!-- Header del Card -->
+                <div class="bg-gradient-to-r from-indigo-50 to-purple-50 p-6 border-b border-gray-200">
+                    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                        <div>
+    <h3 class="text-xl font-bold text-gray-900">${registro.metodo || 'Método Desconocido'}</h3>
+    <p class="text-sm text-gray-600">${registro.usuaria_nombre || 'Usuaria sin nombre'}</p>
+</div>
+                        <div class="flex gap-2">
+                            <span class="px-3 py-1 bg-yellow-100 text-yellow-800 rounded-full text-sm font-medium">
+                                Pendiente
+                            </span>
+                            <span class="px-3 py-1 ${badgeColor} rounded-full text-sm font-medium capitalize">
+                                ${registro.tipo_usuaria || 'N/A'}
+                            </span>
                         </div>
                     </div>
                 </div>
                 
-                <!-- Botones de acción -->
-                <div style="margin-top: 1rem; display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
-                    <button class="btn btn-success" onclick="ValidacionSystem.validarRegistro(${registro.id})" style="flex: 1; min-width: 150px;">
-                        ✅ Validar
-                    </button>
-                    <button class="btn btn-danger" onclick="ValidacionSystem.rechazarRegistro(${registro.id})" style="flex: 1; min-width: 150px;">
-                        ❌ Rechazar
-                    </button>
+                <!-- Detalles del Registro -->
+                <div class="p-6">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                        <!-- Auxiliar -->
+                        <div class="space-y-1">
+                            <p class="text-xs text-gray-500 font-medium uppercase tracking-wide">Auxiliar</p>
+                            <p class="text-base font-semibold text-gray-900">${registro.registrado_por || 'N/A'}</p>
+                            <p class="text-sm text-gray-600">${registro.cargo_registrador || ''}</p>
+                        </div>
+                        
+                        <!-- Comunidad -->
+                        <div class="space-y-1">
+                            <p class="text-xs text-gray-500 font-medium uppercase tracking-wide">Comunidad</p>
+                            <p class="text-base font-semibold text-gray-900">${registro.comunidad || 'N/A'}</p>
+                            <p class="text-sm text-gray-600">${registro.codigo_comunidad || ''}</p>
+                        </div>
+                        
+                        <!-- Cantidad -->
+                        <div class="space-y-1">
+                            <p class="text-xs text-gray-500 font-medium uppercase tracking-wide">Cantidad</p>
+                            <p class="text-3xl font-bold text-indigo-600">${registro.cantidad_administrada || 0}</p>
+                            <p class="text-sm text-gray-600">usuaria${registro.cantidad_administrada !== 1 ? 's' : ''}</p>
+                        </div>
+                        
+                        <!-- Fecha -->
+                        <div class="space-y-1">
+                            <p class="text-xs text-gray-500 font-medium uppercase tracking-wide">Fecha Registro</p>
+                            <p class="text-base font-semibold text-gray-900">${this.formatearFecha(registro.fecha_hora_registro)}</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Botones de Acción -->
+                    <div class="flex flex-col sm:flex-row gap-3">
+                        <button onclick="ValidacionSystem.validarRegistro(${registro.id})" 
+                                class="flex-1 px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium flex items-center justify-center gap-2 shadow-md hover:shadow-lg">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                            Validar
+                        </button>
+                        <button onclick="ValidacionSystem.rechazarRegistro(${registro.id})" 
+                                class="flex-1 px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium flex items-center justify-center gap-2 shadow-md hover:shadow-lg">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                            </svg>
+                            Rechazar
+                        </button>
+                    </div>
                 </div>
             </div>
-        `).join('');
+        `;
+    }).join('');
 
-        containerElement.innerHTML = registrosHtml;
+    // INSERTAR HTML
+    containerElement.innerHTML = registrosHtml;
+    
+    // MOSTRAR CONTAINER DESPUÉS DE INSERTAR
+    containerElement.classList.remove('hidden');
+    
+    // OCULTAR MENSAJE VACÍO
+    if (sinRegistrosElement) {
+        sinRegistrosElement.classList.add('hidden');
+    }
+    
+    console.log('✅ Container mostrado');
+    console.log('Container classes:', containerElement.className);
 
-        // Mostrar botón de validar todos si hay registros
-        const btnValidarTodos = document.getElementById('btn-validar-todos');
-        if (btnValidarTodos) {
-            btnValidarTodos.style.display = this.registrosFiltrados.length > 1 ? 'inline-block' : 'none';
+    // Mostrar botón de validar todos
+    const btnValidarTodos = document.getElementById('btn-validar-todos');
+    if (btnValidarTodos) {
+        if (this.registrosFiltrados.length > 1) {
+            btnValidarTodos.classList.remove('hidden');
+            btnValidarTodos.classList.add('flex');
+        } else {
+            btnValidarTodos.classList.add('hidden');
+            btnValidarTodos.classList.remove('flex');
         }
+    }
 
-        // Recargar filtros si es la primera vez
-        if (this.registrosFiltrados.length > 0 && this.registrosFiltrados === this.registrosPendientes) {
-            setTimeout(() => this.cargarFiltros(), 100);
-        }
-    },
+    // Cargar filtros
+    setTimeout(() => this.cargarFiltros(), 100);
+},
 
     // ===== VALIDAR REGISTRO =====
-    async validarRegistro(registroId) {
-        this.mostrarModal(
-            'Validar Registro',
-            '¿Confirmar que este registro es correcto y debe ser validado?',
-            () => this.ejecutarValidacion(registroId)
-        );
-    },
-
-    
+async validarRegistro(registroId) {
+    this.mostrarModal(
+        'Validar Registro',
+        '¿Confirmar que este registro es correcto y debe ser validado?',
+        () => this.ejecutarValidacion(registroId)
+    );
+},
 
     // ===== RECHAZAR REGISTRO =====
-    async rechazarRegistro(registroId) {
-        this.mostrarModal(
-            'Eliminar Registro',
-            '⚠️ ATENCIÓN: Este registro será eliminado permanentemente del sistema. ¿Está seguro?',
-            () => this.ejecutarRechazo(registroId)
-        );
-    },
+async rechazarRegistro(registroId) {
+    this.mostrarModal(
+        'Eliminar Registro',
+        '⚠️ ATENCIÓN: Este registro será eliminado permanentemente del sistema. ¿Está seguro?',
+        () => this.ejecutarRechazo(registroId)
+    );
+},
 
-    // ===== EJECUTAR VALIDACIÓN =====
+    // ===== EJECUTAR VALIDACIÓN CON ANIMACIÓN =====
 async ejecutarValidacion(registroId) {
     try {
+        // Cerrar modal primero
+        const modal = document.getElementById('modal-confirmacion');
+        if (modal) modal.classList.add('hidden');
+        
         SGPF.showLoading(true);
 
         const response = await SGPF.apiCall(`/validacion/registro/${registroId}`, 'PUT', {
@@ -240,7 +296,24 @@ async ejecutarValidacion(registroId) {
         });
 
         if (response && response.success) {
-            SGPF.showToast('Registro validado exitosamente', 'success');
+            SGPF.showLoading(false);
+            
+            // 🎭 ANIMACIÓN DE ÉXITO
+            const card = document.querySelector(`[data-registro-id="${registroId}"]`);
+            if (card) {
+                // Cambiar a verde y animar hacia la derecha
+                card.style.transition = 'all 0.6s ease-out';
+                card.style.backgroundColor = '#10b981';
+                card.style.transform = 'translateX(100%)';
+                card.style.opacity = '0';
+                
+                // Esperar a que termine la animación
+                await new Promise(resolve => setTimeout(resolve, 600));
+            }
+            
+            SGPF.showToast('✅ Registro validado exitosamente', 'success');
+            
+            // Recargar registros
             await this.cargarRegistrosPendientes();
         } else {
             throw new Error(response?.message || 'Error desconocido');
@@ -253,15 +326,36 @@ async ejecutarValidacion(registroId) {
     }
 },
 
-// ===== EJECUTAR RECHAZO =====
+// ===== EJECUTAR RECHAZO CON ANIMACIÓN =====
 async ejecutarRechazo(registroId) {
     try {
+        // Cerrar modal primero
+        const modal = document.getElementById('modal-confirmacion');
+        if (modal) modal.classList.add('hidden');
+        
         SGPF.showLoading(true);
 
         const response = await SGPF.apiCall(`/validacion/registro/${registroId}`, 'DELETE');
 
         if (response && response.success) {
-            SGPF.showToast('Registro eliminado permanentemente', 'success');
+            SGPF.showLoading(false);
+            
+            // 🎭 ANIMACIÓN DE RECHAZO
+            const card = document.querySelector(`[data-registro-id="${registroId}"]`);
+            if (card) {
+                // Cambiar a rojo y animar hacia la izquierda
+                card.style.transition = 'all 0.6s ease-out';
+                card.style.backgroundColor = '#ef4444';
+                card.style.transform = 'translateX(-100%)';
+                card.style.opacity = '0';
+                
+                // Esperar a que termine la animación
+                await new Promise(resolve => setTimeout(resolve, 600));
+            }
+            
+            SGPF.showToast('🗑️ Registro eliminado permanentemente', 'success');
+            
+            // Recargar registros
             await this.cargarRegistrosPendientes();
         } else {
             throw new Error(response?.message || 'Error desconocido');
@@ -394,30 +488,28 @@ async ejecutarRechazo(registroId) {
     },
 
     // ===== MOSTRAR MODAL =====
-    mostrarModal(titulo, mensaje, accionConfirmar) {
-        const modal = document.getElementById('modal-confirmacion');
-        const tituloElement = document.getElementById('modal-titulo');
-        const mensajeElement = document.getElementById('modal-mensaje');
+mostrarModal(titulo, mensaje, accionConfirmar) {
+    const modal = document.getElementById('modal-confirmacion');
+    const tituloElement = document.getElementById('modal-titulo');
+    const mensajeElement = document.getElementById('modal-mensaje');
+    
+    if (modal && tituloElement && mensajeElement) {
+        tituloElement.textContent = titulo;
+        mensajeElement.textContent = mensaje;
+        modal.classList.remove('hidden');
         
-        if (modal && tituloElement && mensajeElement) {
-            tituloElement.textContent = titulo;
-            mensajeElement.textContent = mensaje;
-            modal.style.display = 'block';
-            
-            this.accionPendiente = accionConfirmar;
-        }
-    },
+        this.accionPendiente = accionConfirmar;
+    }
+},
 
     // ===== EJECUTAR ACCIÓN CONFIRMADA =====
-    ejecutarAccionConfirmada() {
-        const modal = document.getElementById('modal-confirmacion');
-        if (modal) modal.style.display = 'none';
-        
-        if (this.accionPendiente) {
-            this.accionPendiente();
-            this.accionPendiente = null;
-        }
-    },
+ejecutarAccionConfirmada() {
+    // NO cerrar el modal aquí, cada función lo cierra
+    if (this.accionPendiente) {
+        this.accionPendiente();
+        this.accionPendiente = null;
+    }
+},
 
     // ===== MOSTRAR SIN REGISTROS =====
     mostrarSinRegistros() {

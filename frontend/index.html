@@ -7,12 +7,60 @@
     <!-- Tailwind CSS CDN (PRIMERO) -->
     <script src="https://cdn.tailwindcss.com"></script>
     
+    <!-- Configuración de Tailwind personalizada -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            50: '#f5f7ff',
+                            100: '#ebf0ff',
+                            200: '#d6e0ff',
+                            300: '#a3b9ff',
+                            400: '#6b8eff',
+                            500: '#4169e1',
+                            600: '#3451b8',
+                            700: '#2a3f8f',
+                            800: '#1f2d66',
+                            900: '#141d3d',
+                        }
+                    },
+                    animation: {
+                        'fade-in': 'fadeIn 0.5s ease-out',
+                        'slide-up': 'slideUp 0.4s ease-out',
+                        'slide-down': 'slideDown 0.3s ease-out',
+                        'scale-in': 'scaleIn 0.3s ease-out',
+                    },
+                    keyframes: {
+                        fadeIn: {
+                            '0%': { opacity: '0' },
+                            '100%': { opacity: '1' },
+                        },
+                        slideUp: {
+                            '0%': { opacity: '0', transform: 'translateY(30px)' },
+                            '100%': { opacity: '1', transform: 'translateY(0)' },
+                        },
+                        slideDown: {
+                            '0%': { opacity: '0', transform: 'translateY(-20px)' },
+                            '100%': { opacity: '1', transform: 'translateY(0)' },
+                        },
+                        scaleIn: {
+                            '0%': { opacity: '0', transform: 'scale(0.9)' },
+                            '100%': { opacity: '1', transform: 'scale(1)' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    
     <!-- Librerías externas -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     
     <title>SGPF - MSPAS Huehuetenango</title>
     
-    <!-- CSS Modular (después de Tailwind) -->
+    <!-- CSS Modular -->
     <link rel="stylesheet" href="css/base.css">
     <link rel="stylesheet" href="css/components.css">
     <link rel="stylesheet" href="css/mobile.css">
@@ -25,21 +73,34 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     
     <style>
-        /* Estilos adicionales para mejorar la apariencia */
-        .app-container {
+        /* 🎨 Fondo degradado estilo login */
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            margin: 0;
+            position: relative;
         }
         
-        .main-content {
-            min-height: calc(100vh - 120px);
-            background: #f8f9fa;
-            padding-bottom: 80px; /* Espacio para nav móvil */
+        /* Glassmorphism effect */
+        .glass {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
         }
         
+        .glass-dark {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+        }
+        
+        /* Header con glassmorphism */
         .app-header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
         }
         
         .header-content {
@@ -54,6 +115,7 @@
         .header-logo {
             height: 40px;
             width: auto;
+            filter: brightness(0) invert(1);
         }
         
         .user-info {
@@ -66,6 +128,7 @@
         #user-name {
             font-weight: 600;
             display: none;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
         
         @media (min-width: 640px) {
@@ -75,42 +138,119 @@
         }
         
         .btn-logout {
-            background: rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, 0.25);
             color: white;
-            padding: 0.5rem 1rem;
-            border-radius: 0.5rem;
-            border: none;
+            padding: 0.5rem 1.25rem;
+            border-radius: 0.75rem;
+            border: 1px solid rgba(255, 255, 255, 0.3);
             font-weight: 600;
             cursor: pointer;
             transition: all 0.3s ease;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
         }
         
         .btn-logout:hover {
-            background: rgba(255, 255, 255, 0.3);
+            background: rgba(255, 255, 255, 0.35);
             transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
         }
         
+        /* Contenido principal con animación */
+        .main-content {
+            min-height: calc(100vh - 140px);
+            padding: 1.5rem;
+            padding-bottom: 100px;
+        }
+        
+        #main-content > * {
+            animation: fadeIn 0.4s ease-out;
+        }
+        
+        /* Navegación móvil mejorada */
         .mobile-nav {
             position: fixed;
             bottom: 0;
             left: 0;
             right: 0;
-            background: white;
-            border-top: 1px solid #e5e7eb;
-            box-shadow: 0 -4px 6px -1px rgba(0, 0, 0, 0.1);
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-top: 1px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 -4px 30px rgba(0, 0, 0, 0.1);
             z-index: 50;
+            display: flex;
+            justify-content: space-around;
+            padding: 0.75rem 0;
         }
         
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.25rem;
+            padding: 0.5rem 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border-radius: 0.75rem;
+            position: relative;
+        }
+        
+        .nav-item::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border-radius: 0.75rem;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        .nav-item.active::before {
+            opacity: 0.15;
+        }
+        
+        .nav-item:hover::before {
+            opacity: 0.1;
+        }
+        
+        .nav-icon {
+            font-size: 1.5rem;
+            transition: transform 0.3s ease;
+            position: relative;
+            z-index: 1;
+            color: #6b7280;
+        }
+        
+        .nav-item.active .nav-icon {
+            transform: scale(1.1);
+            color: #667eea;
+        }
+        
+        .nav-label {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: #6b7280;
+            transition: color 0.3s ease;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .nav-item.active .nav-label {
+            color: #667eea;
+        }
+        
+        /* Loading overlay mejorado */
         .loading-overlay {
             position: fixed;
             inset: 0;
-            background: rgba(0, 0, 0, 0.7);
+            background: rgba(102, 126, 234, 0.9);
+            backdrop-filter: blur(8px);
             display: none;
             align-items: center;
             justify-content: center;
             z-index: 9999;
             flex-direction: column;
-            gap: 1rem;
+            gap: 1.5rem;
         }
         
         .loading-overlay:not(.hidden) {
@@ -118,12 +258,12 @@
         }
         
         .loading-spinner {
-            width: 50px;
-            height: 50px;
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid #667eea;
+            width: 60px;
+            height: 60px;
+            border: 5px solid rgba(255, 255, 255, 0.3);
+            border-top: 5px solid white;
             border-radius: 50%;
-            animation: spin 1s linear infinite;
+            animation: spin 0.8s linear infinite;
         }
         
         @keyframes spin {
@@ -135,8 +275,10 @@
             color: white;
             font-size: 1.125rem;
             font-weight: 600;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
         }
         
+        /* Toast notifications */
         .toast-container {
             position: fixed;
             top: 20px;
@@ -147,52 +289,63 @@
             gap: 0.5rem;
         }
         
+        .toast {
+            animation: slideDown 0.3s ease-out;
+        }
+        
         .hidden {
             display: none !important;
         }
         
-        /* Mejoras visuales para el contenido principal */
-        #main-content {
-            animation: fadeIn 0.3s ease-in;
-        }
-        
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(10px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-        
+        /* Loading inicial mejorado */
         #initial-loading {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 3rem 1.5rem;
-            border-radius: 1rem;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            padding: 3rem 2rem;
+            border-radius: 1.5rem;
             text-align: center;
-            margin: 2rem;
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            margin: 2rem auto;
+            max-width: 400px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            animation: scaleIn 0.5s ease-out;
         }
         
         #initial-loading h2 {
             font-size: 1.875rem;
             font-weight: 700;
             margin-bottom: 0.5rem;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
         }
         
         #initial-loading p {
             font-size: 1rem;
-            opacity: 0.9;
+            color: #6b7280;
+        }
+        
+        .pulse-dot {
+            width: 16px;
+            height: 16px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border-radius: 50%;
+            margin: 1rem auto;
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(1.2); }
         }
     </style>
 </head>
-<body class="bg-gray-100">
-    <div id="app" class="app-container">
-        <!-- Header dinámico -->
-        <header id="app-header" class="app-header hidden">
+<body>
+    <div id="app">
+        <!-- Header glassmorphism -->
+        <header id="app-header" class="app-header hidden animate-slide-down">
             <div class="header-content">
                 <img src="assets/images/logo-mspas-2.png" alt="MSPAS" id="header-logo" class="header-logo">
                 <div class="user-info">
@@ -202,83 +355,55 @@
             </div>
         </header>
 
-        <!-- Contenedor principal donde se cargan los templates -->
+        <!-- Contenedor principal -->
         <main id="main-content" class="main-content">
-            <!-- Vista inicial mientras carga -->
-            <div id="initial-loading" class="max-w-2xl mx-auto mt-20">
-                <div class="animate-pulse mb-4">
-                    <div class="w-16 h-16 bg-white bg-opacity-30 rounded-full mx-auto mb-4"></div>
-                </div>
+            <!-- Vista inicial -->
+            <div id="initial-loading">
+                <div class="pulse-dot"></div>
                 <h2>🏥 Cargando Sistema</h2>
                 <p>Preparando tu espacio de trabajo...</p>
             </div>
         </main>
 
-        <!-- Navegación móvil dinámica -->
+        <!-- Navegación móvil glassmorphism -->
         <nav id="mobile-nav" class="mobile-nav hidden">
-            <!-- Los tabs se generan dinámicamente según el rol del usuario -->
+            <!-- Los tabs se generan dinámicamente -->
         </nav>
 
-        <!-- Loading overlay global -->
+        <!-- Loading overlay -->
         <div id="loading-overlay" class="loading-overlay hidden">
             <div class="loading-spinner"></div>
             <p>Cargando...</p>
         </div>
 
-        <!-- Container para notificaciones toast -->
+        <!-- Toast container -->
         <div id="toast-container" class="toast-container"></div>
     </div>
 
-    <!-- JavaScript Modular - Orden importante -->
+    <!-- JavaScript Modular -->
     <script src="js/config.js"></script>
     <script src="js/shared.js"></script>
     <script src="js/component-loader.js"></script>
     <script src="js/auth.js"></script>
     <script src="js/app.js"></script>
     
-    <!-- Inicialización de la aplicación -->
+    <!-- Inicialización -->
     <script>
-        // Configuración global para debugging en desarrollo
         if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
             window.SGPF_DEBUG = true;
-            console.log('🔧 Modo debug activado');
         }
         
-        // Inicialización principal
         document.addEventListener('DOMContentLoaded', () => {
             console.log('🌟 DOM cargado, inicializando SGPF App');
-            
-            // Pequeño delay para evitar condiciones de carrera
-            setTimeout(() => {
-                SGPFApp.init();
-            }, 100);
+            setTimeout(() => SGPFApp.init(), 100);
         });
         
-        // Manejar errores JavaScript globales
         window.addEventListener('error', (event) => {
-            console.error('❌ Error JavaScript global:', {
-                message: event.message,
-                filename: event.filename,
-                lineno: event.lineno,
-                colno: event.colno
-            });
-            
-            // Mostrar error al usuario solo en desarrollo
+            console.error('❌ Error JavaScript global:', event.message);
             if (window.SGPF_DEBUG) {
                 alert(`Error: ${event.message}\nArchivo: ${event.filename}\nLínea: ${event.lineno}`);
             }
         });
-        
-        // Manejar promesas rechazadas
-        window.addEventListener('unhandledrejection', (event) => {
-            console.error('❌ Promesa rechazada:', event.reason);
-            
-            if (window.SGPF_DEBUG) {
-                alert(`Promise rechazada: ${event.reason}`);
-            }
-        });
     </script>
-    <script src="js/navigation-fix.js"></script>
-    <script src="js/counter-emergency-fix.js"></script>
 </body>
 </html>

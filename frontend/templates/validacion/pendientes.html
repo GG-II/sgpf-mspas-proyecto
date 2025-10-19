@@ -1,124 +1,176 @@
-<!-- ===== VISTA DE VALIDACIÓN DE REGISTROS ===== -->
+<!-- ===== VISTA DE VALIDACIÓN MODERNIZADA CON TAILWIND ===== -->
 
-<!-- Header del módulo de validación -->
-<div class="dashboard-hero">
-    <h2>🔍 Validación de Registros</h2>
-    <p id="validacion-territorio">Revisa y valida los registros de tu territorio</p>
+<!-- Header Moderno con Gradiente -->
+<div class="bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-2xl shadow-xl p-8 mb-6">
+    <div class="mb-2">
+        <h2 class="text-3xl font-bold mb-2">Validación de Registros</h2>
+        <p id="validacion-territorio" class="text-indigo-100 text-lg">Revisa y valida los registros de tu territorio</p>
+    </div>
 </div>
 
-<!-- Resumen de validación (similar a las tarjetas del formulario) -->
-<div class="card">
-    <div class="card-title">Resumen de Validación</div>
-    <div class="card-body">
-        <div id="validacion-resumen" class="method-grid">
-            <div class="method-item">
-                <label>Pendientes</label>
-                <div class="counter-input">
-                    <span class="total-value" id="total-pendientes">0</span>
-                </div>
+<!-- Resumen con Cards Modernas (3 CARDS) -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+    <!-- Card Pendientes -->
+    <div class="bg-white rounded-xl shadow-lg p-6 border-l-4 border-yellow-500 hover:shadow-xl transition-shadow">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-sm text-gray-600 font-medium mb-1">Pendientes</p>
+                <p id="total-pendientes" class="text-3xl font-bold text-gray-900">0</p>
             </div>
-            <div class="method-item">
-                <label>Comunidades</label>
-                <div class="counter-input">
-                    <span class="total-value" id="total-comunidades">0</span>
-                </div>
+            <div class="w-12 h-12 bg-yellow-100 rounded-full flex items-center justify-center">
+                <svg class="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
             </div>
-            <div class="method-item">
-                <label>Total Usuarias</label>
-                <div class="counter-input">
-                    <span class="total-value" id="total-usuarias">0</span>
-                </div>
+        </div>
+    </div>
+
+    <!-- Card Comunidades -->
+    <div class="bg-white rounded-xl shadow-lg p-6 border-l-4 border-blue-500 hover:shadow-xl transition-shadow">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-sm text-gray-600 font-medium mb-1">Comunidades</p>
+                <p id="total-comunidades" class="text-3xl font-bold text-gray-900">0</p>
             </div>
-            <div class="method-item">
-                <label>Validados Hoy</label>
-                <div class="counter-input">
-                    <span class="total-value" id="validados-hoy">0</span>
-                </div>
+            <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+                <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+                </svg>
+            </div>
+        </div>
+    </div>
+
+    <!-- Card Usuarias -->
+    <div class="bg-white rounded-xl shadow-lg p-6 border-l-4 border-green-500 hover:shadow-xl transition-shadow">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-sm text-gray-600 font-medium mb-1">Total Usuarias</p>
+                <p id="total-usuarias" class="text-3xl font-bold text-gray-900">0</p>
+            </div>
+            <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
+                <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/>
+                </svg>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Filtros de búsqueda -->
-<div class="card">
-    <div class="card-title">Filtros de Búsqueda</div>
-    <div class="card-body">
-        <div class="period-selector">
-            <div class="input-group">
-                <label>Comunidad:</label>
-                <select id="filtro-comunidad" class="form-select">
-                    <option value="">Todas las comunidades</option>
-                    <!-- Se llena dinámicamente -->
-                </select>
-            </div>
-            <div class="input-group">
-                <label>Auxiliar:</label>
-                <select id="filtro-auxiliar" class="form-select">
-                    <option value="">Todos los auxiliares</option>
-                    <!-- Se llena dinámicamente -->
-                </select>
-            </div>
+<!-- Filtros Modernos -->
+<div class="bg-white rounded-xl shadow-lg p-6 mb-6">
+    <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+        <svg class="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/>
+        </svg>
+        Filtros de Búsqueda
+    </h3>
+    
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+        <!-- Filtro Comunidad -->
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Comunidad</label>
+            <select id="filtro-comunidad" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all">
+                <option value="">Todas las comunidades</option>
+            </select>
         </div>
+
+        <!-- Filtro Auxiliar -->
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Auxiliar</label>
+            <select id="filtro-auxiliar" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all">
+                <option value="">Todos los auxiliares</option>
+            </select>
+        </div>
+    </div>
+    
+    <!-- Búsqueda y Botones -->
+    <div class="flex flex-col sm:flex-row gap-3">
+        <input type="text" id="buscar-registro" 
+               placeholder="🔍 Buscar por método, comunidad, auxiliar..." 
+               class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all">
         
-        <div style="margin-top: 1rem; display: flex; gap: 1rem;">
-            <input type="text" id="buscar-registro" placeholder="Buscar por método, cantidad, etc..." class="form-select" style="flex: 1;">
-            <button id="btn-limpiar-filtros" class="btn btn-secondary">Limpiar</button>
-            <button id="btn-actualizar" class="btn btn-primary">Actualizar</button>
+        <button id="btn-limpiar-filtros" class="px-6 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors font-medium">
+            Limpiar
+        </button>
+        
+        <button id="btn-actualizar" class="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-medium flex items-center gap-2">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+            </svg>
+            Actualizar
+        </button>
+    </div>
+</div>
+
+<!-- Lista de Registros -->
+<div class="mb-6">
+    <!-- Loading State -->
+    <div id="validacion-loading" class="bg-white rounded-xl shadow-lg p-12 text-center">
+        <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto mb-4"></div>
+        <p class="text-gray-600">Cargando registros pendientes...</p>
+    </div>
+    
+    <!-- Container de Registros -->
+    <div id="registros-container" class="hidden space-y-4">
+        <!-- Los registros se insertan aquí dinámicamente -->
+    </div>
+    
+    <!-- Mensaje Sin Registros -->
+    <div id="sin-registros-mensaje" class="hidden bg-white rounded-xl shadow-lg p-12 text-center">
+        <div class="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <svg class="w-10 h-10 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+        </div>
+        <h3 class="text-2xl font-bold text-gray-900 mb-2">¡Todo al día!</h3>
+        <p class="text-gray-600">No hay registros pendientes de validación.</p>
+    </div>
+</div>
+
+<!-- Botones de Acción -->
+<div class="flex justify-center mb-6">
+    <button id="btn-validar-todos" class="hidden px-8 py-3 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-all font-medium items-center gap-2 justify-center shadow-lg hover:shadow-xl">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+        Validar Todos
+    </button>
+</div>
+
+<!-- Modal Moderno con Backdrop Blur -->
+<div id="modal-confirmacion" class="hidden fixed inset-0 z-50 overflow-y-auto">
+    <!-- Backdrop -->
+    <div class="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm transition-opacity"></div>
+    
+    <!-- Modal Content -->
+    <div class="flex items-center justify-center min-h-screen p-4">
+        <div class="relative bg-white rounded-2xl shadow-2xl max-w-md w-full transform transition-all">
+            <!-- Header -->
+            <div class="p-6 border-b border-gray-200">
+                <h3 id="modal-titulo" class="text-2xl font-bold text-gray-900">Confirmar Acción</h3>
+            </div>
+            
+            <!-- Body -->
+            <div class="p-6">
+                <p id="modal-mensaje" class="text-gray-600 text-lg">¿Estás seguro de realizar esta acción?</p>
+            </div>
+            
+            <!-- Footer -->
+            <div class="p-6 border-t border-gray-200 flex gap-3">
+                <button id="modal-cancelar" class="flex-1 px-6 py-3 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 transition-colors font-medium">
+                    Cancelar
+                </button>
+                <button id="modal-confirmar" class="flex-1 px-6 py-3 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-colors font-medium">
+                    Confirmar
+                </button>
+            </div>
         </div>
     </div>
 </div>
 
-<!-- Lista de registros pendientes -->
-<div class="card">
-    <div class="card-title">Registros Pendientes de Validación</div>
-    <div class="card-body">
-        
-        <!-- Loading state -->
-        <div id="validacion-loading" class="loading">Cargando registros pendientes...</div>
-        
-        <!-- Lista de registros (estilo similar a métodos) -->
-        <div id="registros-container" style="display: none;">
-            <!-- Los registros se insertan aquí dinámicamente -->
-        </div>
-        
-        <!-- Mensaje sin registros -->
-        <div id="sin-registros-mensaje" class="card" style="display: none;">
-            <div class="card-body" style="text-align: center; padding: 2rem;">
-                <h3>✅ No hay registros pendientes</h3>
-                <p>Todos los registros de tu territorio están validados.</p>
-            </div>
-        </div>
-        
-    </div>
-</div>
-
-<!-- Acciones rápidas -->
-<div class="action-buttons">
-    <button type="button" class="btn btn-secondary" id="btn-regresar">Regresar al Dashboard</button>
-    <button type="button" class="btn btn-primary" id="btn-validar-todos" style="display: none;">Validar Todos</button>
-</div>
-
-<!-- Modal de confirmación para validaciones masivas -->
-<div id="modal-confirmacion" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000;">
-    <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 2rem; border-radius: 12px; max-width: 400px; width: 90%;">
-        <h3 id="modal-titulo">Confirmar Acción</h3>
-        <p id="modal-mensaje">¿Estás seguro de realizar esta acción?</p>
-        <div style="display: flex; gap: 1rem; justify-content: flex-end; margin-top: 1.5rem;">
-            <button id="modal-cancelar" class="btn btn-secondary">Cancelar</button>
-            <button id="modal-confirmar" class="btn btn-primary">Confirmar</button>
-        </div>
-    </div>
-</div>
-
-<!-- Script específico del módulo de validación -->
+<!-- Script del módulo -->
 <script>
-// Inicializar módulo de validación cuando se carga el template
-document.addEventListener('DOMContentLoaded', () => {
-    if (typeof ValidacionSystem !== 'undefined') {
-        ValidacionSystem.init();
-    }
-});
-
 // Event listeners para filtros
 document.getElementById('filtro-comunidad')?.addEventListener('change', () => {
     if (window.ValidacionSystem) ValidacionSystem.aplicarFiltros();
@@ -132,7 +184,7 @@ document.getElementById('buscar-registro')?.addEventListener('input', () => {
     if (window.ValidacionSystem) ValidacionSystem.aplicarFiltros();
 });
 
-// Botones de acción
+// Botones
 document.getElementById('btn-limpiar-filtros')?.addEventListener('click', () => {
     if (window.ValidacionSystem) ValidacionSystem.limpiarFiltros();
 });
@@ -141,17 +193,13 @@ document.getElementById('btn-actualizar')?.addEventListener('click', () => {
     if (window.ValidacionSystem) ValidacionSystem.cargarRegistrosPendientes();
 });
 
-document.getElementById('btn-regresar')?.addEventListener('click', () => {
-    ComponentLoader.navigateToView('dashboard');
-});
-
 document.getElementById('btn-validar-todos')?.addEventListener('click', () => {
     if (window.ValidacionSystem) ValidacionSystem.validarTodos();
 });
 
-// Modal
+// Modal - Cancelar
 document.getElementById('modal-cancelar')?.addEventListener('click', () => {
-    document.getElementById('modal-confirmacion').style.display = 'none';
+    document.getElementById('modal-confirmacion').classList.add('hidden');
 });
 
 document.getElementById('modal-confirmar')?.addEventListener('click', () => {
