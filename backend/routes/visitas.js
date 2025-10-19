@@ -673,4 +673,69 @@ router.get('/stats/general', authenticateToken, (req, res) => {
     }
 });
 
+// ===== VALIDAR VISITA (Cambiar estado a validado) =====
+router.patch('/:id/validar', authenticateToken, requirePermission('validar'), (req, res) => {
+    try {
+        const visitaId = req.params.id;
+        const { observaciones_validacion } = req.body;
+        const db = req.app.locals.db;
+        const user = req.user;
+
+        if (!db) {
+            return res.status(500).json({
+                success: false,
+                message: 'Base de datos no disponible'
+            });
+        }
+
+        console.log(`✅ [VALIDAR] Visita ${visitaId} por ${user.email}`);
+
+        // Verificar que la visita existe y está pendiente
+        db.get('SELECT * FROM visitas WHERE id = ? AND estado = "registrado"', [visitaId], (err, visita) => {
+            if (err || !visita) {
+                return res.status(404).json({
+                    success: false,
+                    message: 'Visita no encontrada o ya validada'
+                });
+            }
+
+            // Actualizar a validado
+            const updateQuery = `
+                UPDATE visitas 
+                SET estado = 'validado',
+                    validado_por = ?,
+                    fecha_hora_validacion = CURRENT_TIMESTAMP,
+                    observaciones_validacion = ?,
+                    updated_at = CURRENT_TIMESTAMP
+                WHERE id = ?
+            `;
+
+            db.run(updateQuery, [user.id, observaciones_validacion || null, visitaId], function(err) {
+                if (err) {
+                    console.error('❌ Error actualizando:', err);
+                    return res.status(500).json({
+                        success: false,
+                        message: 'Error validando visita'
+                    });
+                }
+
+                console.log(`✅ Visita ${visitaId} validada`);
+
+                res.json({
+                    success: true,
+                    message: 'Visita validada exitosamente',
+                    data: { id: visitaId, estado: 'validado' }
+                });
+            });
+        });
+
+    } catch (error) {
+        console.error('❌ Error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error interno del servidor'
+        });
+    }
+});
+
 module.exports = router;

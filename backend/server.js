@@ -88,27 +88,31 @@ app.get('/api/health', (req, res) => {
 const authRoutes = require('./routes/auth');
 const registrosRoutes = require('./routes/registros');
 const adminRoutes = require('./routes/admin');
-const validacionRoutes = require('./routes/validacion');
+//const validacionRoutes = require('./routes/validacion');
 const reportesRoutes = require('./routes/reportes');
 const dashboardRoutes = require('./routes/dashboard');
 const perfilRoutes = require('./routes/perfil');
 const usuariasRoutes = require('./routes/usuarias');
 const visitasRoutes = require('./routes/visitas');
 const comunidadesRouter = require('./routes/comunidades');
+const dashboardAuxiliarRoutes = require('./routes/dashboard-auxiliar');
 const planificacionRoutes = require('./routes/planificacion');
+const validacionVisitasRoutes = require('./routes/validacion-visitas');
 
 // Registrar rutas
 app.use('/api/auth', authRoutes);
 app.use('/api/registros', registrosRoutes);
 app.use('/api/admin', adminRoutes);
-app.use('/api/validacion', validacionRoutes);
+//app.use('/api/validacion', validacionRoutes);
 app.use('/api/reportes', reportesRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/perfil', perfilRoutes);
 app.use('/api/usuarias', usuariasRoutes);
 app.use('/api/visitas', visitasRoutes);
 app.use('/api/comunidades', comunidadesRouter);
+app.use('/api/dashboard-auxiliar', dashboardAuxiliarRoutes);
 app.use('/api/planificacion', planificacionRoutes);
+app.use('/api/validacion', validacionVisitasRoutes);
 
 // ===== RUTAS BÁSICAS (mantener compatibilidad) =====
 // Estas las moveré gradualmente a módulos específicos

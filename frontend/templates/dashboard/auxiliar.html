@@ -1,4 +1,4 @@
-<!-- ===== DASHBOARD AUXILIAR V2.0 - SIMPLIFICADO ===== -->
+<!-- ===== DASHBOARD AUXILIAR V2.1 - OPTIMIZADO CON 4 MÉTRICAS ===== -->
 
 <div class="max-w-4xl mx-auto p-4 space-y-6">
   
@@ -8,8 +8,15 @@
     <p class="text-blue-100 mt-1" id="auxiliar-comunidad">Comunidad: Cargando...</p>
   </div>
 
-  <!-- 3 Métricas Principales: Usuarias del Mes -->
-  <div class="grid grid-cols-3 gap-4">
+  <!-- 4 Métricas Principales: Total + 3 Tipos -->
+  <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+    <!-- NUEVA: Total Usuarias -->
+    <div class="bg-white rounded-lg p-4 text-center shadow-md hover:shadow-lg transition">
+      <div class="text-4xl font-bold text-indigo-600" id="total-usuarias">0</div>
+      <div class="text-sm text-gray-600 mt-2">Total Usuarias</div>
+      <div class="text-xs text-gray-400 mt-1">Este mes</div>
+    </div>
+    
     <div class="bg-white rounded-lg p-4 text-center shadow-md hover:shadow-lg transition">
       <div class="text-4xl font-bold text-green-600" id="usuarias-nuevas">0</div>
       <div class="text-sm text-gray-600 mt-2">Nuevas</div>
@@ -54,7 +61,7 @@
     
     <!-- Sin visitas -->
     <div id="sin-visitas" class="hidden px-6 py-8 text-center text-gray-400">
-      <div class="text-4xl mb-2">📭</div>
+      <div class="text-4xl mb-2">🔭</div>
       <p>Aún no has registrado visitas este mes</p>
     </div>
   </div>
@@ -83,6 +90,8 @@ document.addEventListener('DOMContentLoaded', () => {
     setTimeout(() => {
         if (typeof window.AuxiliarDashboard !== 'undefined') {
             window.AuxiliarDashboard.init();
+        } else {
+            console.error('❌ AuxiliarDashboard no está definido');
         }
     }, 300);
 });

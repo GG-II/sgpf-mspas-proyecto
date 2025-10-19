@@ -52,38 +52,56 @@ window.ValidacionSystem = window.ValidacionSystem || {
     },
 
     // ===== CARGAR REGISTROS PENDIENTES =====
-    async cargarRegistrosPendientes() {
-        try {
-            console.log('📋 Cargando registros pendientes...');
-            
-            const loadingElement = document.getElementById('validacion-loading');
-            const containerElement = document.getElementById('registros-container');
-            const sinRegistrosElement = document.getElementById('sin-registros-mensaje');
-            
-            if (loadingElement) loadingElement.style.display = 'block';
-            if (containerElement) containerElement.style.display = 'none';
-            if (sinRegistrosElement) sinRegistrosElement.style.display = 'none';
+async cargarRegistrosPendientes() {
+    try {
+        console.log('📋 Cargando visitas pendientes...');
+        
+        const loadingElement = document.getElementById('validacion-loading');
+        const containerElement = document.getElementById('registros-container');
+        const sinRegistrosElement = document.getElementById('sin-registros-mensaje');
+        
+        if (loadingElement) loadingElement.style.display = 'block';
+        if (containerElement) containerElement.style.display = 'none';
+        if (sinRegistrosElement) sinRegistrosElement.style.display = 'none';
 
-            // Llamar al mismo endpoint que usa el encargado
-            const response = await SGPF.apiCall('/validacion/pendientes');
+        // ✅ SOLUCIÓN TEMPORAL: Usar endpoint de visitas con filtro de estado
+        const response = await SGPF.apiCall('/visitas?estado=registrado&limit=100');
 
-            if (response && response.success && response.data.registros_pendientes) {
-                this.registrosPendientes = response.data.registros_pendientes;
-                this.registrosFiltrados = [...this.registrosPendientes];
-                
-                this.actualizarResumen();
-                this.mostrarRegistros();
-            } else {
-                this.mostrarSinRegistros();
-            }
-        } catch (error) {
-            console.error('❌ Error cargando registros:', error);
-            this.mostrarError('Error cargando registros pendientes');
-        } finally {
-            const loadingElement = document.getElementById('validacion-loading');
-            if (loadingElement) loadingElement.style.display = 'none';
+        if (response && response.success && response.data.visitas) {
+            // Mapear estructura de visitas a estructura esperada
+            this.registrosPendientes = response.data.visitas.map(v => ({
+                id: v.id,
+                metodo: v.metodo,
+                metodo_corto: v.nombre_corto,
+                comunidad: v.comunidad,
+                codigo_comunidad: v.codigo_comunidad,
+                territorio: v.territorio,
+                registrado_por: v.registrado_por,
+                cargo_registrador: 'Auxiliar de Enfermería',
+                cantidad_administrada: 1, // V2.0: 1 visita = 1 usuaria
+                fecha_hora_registro: v.fecha_hora_registro,
+                usuaria_nombre: v.usuaria_nombre,
+                tipo_usuaria: v.tipo_usuaria,
+                estado: v.estado
+            }));
+            
+            this.registrosFiltrados = [...this.registrosPendientes];
+            
+            console.log(`✅ ${this.registrosPendientes.length} visitas pendientes cargadas`);
+            
+            this.actualizarResumen();
+            this.mostrarRegistros();
+        } else {
+            this.mostrarSinRegistros();
         }
-    },
+    } catch (error) {
+        console.error('❌ Error cargando visitas:', error);
+        this.mostrarError('Error cargando visitas pendientes');
+    } finally {
+        const loadingElement = document.getElementById('validacion-loading');
+        if (loadingElement) loadingElement.style.display = 'none';
+    }
+},
 
     // ===== ACTUALIZAR RESUMEN =====
     actualizarResumen() {
@@ -200,32 +218,7 @@ window.ValidacionSystem = window.ValidacionSystem || {
         );
     },
 
-    // ===== EJECUTAR VALIDACIÓN =====
-    async ejecutarValidacion(registroId) {
-        try {
-            SGPF.showLoading(true);
-
-            const response = await SGPF.apiCall(`/validacion/registro/${registroId}`, {
-                method: 'PUT',
-                body: JSON.stringify({
-                    accion: 'aprobar',
-                    observaciones_validacion: 'Validado en módulo de validación'
-                })
-            });
-
-            if (response && response.success) {
-                SGPF.showToast('Registro validado exitosamente', 'success');
-                await this.cargarRegistrosPendientes();
-            } else {
-                throw new Error(response?.message || 'Error desconocido');
-            }
-        } catch (error) {
-            console.error('❌ Error validando registro:', error);
-            SGPF.showToast('Error al validar registro', 'error');
-        } finally {
-            SGPF.showLoading(false);
-        }
-    },
+    
 
     // ===== RECHAZAR REGISTRO =====
     async rechazarRegistro(registroId) {
@@ -236,29 +229,50 @@ window.ValidacionSystem = window.ValidacionSystem || {
         );
     },
 
-    // ===== EJECUTAR RECHAZO =====
-    async ejecutarRechazo(registroId) {
-        try {
-            SGPF.showLoading(true);
+    // ===== EJECUTAR VALIDACIÓN =====
+async ejecutarValidacion(registroId) {
+    try {
+        SGPF.showLoading(true);
 
-            // Usar el endpoint DELETE para eliminar completamente
-            const response = await SGPF.apiCall(`/registros/${registroId}`, {
-                method: 'DELETE'
-            });
+        const response = await SGPF.apiCall(`/validacion/registro/${registroId}`, 'PUT', {
+            accion: 'aprobar',
+            observaciones_validacion: 'Validado en módulo de validación'
+        });
 
-            if (response && response.success) {
-                SGPF.showToast('Registro eliminado permanentemente', 'success');
-                await this.cargarRegistrosPendientes();
-            } else {
-                throw new Error(response?.message || 'Error desconocido');
-            }
-        } catch (error) {
-            console.error('❌ Error eliminando registro:', error);
-            SGPF.showToast('Error al eliminar registro', 'error');
-        } finally {
-            SGPF.showLoading(false);
+        if (response && response.success) {
+            SGPF.showToast('Registro validado exitosamente', 'success');
+            await this.cargarRegistrosPendientes();
+        } else {
+            throw new Error(response?.message || 'Error desconocido');
         }
-    },
+    } catch (error) {
+        console.error('❌ Error validando registro:', error);
+        SGPF.showToast('Error al validar registro', 'error');
+    } finally {
+        SGPF.showLoading(false);
+    }
+},
+
+// ===== EJECUTAR RECHAZO =====
+async ejecutarRechazo(registroId) {
+    try {
+        SGPF.showLoading(true);
+
+        const response = await SGPF.apiCall(`/validacion/registro/${registroId}`, 'DELETE');
+
+        if (response && response.success) {
+            SGPF.showToast('Registro eliminado permanentemente', 'success');
+            await this.cargarRegistrosPendientes();
+        } else {
+            throw new Error(response?.message || 'Error desconocido');
+        }
+    } catch (error) {
+        console.error('❌ Error eliminando registro:', error);
+        SGPF.showToast('Error al eliminar registro', 'error');
+    } finally {
+        SGPF.showLoading(false);
+    }
+},
 
     // ===== CARGAR FILTROS =====
     async cargarFiltros() {

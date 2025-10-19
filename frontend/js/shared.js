@@ -45,7 +45,7 @@ const SGPF = {
 
     // ✅ Solo agregar body si no es GET y hay datos
     if (body && method !== 'GET') {
-        config.body = JSON.stringify(body);
+        config.body = typeof body === 'string' ? body : JSON.stringify(body);
     }
 
     try {
