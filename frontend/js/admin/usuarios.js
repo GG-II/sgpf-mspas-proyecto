@@ -1,4 +1,4 @@
-// ===== GESTIÓN DE USUARIOS - SGPF ADMIN (VERSIÓN CORREGIDA) =====
+// ===== GESTIÓN DE USUARIOS - SGPF ADMIN (VERSIÓN CORREGIDA CON TERRITORIOS MÚLTIPLES) =====
 window.UsuariosAdmin = window.UsuariosAdmin || {
   // Estado local
   usuarios: [],
@@ -241,7 +241,6 @@ window.UsuariosAdmin = window.UsuariosAdmin || {
                   usuario.territorio_nombre || usuario.distrito_nombre || "-"
                 }</td>
                 <td>${estadoBadge}</td>
-                <!-- COLUMNA "ÚLTIMO ACCESO" ELIMINADA -->
                 <td>
                     <div class="acciones-usuario">
                         <button class="btn-accion btn-editar" 
@@ -302,7 +301,7 @@ window.UsuariosAdmin = window.UsuariosAdmin || {
       });
     }
 
-    // NUEVO: Listener para autocompletar email
+    // Listener para autocompletar email
     const emailPrefix = document.getElementById("usuario-email-prefix");
     if (emailPrefix) {
       emailPrefix.addEventListener("input", (e) => {
@@ -406,12 +405,10 @@ window.UsuariosAdmin = window.UsuariosAdmin || {
     await new Promise((resolve) => setTimeout(resolve, 100));
     document.getElementById("usuario-rol").value = usuario.codigo_rol || "";
 
+    // ===== CAMBIO AQUÍ: CARGAR TERRITORIOS ASIGNADOS =====
     if (usuario.codigo_rol === "asistente_tecnico") {
       await this.toggleCamposEspecificos("asistente_tecnico");
-      this.cargarTerritoriosEnSelect();
-      await new Promise((resolve) => setTimeout(resolve, 100));
-      document.getElementById("usuario-territorio").value =
-        usuario.territorio_id || "";
+      await this.cargarTerritoriosAsignadosUsuario(usuarioId);
     } else if (usuario.codigo_rol === "auxiliar_enfermeria") {
       await this.toggleCamposEspecificos("auxiliar_enfermeria");
       await this.cargarComunidadesAsignadasUsuario(usuarioId);
@@ -497,26 +494,26 @@ window.UsuariosAdmin = window.UsuariosAdmin || {
             }
         }
 
+        // ===== CAMBIO AQUÍ: VALIDAR Y ENVIAR TERRITORIOS =====
         if (rol === 'asistente_tecnico') {
-    const territoriosSeleccionados = this.obtenerTerritoriosSeleccionados();
-    
-    if (territoriosSeleccionados.length === 0) {
-        SGPF.showLoading(false);
-        this.guardando = false;
-        if (btnGuardar) {
-            btnGuardar.disabled = false;
-            btnGuardar.textContent = 'Guardar Usuario';
+            const territoriosSeleccionados = this.obtenerTerritoriosSeleccionados();
+            
+            if (territoriosSeleccionados.length === 0) {
+                SGPF.showLoading(false);
+                this.guardando = false;
+                if (btnGuardar) {
+                    btnGuardar.disabled = false;
+                    btnGuardar.textContent = 'Guardar Usuario';
+                }
+                SGPF.showToast('Debe seleccionar al menos un territorio para asistentes', 'warning');
+                return;
+            }
+            
+            // Enviar territorios_ids al backend
+            data.territorios_ids = territoriosSeleccionados;
+            // También guardar el primero en territorio_id (compatibilidad)
+            data.territorio_id = territoriosSeleccionados[0];
         }
-        SGPF.showToast('Debe seleccionar al menos un territorio para asistentes', 'warning');
-        return;
-    }
-    
-    // IMPORTANTE: Enviar territorios_ids al backend
-    data.territorios_ids = territoriosSeleccionados;
-    
-    // OPCIONAL: También guardar en territorio_id el primero (por compatibilidad)
-    data.territorio_id = territoriosSeleccionados[0];
-}
 
         if (!this.modoEdicion) {
             data.password = document.getElementById('usuario-password').value;
@@ -539,7 +536,7 @@ window.UsuariosAdmin = window.UsuariosAdmin || {
         if (response && response.success) {
             let mensajeFinal = this.modoEdicion ? 'Usuario actualizado exitosamente' : 'Usuario creado exitosamente';
             
-            // Asignar comunidades para auxiliares (SOLO si hay comunidades seleccionadas)
+            // Asignar comunidades para auxiliares
             if (rol === 'auxiliar_enfermeria') {
                 const comunidadesSeleccionadas = this.obtenerComunidadesSeleccionadas();
                 
@@ -549,21 +546,16 @@ window.UsuariosAdmin = window.UsuariosAdmin || {
                         response.data.id;
                     
                     try {
-                        const respuestaComunidades = await this.asignarComunidadesAUsuario(usuarioId, comunidadesSeleccionadas);
-                        
-                        if (respuestaComunidades) {
-                            // No mostrar mensaje adicional, solo modificar el mensaje principal
-                            mensajeFinal += ` y ${comunidadesSeleccionadas.length} comunidad(es) asignada(s)`;
-                        }
+                        await this.asignarComunidadesAUsuario(usuarioId, comunidadesSeleccionadas);
+                        mensajeFinal += ` y ${comunidadesSeleccionadas.length} comunidad(es) asignada(s)`;
                     } catch (errorComunidades) {
                         console.error('❌ Error asignando comunidades:', errorComunidades);
-                        // No mostrar toast de error, solo modificar el mensaje
                         mensajeFinal += ', pero con errores al asignar comunidades';
                     }
                 }
             }
 
-            // ===== ASIGNAR TERRITORIOS PARA ASISTENTES =====
+            // ===== AGREGAR AQUÍ: ASIGNAR TERRITORIOS PARA ASISTENTES =====
             if (rol === 'asistente_tecnico') {
                 const territoriosSeleccionados = this.obtenerTerritoriosSeleccionados();
                 
@@ -581,7 +573,6 @@ window.UsuariosAdmin = window.UsuariosAdmin || {
                     }
                 }
             }
-
 
             // Mostrar UN SOLO mensaje
             SGPF.showToast(mensajeFinal, 'success');
@@ -603,11 +594,11 @@ window.UsuariosAdmin = window.UsuariosAdmin || {
             btnGuardar.textContent = 'Guardar Usuario';
         }
     }
-},
+  },
 
-// Modificar asignarComunidadesAUsuario para que NO muestre toasts
-async asignarComunidadesAUsuario(usuarioId, comunidadesIds) {
-    console.log(`📍 Asignando ${comunidadesIds.length} comunidades al usuario ${usuarioId}:`, comunidadesIds);
+  // ===== ASIGNAR COMUNIDADES A USUARIO =====
+  async asignarComunidadesAUsuario(usuarioId, comunidadesIds) {
+    console.log(`🏘️ Asignando ${comunidadesIds.length} comunidades al usuario ${usuarioId}:`, comunidadesIds);
     
     const response = await SGPF.apiCall(`/admin/usuarios/${usuarioId}/comunidades`, {
         method: 'POST',
@@ -621,10 +612,117 @@ async asignarComunidadesAUsuario(usuarioId, comunidadesIds) {
         console.error('❌ Error en respuesta:', response);
         throw new Error(response?.message || 'Error asignando comunidades');
     }
-},
+  },
 
-// ===== ASIGNAR TERRITORIOS A USUARIO =====
-async asignarTerritoriosAUsuario(usuarioId, territoriosIds) {
+  // ===== CARGAR COMUNIDADES ASIGNADAS A USUARIO =====
+  async cargarComunidadesAsignadasUsuario(usuarioId) {
+    try {
+      const response = await SGPF.apiCall(
+        `/admin/usuarios/${usuarioId}/comunidades`
+      );
+
+      if (response && response.success) {
+        const comunidadesAsignadas = response.data.comunidades_asignadas || [];
+        const idsAsignados = comunidadesAsignadas.map((c) => c.id);
+
+        this.cargarComunidadesEnLista(idsAsignados);
+      }
+    } catch (error) {
+      console.error("❌ Error cargando comunidades asignadas:", error);
+      this.cargarComunidadesEnLista([]);
+    }
+  },
+
+  // ===== OBTENER COMUNIDADES SELECCIONADAS =====
+  obtenerComunidadesSeleccionadas() {
+    const checkboxes = document.querySelectorAll(
+      '#usuario-comunidades-list input[type="checkbox"]:checked'
+    );
+    return Array.from(checkboxes).map((cb) => parseInt(cb.value));
+  },
+
+  // ===== OBTENER TERRITORIOS SELECCIONADOS =====
+  obtenerTerritoriosSeleccionados() {
+    const checkboxes = document.querySelectorAll('#usuario-territorios-list input[type="checkbox"]:checked');
+    return Array.from(checkboxes).map(cb => parseInt(cb.value));
+  },
+
+  // ===== TOGGLE CAMPOS ESPECÍFICOS =====
+  async toggleCamposEspecificos(rol) {
+    const territorioGroup = document.getElementById("usuario-territorio-group");
+    const comunidadesGroup = document.getElementById("usuario-comunidades-group");
+    const codigoInput = document.getElementById("usuario-codigo");
+
+    // Ocultar todos primero
+    if (territorioGroup) territorioGroup.style.display = "none";
+    if (comunidadesGroup) comunidadesGroup.style.display = "none";
+
+    // Generar código automático si NO estamos en modo edición
+    if (!this.modoEdicion && rol && codigoInput) {
+      const codigo = await this.generarCodigoEmpleado(rol);
+      codigoInput.value = codigo;
+    }
+
+    // ===== CAMBIO AQUÍ: LLAMAR A cargarTerritoriosEnLista =====
+    if (rol === "asistente_tecnico") {
+      if (territorioGroup) {
+        territorioGroup.style.display = "block";
+        this.cargarTerritoriosEnLista([]);
+      }
+    } else if (rol === "auxiliar_enfermeria") {
+      if (comunidadesGroup) {
+        comunidadesGroup.style.display = "block";
+        this.cargarComunidadesEnLista([]);
+      }
+    }
+  },
+
+  // ===== CARGAR TERRITORIOS EN LISTA CON CHECKBOXES =====
+  cargarTerritoriosEnLista(idsSeleccionados = []) {
+    const container = document.getElementById('usuario-territorios-list');
+    if (!container) return;
+
+    let html = '';
+    this.territorios.forEach(territorio => {
+        const checked = idsSeleccionados.includes(territorio.id) ? 'checked' : '';
+        html += `
+            <label style="display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem; cursor: pointer; border-radius: 4px; transition: background 0.2s;"
+                   onmouseover="this.style.backgroundColor='#f5f5f5'" 
+                   onmouseout="this.style.backgroundColor='transparent'">
+                <input type="checkbox" value="${territorio.id}" ${checked} 
+                       style="cursor: pointer; width: 18px; height: 18px;">
+                <span style="line-height: 1.5; font-size: 0.9rem; flex: 1;">
+                    <strong>${territorio.nombre}</strong>
+                    <small style="color: #888; font-size: 0.85rem; display: block;">(${territorio.codigo})</small>
+                </span>
+            </label>
+        `;
+    });
+
+    container.innerHTML = html;
+  },
+
+  // ===== CARGAR TERRITORIOS ASIGNADOS A USUARIO =====
+  async cargarTerritoriosAsignadosUsuario(usuarioId) {
+    try {
+        const response = await SGPF.apiCall(`/admin/usuarios/${usuarioId}/territorios`);
+
+        if (response && response.success) {
+            const territoriosAsignados = response.data.territorios_asignados || [];
+            const idsAsignados = territoriosAsignados.map(t => t.id);
+            
+            console.log(`🗺️ Usuario tiene ${idsAsignados.length} territorios asignados:`, idsAsignados);
+
+            this.cargarTerritoriosEnLista(idsAsignados);
+        }
+    } catch (error) {
+        console.error('❌ Error cargando territorios asignados:', error);
+        this.cargarTerritoriosEnLista([]);
+    }
+  },
+
+  // ===== ASIGNAR TERRITORIOS A USUARIO =====
+  async asignarTerritoriosAUsuario(usuarioId, territoriosIds) {
     console.log(`🗺️ Asignando ${territoriosIds.length} territorios al usuario ${usuarioId}:`, territoriosIds);
     
     const response = await SGPF.apiCall(`/admin/usuarios/${usuarioId}/territorios`, {
@@ -639,90 +737,7 @@ async asignarTerritoriosAUsuario(usuarioId, territoriosIds) {
         console.error('❌ Error en respuesta:', response);
         throw new Error(response?.message || 'Error asignando territorios');
     }
-},
-
-  // ===== ASIGNAR COMUNIDADES A USUARIO =====
-  async asignarComunidadesAUsuario(usuarioId, comunidadesIds) {
-    try {
-        console.log(`Asignando ${comunidadesIds.length} comunidades al usuario ${usuarioId}`);
-        
-        const response = await SGPF.apiCall(`/admin/usuarios/${usuarioId}/comunidades`, {
-            method: 'POST',
-            body: JSON.stringify({ comunidades_ids: comunidadesIds })
-        });
-
-        if (response && response.success) {
-            console.log('Comunidades asignadas correctamente');
-            return true;
-        } else {
-            throw new Error(response?.message || 'Error asignando comunidades');
-        }
-    } catch (error) {
-        console.error('Error asignando comunidades:', error);
-        throw error;
-    }
-},
-
-  // ===== CARGAR TERRITORIOS ASIGNADOS A USUARIO =====
-async cargarTerritoriosAsignadosUsuario(usuarioId) {
-    try {
-        const response = await SGPF.apiCall(`/admin/usuarios/${usuarioId}/territorios`);
-
-        if (response && response.success) {
-            const territoriosAsignados = response.data.territorios_asignados || [];
-            const idsAsignados = territoriosAsignados.map(t => t.id);
-            
-            console.log(`🗺️ Usuario tiene ${idsAsignados.length} territorios asignados:`, idsAsignados);
-
-            // Cargar lista de territorios con checkboxes marcados
-            this.cargarTerritoriosEnLista(idsAsignados);
-        }
-    } catch (error) {
-        console.error('❌ Error cargando territorios asignados:', error);
-        this.cargarTerritoriosEnLista([]);
-    }
-},
-
-  // ===== OBTENER COMUNIDADES SELECCIONADAS =====
-  obtenerComunidadesSeleccionadas() {
-    const checkboxes = document.querySelectorAll(
-      '#usuario-comunidades-list input[type="checkbox"]:checked'
-    );
-    return Array.from(checkboxes).map((cb) => parseInt(cb.value));
   },
-
-  // ===== OBTENER TERRITORIOS SELECCIONADOS =====
-obtenerTerritoriosSeleccionados() {
-    const checkboxes = document.querySelectorAll('#usuario-territorios-list input[type="checkbox"]:checked');
-    return Array.from(checkboxes).map(cb => parseInt(cb.value));
-},
-
-  // ===== TOGGLE CAMPOS ESPECÍFICOS =====
-async toggleCamposEspecificos(rol) {
-    const territorioGroup = document.getElementById('usuario-territorio-group');
-    const comunidadesGroup = document.getElementById('usuario-comunidades-group');
-    const codigoInput = document.getElementById('usuario-codigo');
-
-    // Ocultar todos primero
-    if (territorioGroup) territorioGroup.style.display = 'none';
-    if (comunidadesGroup) comunidadesGroup.style.display = 'none';
-
-    // Generar código automático si NO estamos en modo edición
-    if (!this.modoEdicion && rol && codigoInput) {
-        const codigo = await this.generarCodigoEmpleado(rol);
-        codigoInput.value = codigo;
-    }
-
-    if (usuario.codigo_rol === 'asistente_tecnico') {
-      await this.toggleCamposEspecificos('asistente_tecnico');
-      await this.cargarTerritoriosAsignadosUsuario(usuarioId);
-    } else if (usuario.codigo_rol === 'auxiliar_enfermeria') {
-        if (comunidadesGroup) {
-            comunidadesGroup.style.display = 'block';
-            this.cargarComunidadesEnLista([]);
-        }
-    }
-},
 
   // ===== TOGGLE ESTADO USUARIO =====
   async toggleEstadoUsuario(usuarioId, nuevoEstado) {
@@ -843,31 +858,6 @@ async toggleCamposEspecificos(rol) {
         .join("");
   },
 
-  // ===== CARGAR TERRITORIOS EN LISTA CON CHECKBOXES (MÚLTIPLE) =====
-cargarTerritoriosEnLista(idsSeleccionados = []) {
-    const container = document.getElementById('usuario-territorios-list');
-    if (!container) return;
-
-    let html = '';
-    this.territorios.forEach(territorio => {
-        const checked = idsSeleccionados.includes(territorio.id) ? 'checked' : '';
-        html += `
-            <label style="display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem; cursor: pointer; border-radius: 4px; transition: background 0.2s;"
-                   onmouseover="this.style.backgroundColor='#f5f5f5'" 
-                   onmouseout="this.style.backgroundColor='transparent'">
-                <input type="checkbox" value="${territorio.id}" ${checked} 
-                       style="cursor: pointer; width: 18px; height: 18px;">
-                <span style="line-height: 1.5; font-size: 0.9rem; flex: 1;">
-                    <strong>${territorio.nombre}</strong>
-                    <small style="color: #888; font-size: 0.85rem; display: block;">(${territorio.codigo})</small>
-                </span>
-            </label>
-        `;
-    });
-
-    container.innerHTML = html;
-},
-
   // ===== CARGAR COMUNIDADES EN LISTA =====
   cargarComunidadesEnLista(idsSeleccionados = []) {
     const container = document.getElementById('usuario-comunidades-list');
@@ -929,10 +919,10 @@ cargarTerritoriosEnLista(idsSeleccionados = []) {
     });
 
     container.innerHTML = html;
-},
+  },
 
-// NUEVAS FUNCIONES para manejar selección por territorio
-toggleTodasComunidades(territorio) {
+  // ===== FUNCIONES AUXILIARES PARA CHECKBOXES DE COMUNIDADES =====
+  toggleTodasComunidades(territorio) {
     const container = document.getElementById('usuario-comunidades-list');
     if (!container) return;
 
@@ -948,9 +938,9 @@ toggleTodasComunidades(territorio) {
             checkbox.checked = marcar;
         }
     });
-},
+  },
 
-verificarTerritorioCompleto(territorio) {
+  verificarTerritorioCompleto(territorio) {
     const container = document.getElementById('usuario-comunidades-list');
     if (!container) return;
 
@@ -965,7 +955,7 @@ verificarTerritorioCompleto(territorio) {
     if (territorioCheckbox) {
         territorioCheckbox.checked = todasMarcadas;
     }
-},
+  },
 
   // ===== CERRAR MODALES =====
   cerrarModal() {
