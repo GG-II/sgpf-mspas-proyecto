@@ -1,291 +1,481 @@
-<!-- ===== templates/planificacion/configuracion.html ===== -->
+<!-- ===== MÓDULO DE PLANIFICACIÓN DE METAS V2.0 ===== -->
 
-<style>
-/* ===== ESTILOS ESPECÍFICOS PLANIFICACIÓN ===== */
-.filtros-planificacion {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 1rem;
-    margin-bottom: 1.5rem;
-    padding: 1rem;
-    background: #f8f9fa;
-    border-radius: 8px;
-}
-
-.filtro-grupo {
-    display: flex;
-    flex-direction: column;
-}
-
-.filtro-grupo label {
-    font-weight: 600;
-    margin-bottom: 0.5rem;
-    color: #333;
-    font-size: 0.9rem;
-}
-
-.filtro-grupo select,
-.filtro-grupo input {
-    padding: 0.5rem;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    font-size: 0.9rem;
-}
-
-.plan-tabs {
-    display: flex;
-    background: white;
-    border-radius: 8px;
-    margin-bottom: 1rem;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    overflow: hidden;
-}
-
-.tab-button {
-    flex: 1;
-    padding: 1rem;
-    background: #f8f9fa;
-    border: none;
-    cursor: pointer;
-    font-weight: 600;
-    color: #666;
-    transition: all 0.3s ease;
-    border-bottom: 3px solid transparent;
-}
-
-.tab-button.active {
-    background: white;
-    color: var(--mspas-primary);
-    border-bottom-color: var(--mspas-primary);
-}
-
-.tab-button:hover {
-    background: #e9ecef;
-}
-
-.exportar-botones {
-    display: flex;
-    gap: 0.5rem;
-    margin-bottom: 1rem;
-}
-
-.btn-exportar {
-    padding: 0.5rem 1rem;
-    border: 1px solid #ddd;
-    background: white;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 0.9rem;
-    transition: all 0.3s ease;
-}
-
-.btn-exportar:hover {
-    background: var(--mspas-primary);
-    color: white;
-    border-color: var(--mspas-primary);
-}
-
-.tabla-planificacion {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 1rem;
-    background: white;
-    border-radius: 8px;
-    overflow: hidden;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-}
-
-.tabla-planificacion th {
-    background: var(--mspas-primary);
-    color: white;
-    padding: 0.75rem 0.5rem;
-    text-align: left;
-    font-weight: 600;
-    font-size: 0.9rem;
-}
-
-.tabla-planificacion td {
-    padding: 0.75rem 0.5rem;
-    border-bottom: 1px solid #eee;
-    font-size: 0.9rem;
-}
-
-.tabla-planificacion tr:hover {
-    background: #f8f9fa;
-}
-
-.tabla-planificacion .exito {
-    background: #d4edda;
-    color: #155724;
-    font-weight: bold;
-}
-
-.tabla-planificacion .warning {
-    background: #fff3cd;
-    color: #856404;
-    font-weight: bold;
-}
-
-.tabla-planificacion .danger {
-    background: #f8d7da;
-    color: #721c24;
-    font-weight: bold;
-}
-
-.sin-datos {
-    text-align: center;
-    padding: 3rem;
-    color: #666;
-    font-style: italic;
-}
-
-.loading-reportes {
-    text-align: center;
-    padding: 3rem;
-    color: #666;
-}
-
-.loading-reportes::before {
-    content: "";
-    display: block;
-    width: 40px;
-    height: 40px;
-    border: 4px solid #f3f3f3;
-    border-top: 4px solid var(--mspas-primary);
-    border-radius: 50%;
-    animation: spin 1s linear infinite;
-    margin: 0 auto 1rem;
-}
-
-@keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-}
-
-.btn-small {
-    padding: 0.25rem 0.5rem;
-    font-size: 0.85rem;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    transition: all 0.3s ease;
-}
-
-.btn-small.btn-primary {
-    background: var(--mspas-primary);
-    color: white;
-}
-
-.btn-small.btn-primary:hover {
-    opacity: 0.8;
-}
-
-.input-editable {
-    width: 100px;
-    padding: 0.25rem;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    font-size: 0.9rem;
-}
-
-.input-editable-small {
-    width: 70px;
-    padding: 0.2rem;
-    border: 1px solid #ddd;
-    border-radius: 3px;
-    font-size: 0.85rem;
-}
-
-/* Responsive */
-@media (max-width: 768px) {
-    .filtros-planificacion {
-        grid-template-columns: 1fr;
-    }
-    
-    .plan-tabs {
-        flex-direction: column;
-    }
-    
-    .tabla-planificacion {
-        font-size: 0.75rem;
-    }
-    
-    .tabla-planificacion th,
-    .tabla-planificacion td {
-        padding: 0.5rem 0.25rem;
-    }
-}
-</style>
-
-<!-- Header -->
-<div class="dashboard-hero">
-    <h2>Planificación y Metas</h2>
-    <p>Configuración de población MEF, proyecciones anuales y distribución por métodos</p>
-</div>
-
-<!-- Tarjetas de resumen -->
-<div class="stats-grid">
-    <div class="stat-card">
-        <span class="stat-value" id="total-comunidades-plan">0</span>
-        <div class="stat-label">Comunidades</div>
-    </div>
-    
-    <div class="stat-card">
-        <span class="stat-value" id="total-proyeccion-anual">0</span>
-        <div class="stat-label">Proyección Anual</div>
-    </div>
-    
-    <div class="stat-card">
-        <span class="stat-value" id="total-metodos-plan">11</span>
-        <div class="stat-label">Métodos</div>
-    </div>
-    
-    <div class="stat-card">
-        <span class="stat-value" id="porcentaje-distribucion">100%</span>
-        <div class="stat-label">Distribución</div>
-    </div>
-</div>
-
-<!-- Tabs de vistas -->
-<div class="plan-tabs">
-    <button class="tab-button active" data-tab="configuracion">
-        Configuración MEF
-    </button>
-    <button class="tab-button" data-tab="consolidado">
-        Reporte Consolidado
-    </button>
-    <button class="tab-button" data-tab="comparativo">
-        Planificado vs Ejecutado
-    </button>
-</div>
-
-<!-- Filtros -->
-<div class="card">
-    <div class="card-title">Filtros</div>
-    <div class="card-body">
-        <div class="filtros-planificacion">
-            <div class="filtro-grupo">
-                <label for="filtro-año-plan">Año:</label>
-                <select id="filtro-año-plan">
-                    <option value="2025">2025</option>
-                    <option value="2024">2024</option>
-                    <option value="2026">2026</option>
-                </select>
-            </div>
+<div class="max-w-7xl mx-auto p-4 space-y-6">
+  <!-- Header Principal -->
+  <div
+    class="bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-2xl shadow-xl p-8"
+  >
+    <div class="flex items-center justify-between">
+      <div class="flex items-center gap-4">
+        <div
+          class="w-16 h-16 bg-white bg-opacity-20 rounded-full flex items-center justify-center backdrop-blur-sm"
+        >
+          <svg
+            class="w-10 h-10 text-white"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
+            />
+          </svg>
         </div>
+        <div>
+          <h1 class="text-3xl font-bold">Planificación de Metas</h1>
+          <p class="text-blue-100 text-lg mt-1">
+            Configuración y seguimiento anual
+          </p>
+        </div>
+      </div>
+      <div class="flex items-center gap-3">
+        <!-- Selector de Año -->
+        <select
+          id="selector-anio"
+          class="px-4 py-3 bg-white bg-opacity-20 text-white font-semibold rounded-xl border-2 border-white border-opacity-30 backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-white"
+        >
+          <option value="">Cargando años...</option>
+        </select>
+        <!-- Botón Configurar Porcentajes -->
+        <button
+          onclick="Planificacion.abrirModalPorcentajes()"
+          class="px-6 py-3 bg-white bg-opacity-20 text-white font-semibold rounded-xl hover:bg-opacity-30 transition-all backdrop-blur-sm border-2 border-white border-opacity-30 flex items-center gap-2"
+          id="btn-config-porcentajes"
+        >
+          <svg
+            class="w-5 h-5"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
+            />
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+            />
+          </svg>
+          Configurar %
+        </button>
+      </div>
     </div>
+  </div>
+
+  <!-- Tabs de Territorios -->
+  <div
+    class="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-200"
+  >
+    <div class="border-b border-gray-200 bg-gray-50">
+      <nav class="flex -mb-px overflow-x-auto" id="tabs-territorios">
+        <!-- Tabs se cargarán dinámicamente -->
+        <button
+          class="px-6 py-4 text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300 border-b-2 border-transparent transition-all"
+        >
+          Cargando territorios...
+        </button>
+      </nav>
+    </div>
+
+    <!-- Contenido del Territorio Seleccionado -->
+    <div class="p-6">
+      <!-- Estado: Cargando -->
+      <div id="loading-comunidades" class="py-16 text-center">
+        <div
+          class="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600 mx-auto mb-4"
+        ></div>
+        <p class="text-gray-500 text-lg">Cargando datos de planificación...</p>
+      </div>
+
+      <!-- Estado: Sin Datos para el Año -->
+      <div id="sin-datos-anio" class="hidden py-16 text-center">
+        <div
+          class="w-20 h-20 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-4"
+        >
+          <svg
+            class="w-10 h-10 text-yellow-600"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+            />
+          </svg>
+        </div>
+        <p class="text-xl font-bold text-gray-800 mb-2">
+          No hay planificación configurada
+        </p>
+        <p class="text-gray-600 mb-6">
+          Aún no se ha creado la planificación para este año
+        </p>
+        <button
+          onclick="Planificacion.inicializarAnio()"
+          class="px-8 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold rounded-xl hover:from-blue-700 hover:to-indigo-700 transition-all shadow-lg hover:shadow-xl"
+        >
+          Crear Planificación
+        </button>
+      </div>
+
+      <!-- Tabla de Comunidades -->
+      <div id="tabla-comunidades-container" class="hidden">
+        <div class="overflow-x-auto">
+          <table class="w-full">
+            <thead
+              class="bg-gradient-to-r from-gray-50 to-gray-100 border-b-2 border-gray-200"
+            >
+              <tr
+                class="text-left text-xs font-semibold text-gray-600 uppercase tracking-wider"
+              >
+                <th class="px-6 py-4">Comunidad</th>
+                <th class="px-6 py-4 text-center">MEF</th>
+                <th class="px-6 py-4 text-center">Meta Anual</th>
+                <th class="px-6 py-4 text-center">Ejecutado</th>
+                <th class="px-6 py-4 text-center">% Alcanzado</th>
+                <th class="px-6 py-4 text-center">Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="tabla-comunidades-body" class="divide-y divide-gray-200">
+              <!-- Filas se cargarán dinámicamente -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
 
-<!-- Contenido dinámico -->
-<div class="card">
-    <div class="card-title">
-        <span id="titulo-planificacion">Planificación y Metas</span>
+<!-- ===== MODAL: CONFIGURAR PORCENTAJES GLOBALES ===== -->
+<div
+  id="modal-porcentajes"
+  class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4"
+>
+  <div
+    class="bg-white rounded-2xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-hidden"
+  >
+    <!-- Header del Modal -->
+    <div
+      class="bg-gradient-to-r from-purple-600 to-indigo-600 text-white px-6 py-5"
+    >
+      <div class="flex items-center justify-between">
+        <h3 class="text-2xl font-bold flex items-center gap-3">
+          <svg
+            class="w-7 h-7"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
+            />
+          </svg>
+          Configuración de Porcentajes
+        </h3>
+        <button
+          onclick="Planificacion.cerrarModalPorcentajes()"
+          class="text-white hover:bg-white hover:bg-opacity-20 rounded-lg p-2 transition-all"
+        >
+          <svg
+            class="w-6 h-6"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M6 18L18 6M6 6l12 12"
+            />
+          </svg>
+        </button>
+      </div>
+      <p class="text-purple-100 mt-2" id="modal-porcentajes-anio">Año 2025</p>
     </div>
-    <div class="card-body">
-        <div id="contenido-planificacion">
-            <div class="sin-datos">
-                <div>Seleccione una vista y año para comenzar</div>
-            </div>
+
+    <!-- Contenido Scrollable -->
+    <div class="overflow-y-auto" style="max-height: calc(90vh - 180px)">
+      <!-- Advertencia -->
+      <div class="p-6 bg-yellow-50 border-l-4 border-yellow-500 m-6">
+        <div class="flex items-start gap-3">
+          <svg
+            class="w-6 h-6 text-yellow-600 flex-shrink-0 mt-0.5"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+            />
+          </svg>
+          <div>
+            <p class="font-bold text-yellow-800">Advertencia Importante</p>
+            <p class="text-sm text-yellow-700 mt-1">
+              Cambiar estos valores recalculará TODAS las metas de TODAS las
+              comunidades. Las distribuciones mensuales quedarán
+              desactualizadas.
+            </p>
+          </div>
         </div>
+      </div>
+
+      <!-- Formulario de Porcentajes -->
+      <div class="px-6 pb-6 space-y-3" id="form-porcentajes">
+        <!-- Inputs se cargarán dinámicamente -->
+      </div>
+
+      <!-- Indicador de Suma Total -->
+      <div class="px-6 pb-6">
+        <div
+          class="bg-gray-50 rounded-xl p-4 border-2"
+          id="indicador-suma-container"
+        >
+          <div class="flex items-center justify-between">
+            <span class="text-sm font-semibold text-gray-700">SUMA TOTAL:</span>
+            <span class="text-3xl font-bold" id="suma-porcentajes">0.00%</span>
+          </div>
+          <div class="mt-2 h-2 bg-gray-200 rounded-full overflow-hidden">
+            <div
+              id="barra-progreso-suma"
+              class="h-full bg-blue-600 transition-all"
+              style="width: 0%"
+            ></div>
+          </div>
+          <p
+            class="text-xs text-gray-600 mt-2 text-center"
+            id="mensaje-validacion-suma"
+          >
+            Debe sumar exactamente 100%
+          </p>
+        </div>
+      </div>
     </div>
+
+    <!-- Footer del Modal -->
+    <div
+      class="border-t bg-gray-50 px-6 py-4 flex items-center justify-end gap-3"
+    >
+      <button
+        onclick="Planificacion.cerrarModalPorcentajes()"
+        class="px-6 py-2.5 bg-gray-200 text-gray-700 font-semibold rounded-xl hover:bg-gray-300 transition-colors"
+      >
+        Cancelar
+      </button>
+      <button
+        onclick="Planificacion.guardarPorcentajes()"
+        id="btn-guardar-porcentajes"
+        disabled
+        class="px-6 py-2.5 bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-bold rounded-xl hover:from-purple-700 hover:to-indigo-700 transition-all shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
+      >
+        Guardar Cambios
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== MODAL: DESGLOSE DE COMUNIDAD ===== -->
+<div
+  id="modal-comunidad"
+  class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4"
+>
+  <div
+    class="bg-white rounded-2xl shadow-2xl max-w-5xl w-full max-h-[90vh] overflow-hidden"
+  >
+    <!-- Header del Modal -->
+    <div
+      class="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-6 py-5"
+    >
+      <div class="flex items-center justify-between">
+        <div>
+          <h3 class="text-2xl font-bold" id="modal-comunidad-nombre">
+            Comunidad
+          </h3>
+          <div class="flex items-center gap-4 mt-2 text-blue-100">
+            <span>MEF: <strong id="modal-comunidad-mef">0</strong></span>
+            <span>→</span>
+            <span
+              >Proyección Anual:
+              <strong id="modal-comunidad-proyeccion">0</strong></span
+            >
+          </div>
+        </div>
+        <button
+          onclick="Planificacion.cerrarModalComunidad()"
+          class="text-white hover:bg-white hover:bg-opacity-20 rounded-lg p-2 transition-all"
+        >
+          <div id="modal-sobrantes-info" class="hidden px-6 py-4 border-b">
+            <!-- Se llenará dinámicamente con JavaScript -->
+          </div>
+          <svg
+            class="w-6 h-6"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M6 18L18 6M6 6l12 12"
+            />
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Contenido Scrollable -->
+    <div
+      class="overflow-y-auto p-6 space-y-4"
+      style="max-height: calc(90vh - 180px)"
+      id="modal-comunidad-metodos"
+    >
+      <!-- Tarjetas de métodos se cargarán dinámicamente -->
+    </div>
+
+    <!-- Footer del Modal -->
+    <div class="border-t bg-gray-50 px-6 py-4 flex items-center justify-end">
+      <button
+        onclick="Planificacion.cerrarModalComunidad()"
+        class="px-6 py-2.5 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 transition-colors"
+      >
+        Cerrar
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== MODAL: EDITAR DISTRIBUCIÓN MENSUAL ===== -->
+<div
+  id="modal-distribucion"
+  class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4"
+>
+  <div
+    class="bg-white rounded-2xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-hidden"
+  >
+    <!-- Header del Modal -->
+    <div
+      class="bg-gradient-to-r from-green-600 to-teal-600 text-white px-6 py-5"
+    >
+      <div class="flex items-center justify-between">
+        <div>
+          <h3 class="text-2xl font-bold flex items-center gap-3">
+            <svg
+              class="w-7 h-7"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+              />
+            </svg>
+            <span id="modal-dist-titulo">Editar Distribución Mensual</span>
+          </h3>
+          <p class="text-green-100 mt-2">
+            Meta anual: <strong id="modal-dist-meta-anual">0</strong> unidades
+          </p>
+        </div>
+        <button
+          onclick="Planificacion.cerrarModalDistribucion()"
+          class="text-white hover:bg-white hover:bg-opacity-20 rounded-lg p-2 transition-all"
+        >
+          <svg
+            class="w-6 h-6"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M6 18L18 6M6 6l12 12"
+            />
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Contenido Scrollable -->
+    <div class="overflow-y-auto p-6" style="max-height: calc(90vh - 260px)">
+      <p class="text-sm text-gray-600 mb-6">
+        Distribuye las unidades entre los 12 meses del año. La suma debe ser
+        exactamente igual a la meta anual.
+      </p>
+
+      <!-- Grid de 12 Meses -->
+      <div class="grid grid-cols-2 md:grid-cols-3 gap-4" id="grid-meses">
+        <!-- Inputs de meses se cargarán dinámicamente -->
+      </div>
+
+      <!-- Indicador de Validación -->
+      <div
+        class="mt-6 bg-gray-50 rounded-xl p-4 border-2"
+        id="indicador-suma-meses"
+      >
+        <div class="flex items-center justify-between">
+          <span class="text-sm font-semibold text-gray-700">Suma actual:</span>
+          <span class="text-2xl font-bold" id="suma-meses-actual">0</span>
+        </div>
+        <div class="mt-2 flex items-center gap-3">
+          <div class="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
+            <div
+              id="barra-progreso-meses"
+              class="h-full bg-green-600 transition-all"
+              style="width: 0%"
+            ></div>
+          </div>
+          <span class="text-sm font-semibold" id="porcentaje-suma-meses"
+            >0%</span
+          >
+        </div>
+        <p
+          class="text-sm mt-2 text-center font-semibold"
+          id="mensaje-validacion-meses"
+        >
+          <!-- Mensaje dinámico -->
+        </p>
+      </div>
+    </div>
+
+    <!-- Footer del Modal -->
+    <div
+      class="border-t bg-gray-50 px-6 py-4 flex items-center justify-end gap-3"
+    >
+      <button
+        onclick="Planificacion.cerrarModalDistribucion()"
+        class="px-6 py-2.5 bg-gray-200 text-gray-700 font-semibold rounded-xl hover:bg-gray-300 transition-colors"
+      >
+        Cancelar
+      </button>
+      <button
+        onclick="Planificacion.guardarDistribucion()"
+        id="btn-guardar-distribucion"
+        disabled
+        class="px-6 py-2.5 bg-gradient-to-r from-green-600 to-teal-600 text-white font-bold rounded-xl hover:from-green-700 hover:to-teal-700 transition-all shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
+      >
+        Guardar Distribución
+      </button>
+    </div>
+  </div>
 </div>

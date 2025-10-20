@@ -59,25 +59,6 @@ const ComponentLoader = {
       // ESPERAR UN MOMENTO ANTES DE VERIFICAR
       await new Promise((resolve) => setTimeout(resolve, 50));
 
-      // Verificar si los elementos específicos del perfil existen
-      const perfilCodigo = document.getElementById("perfil-codigo");
-      console.log(
-        `🎯 perfil-codigo encontrado DESPUÉS de espera:`,
-        !!perfilCodigo
-      );
-
-      if (perfilCodigo) {
-        console.log(`✅ Elemento encontrado, estructura DOM correcta`);
-      } else {
-        console.error(
-          `❌ Elemento aún no encontrado, verificando HTML completo:`
-        );
-        console.log(
-          "HTML completo insertado:",
-          container.innerHTML.substring(0, 500)
-        );
-      }
-
       this.executeTemplateScripts(container);
       console.log(`✅ Template insertado en main-content`);
       return true;
@@ -159,42 +140,42 @@ const ComponentLoader = {
 
     // Mapear vistas a templates según el rol
     switch (viewName) {
-    case "dashboard":
-      templatePath = `templates/dashboard/${role}.html`;
-      break;
-    
-    case "registro":
-      templatePath = "templates/registro/formulario.html";
-      break;
-    
-    case "registro-v2":
-      templatePath = "templates/registro/formulario-v2.html";
-      break;
-    
-    case "validacion":
-      templatePath = "templates/validacion/pendientes.html";
-      break;
-    
-    case "reportes":
-      templatePath = "templates/reportes/mensual.html";
-      break;
-    
-    case "usuarios":
-      templatePath = "templates/admin/usuarios.html";
-      break;
-    
-    case "planificacion":
-      templatePath = "templates/planificacion/configuracion.html";
-      break;
-    
-    case "perfil":
-      templatePath = "templates/perfil/usuario.html";
-      break;
-    
-    default:
-      console.error(`❌ Vista no reconocida: ${viewName}`);
-      return false;
-  }
+      case "dashboard":
+        templatePath = `templates/dashboard/${role}.html`;
+        break;
+      
+      case "registro":
+        templatePath = "templates/registro/formulario.html";
+        break;
+      
+      case "registro-v2":
+        templatePath = "templates/registro/formulario-v2.html";
+        break;
+      
+      case "validacion":
+        templatePath = "templates/validacion/pendientes.html";
+        break;
+      
+      case "reportes":
+        templatePath = "templates/reportes/mensual.html";
+        break;
+      
+      case "usuarios":
+        templatePath = "templates/admin/usuarios.html";
+        break;
+      
+      case "planificacion":
+        templatePath = "templates/planificacion/configuracion.html";
+        break;
+      
+      case "perfil":
+        templatePath = "templates/perfil/usuario.html";
+        break;
+      
+      default:
+        console.error(`❌ Vista no reconocida: ${viewName}`);
+        return false;
+    }
 
     // MOSTRAR LOADING AL INICIO
     SGPF.showLoading(true);
@@ -274,7 +255,6 @@ const ComponentLoader = {
               await window.CoordinadorDashboard.init();
             }
           }
-
           break;
 
         case "registro":
@@ -286,55 +266,55 @@ const ComponentLoader = {
           break;
 
         case "registro-v2":
-        console.log("🆕 Inicializando Registro V2");
-        
-        // Cargar script si no existe
-        if (!window.RegistroV2) {
-          console.log("📥 Cargando script registro-v2.js");
-          const script = document.createElement("script");
-          script.src = SGPFConfig.getVersionedScript("js/registro-v2.js");
-          document.head.appendChild(script);
+          console.log("🆕 Inicializando Registro V2");
+          
+          // Cargar script si no existe
+          if (!window.RegistroV2) {
+            console.log("📥 Cargando script registro-v2.js");
+            const script = document.createElement("script");
+            script.src = SGPFConfig.getVersionedScript("js/registro-v2.js");
+            document.head.appendChild(script);
 
-          await new Promise((resolve, reject) => {
-            script.onload = () => {
-              console.log("✅ Script registro-v2.js cargado exitosamente");
-              resolve();
-            };
-            script.onerror = (error) => {
-              console.error("❌ Error cargando script registro-v2.js:", error);
-              reject(error);
-            };
-            setTimeout(() => {
-              console.error("⏱️ Timeout cargando script registro-v2.js");
-              reject(new Error("Timeout"));
-            }, 5000);
-          });
-        } else {
-          console.log("✅ Script RegistroV2 ya existe");
-        }
-
-        // Esperar renderizado del DOM
-        console.log("⏳ Esperando 300ms para DOM...");
-        await new Promise((resolve) => setTimeout(resolve, 300));
-
-        console.log("🔍 Verificando window.RegistroV2:", !!window.RegistroV2);
-
-        if (window.RegistroV2) {
-          console.log("🚀 EJECUTANDO RegistroV2.init()");
-          try {
-            await window.RegistroV2.init();
-            console.log("✅ RegistroV2.init() COMPLETADO EXITOSAMENTE");
-          } catch (error) {
-            console.error("❌ ERROR EN RegistroV2.init():", error);
-            throw error;
+            await new Promise((resolve, reject) => {
+              script.onload = () => {
+                console.log("✅ Script registro-v2.js cargado exitosamente");
+                resolve();
+              };
+              script.onerror = (error) => {
+                console.error("❌ Error cargando script registro-v2.js:", error);
+                reject(error);
+              };
+              setTimeout(() => {
+                console.error("⏱️ Timeout cargando script registro-v2.js");
+                reject(new Error("Timeout"));
+              }, 5000);
+            });
+          } else {
+            console.log("✅ Script RegistroV2 ya existe");
           }
-        } else {
-          console.error("❌ RegistroV2 NO DISPONIBLE DESPUÉS DE CARGA");
-          throw new Error("RegistroV2 no se cargó correctamente");
-        }
-        
-        console.log("✅ CASO REGISTRO-V2 TERMINADO");
-        break;
+
+          // Esperar renderizado del DOM
+          console.log("⏳ Esperando 300ms para DOM...");
+          await new Promise((resolve) => setTimeout(resolve, 300));
+
+          console.log("🔍 Verificando window.RegistroV2:", !!window.RegistroV2);
+
+          if (window.RegistroV2) {
+            console.log("🚀 EJECUTANDO RegistroV2.init()");
+            try {
+              await window.RegistroV2.init();
+              console.log("✅ RegistroV2.init() COMPLETADO EXITOSAMENTE");
+            } catch (error) {
+              console.error("❌ ERROR EN RegistroV2.init():", error);
+              throw error;
+            }
+          } else {
+            console.error("❌ RegistroV2 NO DISPONIBLE DESPUÉS DE CARGA");
+            throw new Error("RegistroV2 no se cargó correctamente");
+          }
+          
+          console.log("✅ CASO REGISTRO-V2 TERMINADO");
+          break;
 
         case "validacion":
           // Cargar script de validación si no existe
@@ -357,72 +337,103 @@ const ComponentLoader = {
           break;
 
         case 'planificacion':
-    if (!window.PlanificacionSystem) {
-        const script = document.createElement('script');
-        script.src = SGPFConfig.getVersionedScript("js/planificacion.js");
-        await new Promise((resolve, reject) => {
-            script.onload = resolve;
-            script.onerror = reject;
+          console.log("📊 INICIANDO CASO PLANIFICACION");
+          
+          if (!window.Planificacion) {
+            console.log("📥 Cargando script planificacion.js");
+            const script = document.createElement('script');
+            script.src = SGPFConfig.getVersionedScript("js/planificacion.js");
             document.head.appendChild(script);
-        });
-    }
-    
-    await new Promise(resolve => setTimeout(resolve, 300));
-    
-    if (window.PlanificacionSystem) {
-        await window.PlanificacionSystem.init();
-    }
-    break;
+            
+            await new Promise((resolve, reject) => {
+              script.onload = () => {
+                console.log("✅ Script planificacion.js cargado exitosamente");
+                resolve();
+              };
+              script.onerror = (error) => {
+                console.error("❌ Error cargando script planificacion.js:", error);
+                reject(error);
+              };
+              setTimeout(() => {
+                console.error("⏱️ Timeout cargando script planificacion.js");
+                reject(new Error("Timeout"));
+              }, 5000);
+            });
+          } else {
+            console.log("✅ Script Planificacion ya existe");
+          }
+          
+          console.log("⏳ Esperando 300ms para DOM...");
+          await new Promise(resolve => setTimeout(resolve, 300));
+          
+          console.log("🔍 Verificando window.Planificacion:", !!window.Planificacion);
+          
+          if (window.Planificacion) {
+            console.log("🚀 EJECUTANDO Planificacion.init()");
+            try {
+              await window.Planificacion.init();
+              console.log("✅ Planificacion.init() COMPLETADO EXITOSAMENTE");
+            } catch (error) {
+              console.error("❌ ERROR EN Planificacion.init():", error);
+              throw error;
+            }
+          } else {
+            console.error("❌ Planificacion NO DISPONIBLE DESPUÉS DE CARGA");
+            throw new Error("Planificacion no se cargó correctamente");
+          }
+          
+          console.log("✅ CASO PLANIFICACION TERMINADO");
+          break;
 
         case "perfil":
-          console.log("🔥 INICIANDO CASO PERFIL");
+          console.log("👤 INICIANDO CASO PERFIL");
 
           if (!window.PerfilUsuario) {
-            console.log("🔥 Cargando script perfil.js");
+            console.log("📥 Cargando script perfil.js");
             const script = document.createElement("script");
             script.src = SGPFConfig.getVersionedScript("js/perfil.js");
             document.head.appendChild(script);
 
             await new Promise((resolve, reject) => {
               script.onload = () => {
-                console.log("🔥 Script perfil.js cargado exitosamente");
+                console.log("✅ Script perfil.js cargado exitosamente");
                 resolve();
               };
               script.onerror = (error) => {
-                console.log("🔥 Error cargando script perfil.js:", error);
+                console.error("❌ Error cargando script perfil.js:", error);
                 reject(error);
               };
               setTimeout(() => {
-                console.log("🔥 Timeout cargando script perfil.js");
+                console.error("⏱️ Timeout cargando script perfil.js");
                 reject(new Error("Timeout"));
               }, 5000);
             });
           } else {
-            console.log("🔥 Script PerfilUsuario ya existe");
+            console.log("✅ Script PerfilUsuario ya existe");
           }
 
-          console.log("🔥 Esperando 500ms para DOM...");
+          console.log("⏳ Esperando 500ms para DOM...");
           await new Promise((resolve) => setTimeout(resolve, 500));
 
           console.log(
-            "🔥 Verificando window.PerfilUsuario:",
+            "🔍 Verificando window.PerfilUsuario:",
             !!window.PerfilUsuario
           );
 
           if (window.PerfilUsuario) {
-            console.log("🔥 EJECUTANDO PerfilUsuario.init()");
+            console.log("🚀 EJECUTANDO PerfilUsuario.init()");
             try {
               await window.PerfilUsuario.init();
-              console.log("🔥 PerfilUsuario.init() COMPLETADO EXITOSAMENTE");
+              console.log("✅ PerfilUsuario.init() COMPLETADO EXITOSAMENTE");
             } catch (error) {
-              console.error("🔥 ERROR EN PerfilUsuario.init():", error);
+              console.error("❌ ERROR EN PerfilUsuario.init():", error);
               throw error;
             }
           } else {
-            console.error("🔥 PerfilUsuario NO DISPONIBLE DESPUÉS DE CARGA");
+            console.error("❌ PerfilUsuario NO DISPONIBLE DESPUÉS DE CARGA");
             throw new Error("PerfilUsuario no se cargó correctamente");
           }
-          console.log("🔥 CASO PERFIL TERMINADO");
+          console.log("✅ CASO PERFIL TERMINADO");
           break;
 
         case "reportes":
@@ -445,7 +456,7 @@ const ComponentLoader = {
           }
           break;
 
-        case "usuarios": // NUEVO CASO
+        case "usuarios":
           console.log("👥 INICIANDO CASO USUARIOS");
 
           if (!window.UsuariosAdmin) {
@@ -456,44 +467,44 @@ const ComponentLoader = {
 
             await new Promise((resolve, reject) => {
               script.onload = () => {
-                console.log("📥 Script usuarios.js cargado exitosamente");
+                console.log("✅ Script usuarios.js cargado exitosamente");
                 resolve();
               };
               script.onerror = (error) => {
-                console.log("📥 Error cargando script usuarios.js:", error);
+                console.error("❌ Error cargando script usuarios.js:", error);
                 reject(error);
               };
               setTimeout(() => {
-                console.log("📥 Timeout cargando script usuarios.js");
+                console.error("⏱️ Timeout cargando script usuarios.js");
                 reject(new Error("Timeout"));
               }, 5000);
             });
           } else {
-            console.log("📥 Script UsuariosAdmin ya existe");
+            console.log("✅ Script UsuariosAdmin ya existe");
           }
 
-          console.log("📥 Esperando 500ms para DOM...");
+          console.log("⏳ Esperando 500ms para DOM...");
           await new Promise((resolve) => setTimeout(resolve, 500));
 
           console.log(
-            "📥 Verificando window.UsuariosAdmin:",
+            "🔍 Verificando window.UsuariosAdmin:",
             !!window.UsuariosAdmin
           );
 
           if (window.UsuariosAdmin) {
-            console.log("📥 EJECUTANDO UsuariosAdmin.init()");
+            console.log("🚀 EJECUTANDO UsuariosAdmin.init()");
             try {
               await window.UsuariosAdmin.init();
-              console.log("📥 UsuariosAdmin.init() COMPLETADO EXITOSAMENTE");
+              console.log("✅ UsuariosAdmin.init() COMPLETADO EXITOSAMENTE");
             } catch (error) {
-              console.error("📥 ERROR EN UsuariosAdmin.init():", error);
+              console.error("❌ ERROR EN UsuariosAdmin.init():", error);
               throw error;
             }
           } else {
-            console.error("📥 UsuariosAdmin NO DISPONIBLE DESPUÉS DE CARGA");
+            console.error("❌ UsuariosAdmin NO DISPONIBLE DESPUÉS DE CARGA");
             throw new Error("UsuariosAdmin no se cargó correctamente");
           }
-          console.log("📥 CASO USUARIOS TERMINADO");
+          console.log("✅ CASO USUARIOS TERMINADO");
           break;
           
       }

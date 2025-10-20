@@ -1,1311 +1,1239 @@
-// ===== js/planificacion.js - VERSIÓN CORREGIDA =====
-window.PlanificacionSystem = window.PlanificacionSystem || {
-    // Estado del sistema
-    vistaActual: 'configuracion',
-    datosOriginales: null,
-    datosEditados: null,
-    porcentajesEditados: null,
-    metasEditadas: null,
-    distribucionEditada: null,
-    filtrosActuales: {
-        año: 2025,
-        comunidadId: null,
-        metodoId: null,
-        tipoFiltro: 'metodo' // 'metodo' o 'comunidad'
-    },
-    modoEdicion: false,
+// ===== MÓDULO DE PLANIFICACIÓN DE METAS V2.0 =====
+window.Planificacion = window.Planificacion || {
+  // ===== ESTADO GLOBAL =====
+  state: {
+    anioActual: new Date().getFullYear(),
+    territorioSeleccionado: null,
+    comunidadActual: null,
+    metaActual: null,
+    porcentajes: [],
+    territorios: [],
+    comunidades: [],
+    mesesActuales: Array(12).fill(0),
+    metodosDisponibles: [
+      { id: 1, nombre: "Inyección Mensual", categoria: "Inyecciones" },
+      { id: 2, nombre: "Inyección Bimensual", categoria: "Inyecciones" },
+      {
+        id: 3,
+        nombre: "Implante Hormonal Subdérmico",
+        categoria: "Dispositivos",
+      },
+      { id: 4, nombre: "Condón Masculino", categoria: "Barrera" },
+      { id: 5, nombre: "Collar del Ciclo", categoria: "Naturales" },
+      {
+        id: 6,
+        nombre: "Método de Lactancia y Amenorrea (MELA)",
+        categoria: "Naturales",
+      },
+      {
+        id: 7,
+        nombre: "Anticoncepción Quirúrgica Voluntaria Femenina",
+        categoria: "Quirúrgica",
+      },
+      {
+        id: 8,
+        nombre: "Anticoncepción Quirúrgica Voluntaria Masculina",
+        categoria: "Quirúrgica",
+      },
+      {
+        id: 9,
+        nombre: "Dispositivo Intrauterino (DIU)",
+        categoria: "Dispositivos",
+      },
+      { id: 10, nombre: "Inyección Trimestral", categoria: "Inyecciones" },
+      { id: 11, nombre: "Píldora Anticonceptiva", categoria: "Orales" },
+    ],
+  },
 
-    // INICIALIZACIÓN
-    async init() {
-        console.log('Inicializando Sistema de Planificación y Metas');
-        
-        await new Promise(resolve => setTimeout(resolve, 300));
-        
-        try {
-            const user = SGPF.getCurrentUser();
-            const rolNormalizado = SGPF.getNormalizedRole();
-            
-            console.log('Usuario:', user.nombres, user.apellidos);
-            console.log('Rol:', rolNormalizado);
-            
-            this.modoEdicion = (rolNormalizado === 'coordinador');
-            
-            this.configurarFiltrosDefault();
-            this.configurarEventListeners();
-            await this.cargarResumen();
-            
-            console.log('Sistema de Planificación inicializado');
-        } catch (error) {
-            console.error('Error inicializando planificación:', error);
-            SGPF.showToast('Error inicializando sistema de planificación', 'error');
+  // ===== INICIALIZAR MÓDULO =====
+  async init() {
+    console.log("📊 Inicializando módulo de planificación V2.0");
+
+    try {
+      const user = SGPF.getCurrentUser();
+
+      if (!user) {
+        console.error("❌ Usuario no autenticado");
+        SGPF.showToast("Debes iniciar sesión", "error");
+        return;
+      }
+
+      // Verificar permisos
+      if (user.rol !== "coordinador_municipal" && user.rol !== "encargado_sr") {
+        console.error("❌ Usuario sin permisos de configuración");
+        SGPF.showToast(
+          "No tienes permisos para configurar planificación",
+          "error"
+        );
+        return;
+      }
+
+      // Cargar años disponibles
+      await this.cargarAniosDisponibles();
+
+      // Cargar territorios
+      await this.cargarTerritorios();
+
+      // Configurar selector de año
+      this.configurarSelectorAnio();
+
+      console.log("✅ Módulo de planificación inicializado");
+    } catch (error) {
+      console.error("❌ Error inicializando planificación:", error);
+      SGPF.showToast("Error al inicializar módulo", "error");
+    }
+  },
+
+  // ===== CARGAR AÑOS DISPONIBLES =====
+  async cargarAniosDisponibles() {
+    try {
+      const response = await SGPF.apiCall("/planificacion/anios", "GET");
+
+      if (response.success) {
+        const anios = response.data;
+        const selector = document.getElementById("selector-anio");
+
+        if (selector) {
+          selector.innerHTML = anios
+            .map(
+              (anio) =>
+                `<option value="${anio}" ${
+                  anio === this.state.anioActual ? "selected" : ""
+                }>${anio}</option>`
+            )
+            .join("");
+
+          // Si no hay años, agregar el actual
+          if (anios.length === 0) {
+            selector.innerHTML = `<option value="${this.state.anioActual}" selected>${this.state.anioActual}</option>`;
+          }
         }
-    },
+      }
+    } catch (error) {
+      console.error("❌ Error cargando años:", error);
+    }
+  },
 
-    configurarFiltrosDefault() {
-        const fechaActual = new Date();
-        const añoActual = fechaActual.getFullYear();
+  // ===== CONFIGURAR SELECTOR DE AÑO =====
+  configurarSelectorAnio() {
+    const selector = document.getElementById("selector-anio");
 
-        const selectAño = document.getElementById('filtro-año-plan');
-        if (selectAño) {
-            selectAño.value = añoActual.toString();
-            this.filtrosActuales.año = añoActual;
+    if (selector) {
+      selector.addEventListener("change", async (e) => {
+        this.state.anioActual = parseInt(e.target.value);
+        console.log("📅 Año cambiado a:", this.state.anioActual);
+
+        // Recargar datos del territorio actual
+        if (this.state.territorioSeleccionado) {
+          await this.cargarAvanceTerritorio(this.state.territorioSeleccionado);
         }
-    },
+      });
+    }
+  },
 
-    configurarEventListeners() {
-        // Tabs
-        document.querySelectorAll('.tab-button').forEach(button => {
-            button.addEventListener('click', (e) => {
-                this.cambiarVista(e.target.dataset.tab);
-            });
-        });
+  // ===== CARGAR TERRITORIOS =====
+  async cargarTerritorios() {
+    try {
+      // Obtener territorios desde la BD
+      const response = await SGPF.apiCall("/admin/territorios", "GET");
 
-        // Filtro año
-        const selectAño = document.getElementById('filtro-año-plan');
-        if (selectAño) {
-            selectAño.addEventListener('change', (e) => {
-                this.filtrosActuales.año = parseInt(e.target.value);
-                this.cargarVistaActual();
-            });
+      if (response.success && response.data) {
+        this.state.territorios = response.data;
+        this.renderizarTabsTerritorios();
+
+        // Seleccionar primer territorio por defecto
+        if (this.state.territorios.length > 0) {
+          await this.seleccionarTerritorio(this.state.territorios[0].id);
         }
+      }
+    } catch (error) {
+      console.error("❌ Error cargando territorios:", error);
+      SGPF.showToast("Error al cargar territorios", "error");
+    }
+  },
 
-        // Ocultar botones si no es coordinador
-        if (!this.modoEdicion) {
-            const botonesCoordinador = ['btn-guardar-configuracion', 'btn-guardar-porcentajes', 'btn-calcular-metas', 'btn-guardar-metas-individuales', 'btn-guardar-distribucion'];
-            botonesCoordinador.forEach(id => {
-                const btn = document.getElementById(id);
-                if (btn) btn.style.display = 'none';
-            });
-        }
-    },
+  // ===== RENDERIZAR TABS DE TERRITORIOS =====
+  renderizarTabsTerritorios() {
+    const tabsContainer = document.getElementById("tabs-territorios");
 
-    cambiarVista(vista) {
-        this.vistaActual = vista;
-        
-        document.querySelectorAll('.tab-button').forEach(button => {
-            button.classList.toggle('active', button.dataset.tab === vista);
-        });
+    if (!tabsContainer) return;
 
-        this.cargarVistaActual();
-    },
+    tabsContainer.innerHTML = this.state.territorios
+      .map(
+        (territorio) => `
+            <button 
+                onclick="Planificacion.seleccionarTerritorio(${territorio.id})" 
+                data-territorio-id="${territorio.id}"
+                class="tab-territorio px-6 py-4 text-sm font-medium border-b-2 transition-all whitespace-nowrap
+                       ${
+                         territorio.id === this.state.territorioSeleccionado
+                           ? "text-blue-600 border-blue-600"
+                           : "text-gray-500 border-transparent hover:text-gray-700 hover:border-gray-300"
+                       }">
+                ${territorio.nombre}
+            </button>
+        `
+      )
+      .join("");
+  },
 
-    async cargarVistaActual() {
-        if (this.vistaActual === 'configuracion') {
-            await this.cargarVistaConfiguracion();
-        } else if (this.vistaActual === 'consolidado') {
-            await this.cargarVistaConsolidado();
-        } else if (this.vistaActual === 'comparativo') {
-            await this.cargarVistaComparativo();
-        }
-    },
+  // ===== SELECCIONAR TERRITORIO =====
+  async seleccionarTerritorio(territorioId) {
+    this.state.territorioSeleccionado = territorioId;
 
-    async cargarResumen() {
-        try {
-            const response = await SGPF.apiCall(`/planificacion/configuracion/${this.filtrosActuales.año}`);
-            
-            if (response.success && response.data) {
-                this.actualizarElemento('total-comunidades-plan', response.data.comunidades.length);
-                
-                const totalProyeccion = response.data.comunidades.reduce((sum, c) => sum + (c.proyeccion_anual || 0), 0);
-                this.actualizarElemento('total-proyeccion-anual', totalProyeccion);
-            }
-        } catch (error) {
-            console.error('Error cargando resumen:', error);
-        }
-    },
+    // Actualizar estilos de tabs
+    document.querySelectorAll(".tab-territorio").forEach((tab) => {
+      const id = parseInt(tab.getAttribute("data-territorio-id"));
+      if (id === territorioId) {
+        tab.classList.remove("text-gray-500", "border-transparent");
+        tab.classList.add("text-blue-600", "border-blue-600");
+      } else {
+        tab.classList.remove("text-blue-600", "border-blue-600");
+        tab.classList.add("text-gray-500", "border-transparent");
+      }
+    });
 
-    // ========== VISTA 1: CONFIGURACIÓN MEF ==========
-    async cargarVistaConfiguracion() {
-        console.log('Cargando configuración MEF');
+    // Cargar datos del territorio
+    await this.cargarAvanceTerritorio(territorioId);
+  },
 
-        try {
-            this.mostrarLoading();
+  // ===== CARGAR AVANCE DEL TERRITORIO =====
+  async cargarAvanceTerritorio(territorioId) {
+    try {
+      // Mostrar loading
+      document.getElementById("loading-comunidades").classList.remove("hidden");
+      document
+        .getElementById("tabla-comunidades-container")
+        .classList.add("hidden");
+      document.getElementById("sin-datos-anio").classList.add("hidden");
 
-            const response = await SGPF.apiCall(`/planificacion/configuracion/${this.filtrosActuales.año}`);
+      const response = await SGPF.apiCall(
+        `/planificacion/avance/${territorioId}/${this.state.anioActual}`,
+        "GET"
+      );
 
-            if (response.success) {
-                this.datosOriginales = JSON.parse(JSON.stringify(response.data.comunidades));
-                this.datosEditados = JSON.parse(JSON.stringify(response.data.comunidades));
-                this.renderizarTablaConfiguracion();
-            }
+      document.getElementById("loading-comunidades").classList.add("hidden");
 
-        } catch (error) {
-            console.error('Error cargando configuración:', error);
-            this.mostrarError('Error cargando configuración.');
-        }
-    },
+      if (
+        !response.success ||
+        !response.comunidades ||
+        response.comunidades.length === 0
+      ) {
+        // No hay datos para este año
+        document.getElementById("sin-datos-anio").classList.remove("hidden");
+        return;
+      }
 
-    // ========== VISTA 1: CONFIGURACIÓN MEF CORREGIDO ==========
-    renderizarTablaConfiguracion() {
-        const contenedor = document.getElementById('contenido-planificacion');
-        
-        if (!contenedor) return;
+      this.state.comunidades = response.comunidades;
+      this.renderizarTablaComunidades();
+    } catch (error) {
+      console.error("❌ Error cargando avance:", error);
+      document.getElementById("loading-comunidades").classList.add("hidden");
 
-        let html = `
-            <table class="tabla-planificacion">
-                <thead>
-                    <tr>
-                        <th>No.</th>
-                        <th>Comunidad</th>
-                        <th>Población MEF</th>
-                        <th>Proyección Anual</th>
-                        ${this.modoEdicion ? '<th>Acciones</th>' : ''}
-                    </tr>
-                </thead>
-                <tbody>
-        `;
+      // Verificar si es un 404 (año sin configurar)
+      if (error.message && error.message.includes("No hay configuración")) {
+        document.getElementById("sin-datos-anio").classList.remove("hidden");
+      } else {
+        SGPF.showToast("Error al cargar datos del territorio", "error");
+      }
+    }
+  },
 
-        this.datosEditados.forEach((dato, index) => {
-            html += `
-                <tr>
-                    <td>${index + 1}</td>
-                    <td><strong>${dato.comunidad}</strong></td>
-                    <td>
-                        ${this.modoEdicion ? `
-                            <input type="number" 
-                                   id="mef-${index}"
-                                   class="input-editable" 
-                                   value="${dato.poblacion_mef || 0}"
-                                   min="0"
-                                   onchange="PlanificacionSystem.actualizarSoloMEF(${index}, this.value)"
-                                   style="width: 100px; padding: 0.25rem; border: 1px solid #ddd; border-radius: 4px;">
-                        ` : dato.poblacion_mef || 0}
+  // ===== RENDERIZAR TABLA DE COMUNIDADES =====
+  renderizarTablaComunidades() {
+    const tbody = document.getElementById("tabla-comunidades-body");
+    const container = document.getElementById("tabla-comunidades-container");
+
+    if (!tbody || !container) return;
+
+    container.classList.remove("hidden");
+
+    tbody.innerHTML = this.state.comunidades
+      .map((com) => {
+        const colorEstado = this.getColorEstado(com.estado);
+        const esNegativa = com.meta_calculada < 0;
+        const tieneManual = com.es_manual === 1;
+
+        return `
+                <tr class="hover:bg-blue-50 transition-colors ${
+                  esNegativa ? "bg-red-50" : ""
+                }">
+                    <td class="px-6 py-4">
+                        <div class="font-semibold text-gray-900">${
+                          com.comunidad_nombre
+                        }</div>
+                        <div class="text-xs text-gray-500 mt-1">${
+                          com.codigo_comunidad || ""
+                        }</div>
                     </td>
-                    <td>
-                        ${this.modoEdicion ? `
-                            <input type="number" 
-                                   id="proyeccion-${index}"
-                                   class="input-editable" 
-                                   value="${dato.proyeccion_anual || 0}"
-                                   min="0"
-                                   onchange="PlanificacionSystem.actualizarSoloProyeccion(${index}, this.value)"
-                                   style="width: 100px; padding: 0.25rem; border: 1px solid #ddd; border-radius: 4px;">
-                        ` : dato.proyeccion_anual || 0}
-                    </td>
-                    ${this.modoEdicion ? `
-                        <td>
-                            <button class="btn-small btn-secondary" 
-                                    onclick="PlanificacionSystem.calcularProyeccionAutomatica(${index})"
-                                    title="Calcular con fórmula: (MEF × 35%) - 70">
-                                🧮 Calcular
-                            </button>
-                        </td>
-                    ` : ''}
-                </tr>
-            `;
-        });
-
-        html += `
-                </tbody>
-            </table>
-        `;
-
-        if (this.modoEdicion) {
-            html += `
-                <div style="margin-top: 1rem; text-align: right;">
-                    <button id="btn-guardar-configuracion" class="btn btn-primary">
-                        💾 GUARDAR CAMBIOS
-                    </button>
-                </div>
-            `;
-        }
-
-        contenedor.innerHTML = html;
-
-        if (this.modoEdicion) {
-            document.getElementById('btn-guardar-configuracion')?.addEventListener('click', () => {
-                this.guardarConfiguracion();
-            });
-        }
-    },
-
-    // Solo actualizar MEF sin tocar proyección
-    actualizarSoloMEF(index, valor) {
-        const mef = parseInt(valor) || 0;
-        this.datosEditados[index].poblacion_mef = mef;
-    },
-
-    // Solo actualizar proyección sin tocar MEF
-    actualizarSoloProyeccion(index, valor) {
-        const proyeccion = parseInt(valor) || 0;
-        this.datosEditados[index].proyeccion_anual = proyeccion;
-    },
-
-    // Calcular proyección con la fórmula (botón opcional)
-    calcularProyeccionAutomatica(index) {
-        const mef = this.datosEditados[index].poblacion_mef || 0;
-        const proyeccion = Math.round((mef * 0.35) - 70);
-        const proyeccionFinal = Math.max(0, proyeccion);
-        
-        this.datosEditados[index].proyeccion_anual = proyeccionFinal;
-        
-        // Actualizar el input visualmente
-        const inputProyeccion = document.getElementById(`proyeccion-${index}`);
-        if (inputProyeccion) {
-            inputProyeccion.value = proyeccionFinal;
-        }
-        
-        SGPF.showToast(`Proyección calculada: ${proyeccionFinal}`, 'info');
-    },
-
-    actualizarPoblacionMEF(index, valor) {
-        const mef = parseInt(valor) || 0;
-        this.datosEditados[index].poblacion_mef = mef;
-        
-        // Calcular proyección automáticamente: (MEF × 35%) - 70
-        const proyeccion = Math.round((mef * 0.35) - 70);
-        this.datosEditados[index].proyeccion_anual = Math.max(0, proyeccion);
-        
-        // Actualizar input de proyección
-        const inputProyeccion = event.target.closest('tr').querySelector('input[onchange*="actualizarProyeccionAnual"]');
-        if (inputProyeccion) {
-            inputProyeccion.value = this.datosEditados[index].proyeccion_anual;
-        }
-    },
-
-    actualizarProyeccionAnual(index, valor) {
-        this.datosEditados[index].proyeccion_anual = parseInt(valor) || 0;
-    },
-
-    async guardarConfiguracion() {
-        try {
-            SGPF.showLoading(true);
-
-            console.log('Guardando configuración:', this.datosEditados);
-
-            const response = await SGPF.apiCall(`/planificacion/configuracion/guardar/${this.filtrosActuales.año}`, {
-                method: 'POST',
-                body: JSON.stringify({ comunidades: this.datosEditados })
-            });
-
-            if (response.success) {
-                SGPF.showToast('Configuración guardada exitosamente', 'success');
-                
-                // Limpiar cache
-                this.datosOriginales = null;
-                this.datosEditados = null;
-                
-                // Recargar vista después de un delay
-                setTimeout(async () => {
-                    await this.cargarVistaConfiguracion();
-                    await this.cargarResumen();
-                }, 500);
-            } else {
-                throw new Error(response.message);
-            }
-        } catch (error) {
-            console.error('Error guardando configuración:', error);
-            SGPF.showToast('Error guardando configuración', 'error');
-        } finally {
-            SGPF.showLoading(false);
-        }
-    },
-
-    // ========== VISTA 2: CONSOLIDADO ==========
-    async cargarVistaConsolidado() {
-        console.log('Cargando consolidado');
-
-        try {
-            this.mostrarLoading();
-
-            // Cargar porcentajes globales
-            const respPorcentajes = await SGPF.apiCall(`/planificacion/porcentajes-metodos/${this.filtrosActuales.año}`);
-            
-            // Cargar datos consolidados
-            const respConsolidado = await SGPF.apiCall(`/planificacion/reporte-consolidado/${this.filtrosActuales.año}`);
-
-            if (respPorcentajes.success && respConsolidado.success) {
-                this.porcentajesEditados = respPorcentajes.data.porcentajes.map(p => ({
-                    metodo_id: p.metodo_id,
-                    porcentaje_meta: parseFloat(p.porcentaje_meta)
-                }));
-                
-                this.metasEditadas = respConsolidado.data.consolidado;
-                this.renderizarTablaConsolidado();
-            }
-
-        } catch (error) {
-            console.error('Error cargando consolidado:', error);
-            this.mostrarError('Error cargando consolidado.');
-        }
-    },
-
-    renderizarTablaConsolidado() {
-        const contenedor = document.getElementById('contenido-planificacion');
-        
-        if (!contenedor) return;
-
-        // Agrupar por comunidad
-        const comunidadesMap = {};
-        
-        this.metasEditadas.forEach(row => {
-            if (!comunidadesMap[row.comunidad_id]) {
-                comunidadesMap[row.comunidad_id] = {
-                    comunidad_id: row.comunidad_id,
-                    comunidad: row.comunidad,
-                    poblacion_mef: row.poblacion_mef,
-                    proyeccion_anual: row.proyeccion_anual,
-                    metodos: {}
-                };
-            }
-            
-            if (row.metodo_id) {
-                comunidadesMap[row.comunidad_id].metodos[row.metodo_id] = {
-                    metodo: row.metodo,
-                    orden: row.orden_visualizacion,
-                    porcentaje: row.porcentaje_meta || 0,
-                    proyeccion: row.proyeccion_anual_metodo || 0
-                };
-            }
-        });
-
-        const comunidades = Object.values(comunidadesMap);
-
-        // Calcular suma de porcentajes
-        const sumaPorcentajes = this.porcentajesEditados.reduce((sum, p) => sum + p.porcentaje_meta, 0);
-
-        let html = `
-    ${this.modoEdicion ? `
-        <div style="background: ${sumaPorcentajes === 100 ? '#d4edda' : '#fff3cd'}; padding: 1rem; margin-bottom: 1rem; border-radius: 4px;">
-            <strong>Configuración de Porcentajes Globales</strong><br>
-            Suma actual: <strong>${sumaPorcentajes.toFixed(2)}%</strong> ${sumaPorcentajes === 100 ? '✓' : '(debe ser 100%)'}
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 0.5rem; margin-top: 0.5rem;">
-    ` : ''}
-`;
-
-        if (this.modoEdicion) {
-            // Obtener nombres de métodos
-            const metodosNombres = ['Iny. Mensual', 'Iny. Bimensual', 'Iny. Trimestral', 'Píldora', 'DIU', 'Implante', 'Condón', 'Collar', 'MELA', 'AQV F', 'AQV M'];
-            
-            this.porcentajesEditados.forEach((p, idx) => {
-                html += `
-                    <div style="display: flex; align-items: center; gap: 0.5rem;">
-                        <label style="flex: 1; font-size: 0.85rem;">${metodosNombres[idx]}:</label>
-                        <input type="number" 
-                               step="0.1" 
-                               min="0" 
-                               max="100"
-                               value="${p.porcentaje_meta}"
-                               onchange="PlanificacionSystem.actualizarPorcentaje(${idx}, this.value)"
-                               style="width: 70px; padding: 0.25rem; border: 1px solid #ddd; border-radius: 4px;">
-                        <span style="font-size: 0.85rem;">%</span>
-                    </div>
-                `;
-            });
-
-            html += `
-                    </div>
-                    <div style="margin-top: 1rem; display: flex; gap: 0.5rem;">
-                        <button id="btn-guardar-porcentajes" class="btn btn-primary" ${sumaPorcentajes !== 100 ? 'disabled' : ''}>
-                            GUARDAR PORCENTAJES
-                        </button>
-                        <button id="btn-calcular-metas" class="btn btn-secondary">
-                            HACER CÁLCULO
-                        </button>
-                    </div>
-                </div>
-            `;
-        }
-
-        html += `
-            <div style="overflow-x: auto;">
-                <table class="tabla-planificacion" style="min-width: 1400px;">
-                    <thead>
-                        <tr>
-                            <th>No.</th>
-                            <th>Comunidad</th>
-                            <th>MEF</th>
-                            <th>Proy. Anual</th>
-                            <th>Iny. Mens.<br><small>10%</small></th>
-                            <th>Iny. Bim.<br><small>10%</small></th>
-                            <th>Iny. Trim.<br><small>45%</small></th>
-                            <th>Píldora<br><small>12%</small></th>
-                            <th>DIU<br><small>2%</small></th>
-                            <th>Implante<br><small>8%</small></th>
-                            <th>Condón<br><small>6%</small></th>
-                            <th>Collar<br><small>1%</small></th>
-                            <th>MELA<br><small>5.5%</small></th>
-                            <th>AQV F<br><small>0.25%</small></th>
-                            <th>AQV M<br><small>0.25%</small></th>
-                        </tr>
-                    </thead>
-                    <tbody>
-        `;
-
-        comunidades.forEach((comunidad, index) => {
-            html += `
-                <tr>
-                    <td>${index + 1}</td>
-                    <td><strong>${comunidad.comunidad}</strong></td>
-                    <td>${comunidad.poblacion_mef || 0}</td>
-                    <td><strong>${comunidad.proyeccion_anual || 0}</strong></td>
-            `;
-
-            // Los 11 métodos en orden
-            for (let metodoId = 1; metodoId <= 11; metodoId++) {
-                const metodo = comunidad.metodos[metodoId] || { proyeccion: 0, porcentaje: 0 };
-                
-                if (this.modoEdicion) {
-                    html += `
-                        <td>
-                            <input type="number" 
-                                   class="input-editable-small" 
-                                   value="${metodo.proyeccion}"
-                                   min="0"
-                                   onchange="PlanificacionSystem.actualizarMetaIndividual(${comunidad.comunidad_id}, ${metodoId}, this.value)"
-                                   style="width: 60px; padding: 0.2rem; border: 1px solid #ddd; border-radius: 3px; font-size: 0.85rem;">
-                            <br><small>${metodo.porcentaje}%</small>
-                        </td>
-                    `;
-                } else {
-                    html += `
-                        <td>${metodo.proyeccion}<br><small>${metodo.porcentaje}%</small></td>
-                    `;
-                }
-            }
-
-            html += `</tr>`;
-        });
-
-        // Fila totales
-        const totalMEF = comunidades.reduce((sum, c) => sum + (c.poblacion_mef || 0), 0);
-        const totalProyeccion = comunidades.reduce((sum, c) => sum + (c.proyeccion_anual || 0), 0);
-
-        html += `
-                <tr style="background: #f0f0f0; font-weight: bold;">
-                    <td colspan="2">TOTAL</td>
-                    <td>${totalMEF}</td>
-                    <td>${totalProyeccion}</td>
-                    <td colspan="11"></td>
-                </tr>
-                </tbody>
-            </table>
-            </div>
-        `;
-
-        if (this.modoEdicion) {
-            html += `
-                <div style="margin-top: 1rem; text-align: right;">
-                    <button id="btn-guardar-metas-individuales" class="btn btn-primary">
-                        GUARDAR CAMBIOS
-                    </button>
-                </div>
-            `;
-        }
-
-        html += `
-            <div style="margin-top: 1rem;">
-                <button id="btn-exportar-consolidado-excel" class="btn btn-secondary">
-                    Exportar Excel
-                </button>
-            </div>
-        `;
-
-        contenedor.innerHTML = html;
-
-        // Event listeners
-        if (this.modoEdicion) {
-            document.getElementById('btn-guardar-porcentajes')?.addEventListener('click', () => {
-                this.guardarPorcentajes();
-            });
-
-            document.getElementById('btn-calcular-metas')?.addEventListener('click', () => {
-                this.calcularMetas();
-            });
-
-            document.getElementById('btn-guardar-metas-individuales')?.addEventListener('click', () => {
-                this.guardarMetasIndividuales();
-            });
-        }
-
-        document.getElementById('btn-exportar-consolidado-excel')?.addEventListener('click', () => {
-            this.exportarConsolidadoExcel();
-        });
-    },
-
-    actualizarPorcentaje(index, valor) {
-        this.porcentajesEditados[index].porcentaje_meta = parseFloat(valor) || 0;
-        
-        // Recalcular suma y actualizar vista
-        const suma = this.porcentajesEditados.reduce((s, p) => s + p.porcentaje_meta, 0);
-        const btn = document.getElementById('btn-guardar-porcentajes');
-        if (btn) {
-            btn.disabled = Math.abs(suma - 100) > 0.01;
-        }
-        
-        // Actualizar texto de suma
-        const sumaPorcentajes = suma.toFixed(2);
-        this.renderizarTablaConsolidado();
-    },
-
-    actualizarMetaIndividual(comunidadId, metodoId, valor) {
-        const registro = this.metasEditadas.find(m => m.comunidad_id === comunidadId && m.metodo_id === metodoId);
-        if (registro) {
-            registro.proyeccion_anual_metodo = parseInt(valor) || 0;
-        }
-    },
-
-    async guardarPorcentajes() {
-        try {
-            SGPF.showLoading(true);
-
-            const response = await SGPF.apiCall(`/planificacion/porcentajes-metodos/guardar/${this.filtrosActuales.año}`, {
-                method: 'POST',
-                body: JSON.stringify({ porcentajes: this.porcentajesEditados })
-            });
-
-            if (response.success) {
-                SGPF.showToast('Porcentajes guardados', 'success');
-            } else {
-                throw new Error(response.message);
-            }
-        } catch (error) {
-            console.error('Error guardando porcentajes:', error);
-            SGPF.showToast(error.message || 'Error guardando porcentajes', 'error');
-        } finally {
-            SGPF.showLoading(false);
-        }
-    },
-
-    async calcularMetas() {
-        try {
-            SGPF.showLoading(true);
-
-            const response = await SGPF.apiCall(`/planificacion/calcular-metas/${this.filtrosActuales.año}`, {
-                method: 'POST'
-            });
-
-            if (response.success) {
-                SGPF.showToast(response.message, 'success');
-                await this.cargarVistaConsolidado();
-            } else {
-                throw new Error(response.message);
-            }
-        } catch (error) {
-            console.error('Error calculando metas:', error);
-            SGPF.showToast('Error calculando metas', 'error');
-        } finally {
-            SGPF.showLoading(false);
-        }
-    },
-
-    async guardarMetasIndividuales() {
-        try {
-            SGPF.showLoading(true);
-
-            const metas = this.metasEditadas.map(m => ({
-                comunidad_id: m.comunidad_id,
-                metodo_id: m.metodo_id,
-                año: this.filtrosActuales.año,
-                proyeccion_anual_metodo: m.proyeccion_anual_metodo
-            }));
-
-            const response = await SGPF.apiCall('/planificacion/metas-individuales/guardar', {
-                method: 'POST',
-                body: JSON.stringify({ metas })
-            });
-
-            if (response.success) {
-                SGPF.showToast('Metas guardadas', 'success');
-            } else {
-                throw new Error(response.message);
-            }
-        } catch (error) {
-            console.error('Error guardando metas:', error);
-            SGPF.showToast('Error guardando metas', 'error');
-        } finally {
-            SGPF.showLoading(false);
-        }
-    },
-
-// ========== VISTA 3: PLANIFICADO VS EJECUTADO ==========
-    async cargarVistaComparativo() {
-        console.log('Cargando vista comparativo');
-
-        const contenedor = document.getElementById('contenido-planificacion');
-        
-        contenedor.innerHTML = `
-            <div class="card-body">
-                <h3>Comparativo Planificado vs Ejecutado</h3>
-                <p>Seleccione una opción para ver el comparativo:</p>
-                
-                <div class="filtros-reportes">
-                    <div class="filtro-grupo">
-                        <label>Tipo de Reporte:</label>
-                        <select id="tipo-comparativo" onchange="PlanificacionSystem.cambiarTipoComparativo()">
-                            <option value="metodo">Todas las comunidades de un método</option>
-                            <option value="comunidad">Una comunidad con todos los métodos</option>
-                        </select>
-                    </div>
-                    
-                    <div class="filtro-grupo" id="filtro-metodo-comp" style="display: block;">
-                        <label>Método:</label>
-                        <select id="select-metodo-comp">
-                            <option value="">Seleccione...</option>
-                        </select>
-                    </div>
-                    
-                    <div class="filtro-grupo" id="filtro-comunidad-comp" style="display: none;">
-                        <label>Comunidad:</label>
-                        <select id="select-comunidad-comp">
-                            <option value="">Seleccione...</option>
-                        </select>
-                    </div>
-                    
-                    <div class="filtro-grupo">
-                        <label>&nbsp;</label>
-                        <button id="btn-cargar-comparativo" class="btn btn-primary">
-                            Ver Comparativo
-                        </button>
-                    </div>
-                </div>
-                
-                <div id="resultado-comparativo"></div>
-            </div>
-        `;
-
-        await this.cargarSelectComunidades();
-        await this.cargarSelectMetodos();
-
-        document.getElementById('btn-cargar-comparativo')?.addEventListener('click', () => {
-            this.cargarComparativoDetalle();
-        });
-    },
-
-    cambiarTipoComparativo() {
-        const tipo = document.getElementById('tipo-comparativo')?.value;
-        const filtroMetodo = document.getElementById('filtro-metodo-comp');
-        const filtroComunidad = document.getElementById('filtro-comunidad-comp');
-        
-        if (tipo === 'metodo') {
-            filtroMetodo.style.display = 'flex';
-            filtroComunidad.style.display = 'none';
-            this.filtrosActuales.tipoFiltro = 'metodo';
-        } else {
-            filtroMetodo.style.display = 'none';
-            filtroComunidad.style.display = 'flex';
-            this.filtrosActuales.tipoFiltro = 'comunidad';
-        }
-    },
-
-    async cargarSelectComunidades() {
-        try {
-            const response = await SGPF.apiCall(`/planificacion/configuracion/${this.filtrosActuales.año}`);
-            
-            if (response.success) {
-                const select = document.getElementById('select-comunidad-comp');
-                if (select) {
-                    select.innerHTML = '<option value="">Seleccione...</option>';
-                    response.data.comunidades.forEach(com => {
-                        const option = document.createElement('option');
-                        option.value = com.comunidad_id;
-                        option.textContent = com.comunidad;
-                        select.appendChild(option);
-                    });
-                }
-            }
-        } catch (error) {
-            console.error('Error cargando comunidades:', error);
-        }
-    },
-
-    async cargarSelectMetodos() {
-        try {
-            // Métodos hardcoded por ahora
-            const metodos = [
-                { id: 1, nombre: 'Inyección Mensual' },
-                { id: 2, nombre: 'Inyección Bimensual' },
-                { id: 3, nombre: 'Inyección Trimestral' },
-                { id: 4, nombre: 'Píldora' },
-                { id: 5, nombre: 'DIU' },
-                { id: 6, nombre: 'Implante Subdérmico' },
-                { id: 7, nombre: 'Condón' },
-                { id: 8, nombre: 'Collar de Perlas' },
-                { id: 9, nombre: 'MELA' },
-                { id: 10, nombre: 'AQV Femenina' },
-                { id: 11, nombre: 'AQV Masculina' }
-            ];
-
-            const select = document.getElementById('select-metodo-comp');
-            if (select) {
-                select.innerHTML = '<option value="">Seleccione...</option>';
-                metodos.forEach(metodo => {
-                    const option = document.createElement('option');
-                    option.value = metodo.id;
-                    option.textContent = metodo.nombre;
-                    select.appendChild(option);
-                });
-            }
-        } catch (error) {
-            console.error('Error cargando métodos:', error);
-        }
-    },
-
-    async cargarComparativoDetalle() {
-        const tipo = this.filtrosActuales.tipoFiltro;
-        const metodoId = document.getElementById('select-metodo-comp')?.value;
-        const comunidadId = document.getElementById('select-comunidad-comp')?.value;
-
-        if (tipo === 'metodo' && !metodoId) {
-            SGPF.showToast('Seleccione un método', 'warning');
-            return;
-        }
-
-        if (tipo === 'comunidad' && !comunidadId) {
-            SGPF.showToast('Seleccione una comunidad', 'warning');
-            return;
-        }
-
-        try {
-            SGPF.showLoading(true);
-
-            // NUEVO: Asegurar que existan las metas primero
-            if (tipo === 'metodo') {
-                // Obtener todas las comunidades
-                const respComunidades = await SGPF.apiCall(`/planificacion/configuracion/${this.filtrosActuales.año}`);
-                
-                if (respComunidades.success) {
-                    // Asegurar meta para cada comunidad con este método
-                    for (const com of respComunidades.data.comunidades) {
-                        await SGPF.apiCall('/planificacion/asegurar-meta', {
-                            method: 'POST',
-                            body: JSON.stringify({
-                                comunidad_id: com.comunidad_id,
-                                metodo_id: parseInt(metodoId),
-                                año: this.filtrosActuales.año
-                            })
-                        });
-                    }
-                }
-            } else {
-                // Asegurar meta para esta comunidad con todos los métodos
-                for (let metId = 1; metId <= 11; metId++) {
-                    await SGPF.apiCall('/planificacion/asegurar-meta', {
-                        method: 'POST',
-                        body: JSON.stringify({
-                            comunidad_id: parseInt(comunidadId),
-                            metodo_id: metId,
-                            año: this.filtrosActuales.año
-                        })
-                    });
-                }
-            }
-
-            // Ahora sí cargar los datos
-            let endpoint;
-            if (tipo === 'metodo') {
-                endpoint = `/planificacion/planificacion-mensual/metodo/${metodoId}/${this.filtrosActuales.año}`;
-                this.filtrosActuales.metodoId = parseInt(metodoId);
-            } else {
-                endpoint = `/planificacion/planificacion-mensual/comunidad/${comunidadId}/${this.filtrosActuales.año}`;
-                this.filtrosActuales.comunidadId = parseInt(comunidadId);
-            }
-
-            const response = await SGPF.apiCall(endpoint);
-
-            if (response.success) {
-                this.distribucionEditada = response.data.planificacion;
-                this.renderizarComparativo(response.data.planificacion, tipo);
-            }
-        } catch (error) {
-            console.error('Error cargando comparativo:', error);
-            SGPF.showToast('Error cargando comparativo', 'error');
-        } finally {
-            SGPF.showLoading(false);
-        }
-    },
-
-    renderizarComparativo(datos, tipo) {
-        const contenedor = document.getElementById('resultado-comparativo');
-        
-        if (!contenedor || !datos || datos.length === 0) {
-            if (contenedor) {
-                contenedor.innerHTML = '<div class="sin-datos">No hay datos disponibles</div>';
-            }
-            return;
-        }
-
-        const meses = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
-
-        // Agrupar por comunidad o método
-        const grupos = {};
-        datos.forEach(row => {
-            const key = tipo === 'metodo' ? row.comunidad_id : row.metodo_id;
-            const label = tipo === 'metodo' ? row.comunidad : row.metodo;
-            
-            if (!grupos[key]) {
-                grupos[key] = {
-                    id: key,
-                    label: label,
-                    meta_metodo_comunidad_id: row.meta_metodo_comunidad_id, // IMPORTANTE
-                    meta_anual: row.meta_anual || 0,
-                    meses: {}
-                };
-            }
-            
-            if (row.mes) {
-                grupos[key].meses[row.mes] = {
-                    planificado: row.planificado || 0,
-                    ejecutado: row.ejecutado || 0
-                };
-            }
-        });
-
-        // Inicializar objeto de distribución
-        if (!this.distribucionPorGrupo) {
-            this.distribucionPorGrupo = {};
-        }
-
-        let html = '<div style="margin-top: 2rem;">';
-
-        Object.values(grupos).forEach((grupo) => {
-            // Guardar datos del grupo con el ID correcto
-            this.distribucionPorGrupo[grupo.id] = {
-                meta_metodo_comunidad_id: grupo.meta_metodo_comunidad_id,
-                meta_anual: grupo.meta_anual,
-                distribuciones: []
-            };
-
-            // Calcular totales
-            let totalPlanificado = 0;
-            let totalEjecutado = 0;
-            
-            for (let mes = 1; mes <= 12; mes++) {
-                const valor = grupo.meses[mes]?.planificado || 0;
-                totalPlanificado += valor;
-                totalEjecutado += grupo.meses[mes]?.ejecutado || 0;
-                
-                this.distribucionPorGrupo[grupo.id].distribuciones.push({
-                    mes: mes,
-                    meta_mensual: valor
-                });
-            }
-
-            const porcentajeAlcanzado = totalPlanificado > 0 
-                ? ((totalEjecutado / totalPlanificado) * 100).toFixed(1)
-                : 0;
-
-            const faltaDistribuir = grupo.meta_anual - totalPlanificado;
-            const sumaCorrecta = faltaDistribuir === 0;
-
-            html += `
-                <div style="margin-bottom: 2rem; border: 2px solid ${sumaCorrecta ? '#28a745' : '#dc3545'}; border-radius: 8px; padding: 1rem;">
-                    <h4>${grupo.label}</h4>
-                    <p style="margin-bottom: 0.5rem;">
-                        Meta Anual: <strong>${grupo.meta_anual}</strong> | 
-                        Planificado: <strong id="total-planificado-${grupo.id}">${totalPlanificado}</strong> 
-                        ${!sumaCorrecta ? `<span style="color: ${faltaDistribuir > 0 ? 'red' : 'orange'}; font-weight: bold;">(${faltaDistribuir > 0 ? 'Faltan' : 'Exceso de'} ${Math.abs(faltaDistribuir)})</span>` : '<span style="color: green; font-weight: bold;">✓</span>'} | 
-                        Ejecutado: <strong>${totalEjecutado}</strong> | 
-                        Alcance: <strong style="color: ${porcentajeAlcanzado >= 100 ? 'green' : 'orange'};">${porcentajeAlcanzado}%</strong>
-                    </p>
-                    
-                    <table class="tabla-planificacion">
-                        <thead>
-                            <tr>
-                                <th>Mes</th>
-                                <th>Planificado</th>
-                                <th>Ejecutado</th>
-                                <th>Diferencia</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-            `;
-
-            for (let mes = 1; mes <= 12; mes++) {
-                const datosMes = grupo.meses[mes] || { planificado: 0, ejecutado: 0 };
-                const diferenciaMes = datosMes.ejecutado - datosMes.planificado;
-                const clase = diferenciaMes >= 0 ? 'exito' : 'danger';
-
-                html += `
-                    <tr>
-                        <td><strong>${meses[mes - 1]}</strong></td>
-                        <td>
-                            ${this.modoEdicion ? `
-                                <input type="number" 
-                                       class="input-editable-small" 
-                                       value="${datosMes.planificado}"
-                                       min="0"
-                                       onchange="PlanificacionSystem.actualizarDistribucionMensualNuevo(${grupo.id}, ${mes}, this.value)"
-                                       style="width: 80px; padding: 0.25rem; border: 1px solid #ddd; border-radius: 4px;">
-                            ` : datosMes.planificado}
-                        </td>
-                        <td>${datosMes.ejecutado}</td>
-                        <td class="${clase}">${diferenciaMes >= 0 ? '+' : ''}${diferenciaMes}</td>
-                    </tr>
-                `;
-            }
-
-            html += `
-                        </tbody>
-                        <tfoot>
-                            <tr style="background: #f0f0f0; font-weight: bold;">
-                                <td>TOTAL</td>
-                                <td id="footer-total-${grupo.id}">${totalPlanificado}</td>
-                                <td>${totalEjecutado}</td>
-                                <td class="${totalEjecutado >= totalPlanificado ? 'exito' : 'danger'}">${totalEjecutado >= totalPlanificado ? '+' : ''}${totalEjecutado - totalPlanificado}</td>
-                            </tr>
-                        </tfoot>
-                    </table>
-                    
-                    ${this.modoEdicion ? `
-                        <div style="margin-top: 1rem; text-align: right;">
+                    <td class="px-6 py-4 text-center">
+    <span class="font-bold text-gray-700">${com.mef || 0}</span>
+</td>
+<td class="px-6 py-4 text-center">
+    <div class="flex flex-col items-center gap-1">
+                            ${
+                              com.meta_anual < 0
+                                ? `<div class="flex items-center gap-2 px-3 py-1 bg-red-100 rounded-lg border-2 border-red-500">
+                                    <svg class="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                                    </svg>
+                                    <span class="font-bold text-red-600">${com.meta_anual}</span>
+                                </div>
+                                <span class="text-xs text-red-600 font-semibold">⚠ Requiere ajuste manual</span>`
+                                : `<span class="font-bold text-blue-600">${
+                                    com.meta_anual || 0
+                                  }</span>`
+                            }
+                            ${
+                              com.unidades_sin_distribuir > 0
+                                ? `<span class="text-xs text-orange-600 font-semibold">⚠ ${com.unidades_sin_distribuir} sin distribuir</span>`
+                                : ""
+                            }
+                            ${
+                              tieneManual
+                                ? '<span class="text-xs text-green-600 font-semibold">✓ Manual</span>'
+                                : ""
+                            }
                             <button 
-                                id="btn-guardar-grupo-${grupo.id}" 
-                                class="btn btn-primary"
-                                ${!sumaCorrecta ? 'disabled' : ''}
-                                onclick="PlanificacionSystem.guardarDistribucionGrupo(${grupo.id})">
-                                GUARDAR ${grupo.label.toUpperCase()}
+                                onclick="Planificacion.editarProyeccion(${
+                                  com.comunidad_id
+                                }, ${com.mef}, ${com.meta_anual}, '${
+          com.comunidad_nombre
+        }')" 
+                                class="text-xs text-blue-600 hover:text-blue-800 font-semibold underline">
+                                Editar
                             </button>
                         </div>
-                    ` : ''}
-                </div>
+                    </td>
+                    <td class="px-6 py-4 text-center">
+                        <span class="font-medium text-gray-700">${
+                          com.ejecutado || 0
+                        }</span>
+                    </td>
+                    <td class="px-6 py-4 text-center">
+                        <div class="flex flex-col items-center gap-2">
+                            <span class="text-2xl font-bold ${
+                              colorEstado.text
+                            }">${com.porcentaje_alcanzado}%</span>
+                            <div class="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
+                                <div class="${
+                                  colorEstado.bar
+                                } h-full transition-all" style="width: ${Math.min(
+          com.porcentaje_alcanzado,
+          100
+        )}%"></div>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="px-6 py-4 text-center">
+                        <button 
+                            onclick="Planificacion.verDetalleComunidad(${
+                              com.comunidad_id
+                            })" 
+                            class="px-4 py-2 bg-blue-600 text-white text-sm font-semibold rounded-lg hover:bg-blue-700 transition-colors inline-flex items-center gap-2">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                            </svg>
+                            Ver Detalle
+                        </button>
+                    </td>
+                </tr>
             `;
-        });
+      })
+      .join("");
+  },
 
-        html += '</div>';
+  // ===== VER DETALLE DE COMUNIDAD (MODAL CON 11 MÉTODOS) =====
+  async verDetalleComunidad(comunidadId) {
+    try {
+      SGPF.showLoading(true);
 
-        html += `
-            <div style="margin-top: 1rem;">
-                <button id="btn-exportar-comparativo-excel" class="btn btn-secondary">
-                    📊 Exportar Excel
-                </button>
-            </div>
-        `;
+      const response = await SGPF.apiCall(
+        `/planificacion/comunidad/${comunidadId}/${this.state.anioActual}`,
+        "GET"
+      );
 
-        contenedor.innerHTML = html;
+      SGPF.showLoading(false);
 
-        document.getElementById('btn-exportar-comparativo-excel')?.addEventListener('click', () => {
-            this.exportarComparativoExcel();
-        });
-    },
+      if (!response.success || !response.data) {
+        SGPF.showToast("Error al cargar detalle de la comunidad", "error");
+        return;
+      }
 
-    actualizarDistribucionMensualNuevo(grupoId, mes, valor) {
-        const valorNum = parseInt(valor) || 0;
-        
-        // Actualizar en el objeto
-        const grupo = this.distribucionPorGrupo[grupoId];
-        const distMes = grupo.distribuciones.find(d => d.mes === mes);
-        if (distMes) {
-            distMes.meta_mensual = valorNum;
-        }
+      const comunidad = this.state.comunidades.find(
+        (c) => c.comunidad_id === comunidadId
+      );
+      this.state.comunidadActual = { ...comunidad, metodos: response.data };
 
-        // Recalcular suma
-        const suma = grupo.distribuciones.reduce((acc, d) => acc + d.meta_mensual, 0);
-        
-        // Actualizar display
-        const totalElement = document.getElementById(`total-planificado-${grupoId}`);
-        const footerElement = document.getElementById(`footer-total-${grupoId}`);
-        const btnGuardar = document.getElementById(`btn-guardar-grupo-${grupoId}`);
-        
-        if (totalElement) totalElement.textContent = suma;
-        if (footerElement) footerElement.textContent = suma;
-        
-        // Habilitar/deshabilitar botón
-        const sumaCorrecta = suma === grupo.meta_anual;
-        if (btnGuardar) {
-            btnGuardar.disabled = !sumaCorrecta;
-        }
-
-        // Actualizar texto de diferencia
-        const faltaDistribuir = grupo.meta_anual - suma;
-        const statusText = suma === grupo.meta_anual 
-            ? '<span style="color: green; font-weight: bold;">✓</span>'
-            : `<span style="color: ${faltaDistribuir > 0 ? 'red' : 'orange'}; font-weight: bold;">(${faltaDistribuir > 0 ? 'Faltan' : 'Exceso de'} ${Math.abs(faltaDistribuir)})</span>`;
-        
-        // Buscar el párrafo y actualizarlo
-        const container = totalElement?.closest('div');
-        if (container) {
-            const p = container.querySelector('p');
-            if (p) {
-                p.innerHTML = `
-                    Meta Anual: <strong>${grupo.meta_anual}</strong> | 
-                    Planificado: <strong id="total-planificado-${grupoId}">${suma}</strong> 
-                    ${statusText} | 
-                    Ejecutado: <strong>${p.innerHTML.match(/Ejecutado: <strong>(\d+)<\/strong>/)?.[1] || 0}</strong> | 
-                    Alcance: ${p.innerHTML.match(/Alcance: <strong[^>]*>[\d.]+%<\/strong>/)?.[0] || ''}
-                `;
-            }
-        }
-    },
-
-    // Guardar distribución de un grupo específico
-    async guardarDistribucionGrupo(grupoId) {
-        const grupo = this.distribucionPorGrupo[grupoId];
-        
-        if (!grupo || !grupo.meta_metodo_comunidad_id) {
-            SGPF.showToast('Error: Datos del grupo no válidos', 'error');
-            console.error('Grupo inválido:', grupo);
-            return;
-        }
-
-        // Validar suma
-        const suma = grupo.distribuciones.reduce((acc, d) => acc + d.meta_mensual, 0);
-        if (suma !== grupo.meta_anual) {
-            SGPF.showToast(`La suma (${suma}) debe ser exactamente ${grupo.meta_anual}`, 'error');
-            return;
-        }
-
-        try {
-            SGPF.showLoading(true);
-
-            console.log('Enviando al backend:', {
-                meta_metodo_comunidad_id: grupo.meta_metodo_comunidad_id,
-                meta_anual: grupo.meta_anual,
-                distribuciones: grupo.distribuciones
-            });
-
-            const response = await SGPF.apiCall('/planificacion/planificacion-mensual/guardar', {
-                method: 'POST',
-                body: JSON.stringify({
-                    meta_metodo_comunidad_id: grupo.meta_metodo_comunidad_id,
-                    meta_anual: grupo.meta_anual,
-                    distribuciones: grupo.distribuciones
-                })
-            });
-
-            if (response.success) {
-                SGPF.showToast('Distribución guardada exitosamente', 'success');
-            } else {
-                throw new Error(response.message);
-            }
-        } catch (error) {
-            console.error('Error guardando distribución:', error);
-            SGPF.showToast(error.message || 'Error guardando distribución', 'error');
-        } finally {
-            SGPF.showLoading(false);
-        }
-    },
-
-    actualizarDistribucionMensual(identificador, mes, valor) {
-        // Actualizar en el array de distribucion editada
-        const valorNum = parseInt(valor) || 0;
-        
-        this.distribucionEditada.forEach(dist => {
-            const label = this.filtrosActuales.tipoFiltro === 'metodo' ? dist.comunidad : dist.metodo;
-            if (label === identificador && dist.mes === mes) {
-                dist.planificado = valorNum;
-            }
-        });
-    },
-
-    async guardarDistribucionMensual() {
-        try {
-            // Validar que cada grupo sume exactamente su meta anual
-            const grupos = {};
-            this.distribucionEditada.forEach(dist => {
-                const key = this.filtrosActuales.tipoFiltro === 'metodo' 
-                    ? dist.comunidad_id 
-                    : dist.metodo_id;
-                
-                if (!grupos[key]) {
-                    grupos[key] = {
-                        meta_anual: dist.meta_anual,
-                        total_distribuido: 0
-                    };
-                }
-                
-                grupos[key].total_distribuido += dist.planificado || 0;
-            });
-
-            // Validar
-            for (const grupo of Object.values(grupos)) {
-                if (grupo.total_distribuido !== grupo.meta_anual) {
-                    SGPF.showToast(`La distribución debe sumar exactamente la meta anual (${grupo.meta_anual}). Actual: ${grupo.total_distribuido}`, 'error');
-                    return;
-                }
-            }
-
-            SGPF.showLoading(true);
-
-            // Preparar datos para enviar
-            const distribuciones = this.distribucionEditada.map(dist => ({
-                meta_metodo_comunidad_id: dist.meta_metodo_comunidad_id, // Necesitamos este ID del backend
-                mes: dist.mes,
-                meta_mensual: dist.planificado
-            }));
-
-            const response = await SGPF.apiCall('/planificacion/planificacion-mensual/guardar', {
-                method: 'POST',
-                body: JSON.stringify({ distribuciones })
-            });
-
-            if (response.success) {
-                SGPF.showToast('Distribución mensual guardada', 'success');
-                await this.cargarComparativoDetalle();
-            } else {
-                throw new Error(response.message);
-            }
-        } catch (error) {
-            console.error('Error guardando distribución:', error);
-            SGPF.showToast('Error guardando distribución mensual', 'error');
-        } finally {
-            SGPF.showLoading(false);
-        }
-    },
-
-    // ========== EXPORTACIÓN ==========
-    exportarConsolidadoExcel() {
-        if (typeof XLSX === 'undefined') {
-            SGPF.showToast('Librería Excel no disponible', 'warning');
-            return;
-        }
-
-        try {
-            const tabla = document.querySelector('#contenido-planificacion table');
-            if (!tabla) {
-                SGPF.showToast('No hay datos para exportar', 'warning');
-                return;
-            }
-
-            // Extraer datos de la tabla manualmente para mejor formato
-            const rows = tabla.querySelectorAll('tbody tr');
-            const data = [];
-            
-            // Headers
-            data.push(['No.', 'Comunidad', 'MEF', 'Proy. Anual', 'Iny. Mensual', 'Iny. Bimensual', 'Iny. Trimestral', 'Píldora', 'DIU', 'Implante', 'Condón', 'Collar', 'MELA', 'AQV F', 'AQV M']);
-
-            rows.forEach(row => {
-                const cells = row.querySelectorAll('td');
-                const rowData = [];
-                
-                cells.forEach((cell, idx) => {
-                    if (idx < 4) {
-                        // Primeras 4 columnas son texto/números simples
-                        rowData.push(cell.textContent.trim());
-                    } else {
-                        // Columnas de métodos: extraer solo el número (antes del <br>)
-                        const input = cell.querySelector('input');
-                        if (input) {
-                            rowData.push(parseInt(input.value) || 0);
-                        } else {
-                            const text = cell.textContent.trim().split('\n')[0];
-                            rowData.push(parseInt(text) || 0);
-                        }
-                    }
-                });
-                
-                data.push(rowData);
-            });
-
-            const wb = XLSX.utils.book_new();
-            const ws = XLSX.utils.aoa_to_sheet(data);
-            
-            // Anchos de columna
-            ws['!cols'] = [
-                { width: 5 },
-                { width: 25 },
-                { width: 10 },
-                { width: 12 },
-                { width: 10 },
-                { width: 10 },
-                { width: 10 },
-                { width: 10 },
-                { width: 10 },
-                { width: 10 },
-                { width: 10 },
-                { width: 10 },
-                { width: 10 },
-                { width: 10 },
-                { width: 10 }
-            ];
-
-            XLSX.utils.book_append_sheet(wb, ws, 'Consolidado');
-            XLSX.writeFile(wb, `planificacion_consolidado_${this.filtrosActuales.año}.xlsx`);
-            
-            SGPF.showToast('Excel exportado exitosamente', 'success');
-        } catch (error) {
-            console.error('Error exportando Excel:', error);
-            SGPF.showToast('Error exportando Excel', 'error');
-        }
-    },
-
-    exportarComparativoExcel() {
-        if (typeof XLSX === 'undefined') {
-            SGPF.showToast('Librería Excel no disponible', 'warning');
-            return;
-        }
-
-        try {
-            const tablas = document.querySelectorAll('#resultado-comparativo table');
-            if (tablas.length === 0) {
-                SGPF.showToast('No hay datos para exportar', 'warning');
-                return;
-            }
-
-            const wb = XLSX.utils.book_new();
-
-            tablas.forEach((tabla, index) => {
-                const titulo = tabla.closest('div').querySelector('h4')?.textContent || `Hoja ${index + 1}`;
-                const ws = XLSX.utils.table_to_sheet(tabla);
-                
-                ws['!cols'] = [
-                    { width: 10 },
-                    { width: 15 },
-                    { width: 15 },
-                    { width: 15 }
-                ];
-
-                const sheetName = titulo.substring(0, 31); // Excel limit
-                XLSX.utils.book_append_sheet(wb, ws, sheetName);
-            });
-
-            XLSX.writeFile(wb, `planificacion_comparativo_${this.filtrosActuales.año}.xlsx`);
-            
-            SGPF.showToast('Excel exportado exitosamente', 'success');
-        } catch (error) {
-            console.error('Error exportando Excel:', error);
-            SGPF.showToast('Error exportando Excel', 'error');
-        }
-    },
-
-    // ========== UTILIDADES ==========
-    actualizarElemento(id, valor) {
-        const elemento = document.getElementById(id);
-        if (elemento) {
-            elemento.textContent = valor;
-        }
-    },
-
-    mostrarLoading() {
-        const contenedor = document.getElementById('contenido-planificacion');
-        if (contenedor) {
-            contenedor.innerHTML = `
-                <div class="loading-reportes">
-                    <div>Cargando datos...</div>
-                </div>
-            `;
-        }
-    },
-
-    mostrarError(mensaje) {
-        const contenedor = document.getElementById('contenido-planificacion');
-        if (contenedor) {
-            contenedor.innerHTML = `
-                <div class="sin-datos">
-                    <div>${mensaje}</div>
-                </div>
-            `;
-        }
-    },
-
-    // Función para llenar las cajas vacías
-    async inicializarSistema() {
-        if (!confirm('Esto llenará las tablas vacías. ¿Continuar?')) return;
-
-        try {
-            SGPF.showLoading(true);
-            const response = await SGPF.apiCall(`/planificacion/inicializar/2025`, {
-                method: 'POST'
-            });
-
-            if (response.success) {
-                alert('Sistema inicializado. Recarga la página.');
-                location.reload();
-            }
-        } catch (error) {
-            alert('Error: ' + error.message);
-        } finally {
-            SGPF.showLoading(false);
-        }
+      // Abrir modal
+      this.abrirModalComunidad();
+    } catch (error) {
+      SGPF.showLoading(false);
+      console.error("❌ Error cargando detalle:", error);
+      SGPF.showToast("Error al cargar detalle", "error");
     }
+  },
+
+  // ===== ABRIR MODAL DE COMUNIDAD =====
+  abrirModalComunidad() {
+    const modal = document.getElementById("modal-comunidad");
+    const com = this.state.comunidadActual;
+
+    if (!modal || !com) return;
+
+    // Actualizar header
+document.getElementById('modal-comunidad-nombre').textContent = com.comunidad_nombre;
+document.getElementById('modal-comunidad-mef').textContent = com.mef || 0;
+document.getElementById('modal-comunidad-proyeccion').textContent = com.meta_anual || 0;
+
+// ✅ NUEVO: Detectar si hay unidades sin distribuir
+const proyeccionTotal = com.meta_anual || 0;
+const distribuido = com.metodos.reduce((sum, m) => sum + (m.meta_anual || 0), 0);
+const sinDistribuir = proyeccionTotal - distribuido;
+
+if (sinDistribuir > 0 && proyeccionTotal > 0) {
+    this.mostrarBannerDistribucionPendiente(com, sinDistribuir);
+}
+
+    // Mostrar sobrantes si existen
+    const sobrantesDiv = document.getElementById("modal-sobrantes-info");
+    if (sobrantesDiv) {
+      if (com.unidades_sin_distribuir > 0) {
+        sobrantesDiv.innerHTML = `
+                    <div class="bg-orange-50 border-2 border-orange-500 rounded-lg p-3 flex items-center gap-3">
+                        <svg class="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                        </svg>
+                        <div class="flex-1">
+                            <p class="font-bold text-orange-800">Unidades Sin Distribuir: ${com.unidades_sin_distribuir}</p>
+                            <p class="text-sm text-orange-700">Distribuye estas unidades en los métodos que prefieras</p>
+                        </div>
+                    </div>
+                `;
+        sobrantesDiv.classList.remove("hidden");
+      } else {
+        sobrantesDiv.classList.add("hidden");
+      }
+    }
+
+    if (com.meta_anual <= 0 || com.meta_anual < 5) {
+      this.mostrarBannerAjusteManual(com);
+    }
+
+    // Renderizar tarjetas de métodos
+    const metodosContainer = document.getElementById("modal-comunidad-metodos");
+
+    metodosContainer.innerHTML = com.metodos
+      .map((metodo) => {
+        const colorEstado = this.getColorEstado(metodo.estado);
+        const distribucionValida = metodo.distribucion_valida;
+
+        return `
+                <div class="bg-white border-2 ${
+                  colorEstado.border
+                } rounded-xl p-5 hover:shadow-lg transition-all">
+                    <div class="flex items-start justify-between mb-4">
+                        <div class="flex-1">
+                            <h4 class="text-lg font-bold text-gray-900">${
+                              metodo.metodo_nombre
+                            }</h4>
+                            <p class="text-sm text-gray-500 mt-1">${
+                              metodo.categoria
+                            } • ${metodo.porcentaje_global}%</p>
+                        </div>
+                        <span class="px-3 py-1 ${
+                          colorEstado.badge
+                        } text-sm font-semibold rounded-full">
+                            ${metodo.porcentaje_alcanzado}%
+                        </span>
+                    </div>
+                    
+                    <div class="grid grid-cols-3 gap-4 mb-4">
+                        <div class="text-center">
+                            <p class="text-xs text-gray-500 uppercase">Meta Anual</p>
+                            <p class="text-2xl font-bold text-blue-600">${
+                              metodo.meta_anual
+                            }</p>
+                        </div>
+                        <div class="text-center">
+                            <p class="text-xs text-gray-500 uppercase">Ejecutado</p>
+                            <p class="text-2xl font-bold text-gray-700">${
+                              metodo.ejecutado
+                            }</p>
+                        </div>
+                        <div class="text-center">
+                            <p class="text-xs text-gray-500 uppercase">Pendiente</p>
+                            <p class="text-2xl font-bold text-orange-600">${Math.max(
+                              0,
+                              metodo.meta_anual - metodo.ejecutado
+                            )}</p>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-gray-50 rounded-lg p-3 mb-3">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-sm font-semibold text-gray-700">Distribución Mensual</span>
+                            ${
+                              distribucionValida
+                                ? '<span class="text-xs text-green-600 font-semibold">✓ Válida</span>'
+                                : '<span class="text-xs text-red-600 font-semibold">⚠ Requiere ajuste</span>'
+                            }
+                        </div>
+                        <div class="grid grid-cols-12 gap-1 text-center text-xs">
+                            ${metodo.meses
+                              .map(
+                                (cant, idx) => `
+                                <div class="flex flex-col">
+                                    <span class="text-gray-500 font-semibold">${
+                                      [
+                                        "E",
+                                        "F",
+                                        "M",
+                                        "A",
+                                        "M",
+                                        "J",
+                                        "J",
+                                        "A",
+                                        "S",
+                                        "O",
+                                        "N",
+                                        "D",
+                                      ][idx]
+                                    }</span>
+                                    <span class="font-bold ${
+                                      cant > 0
+                                        ? "text-blue-600"
+                                        : "text-gray-300"
+                                    }">${cant}</span>
+                                </div>
+                            `
+                              )
+                              .join("")}
+                        </div>
+                        <div class="mt-2 text-xs text-center ${
+                          distribucionValida ? "text-green-600" : "text-red-600"
+                        } font-semibold">
+                            Suma: ${metodo.suma_meses} / ${metodo.meta_anual}
+                        </div>
+                    </div>
+                    
+                    <button 
+                        onclick="Planificacion.editarDistribucion(${
+                          metodo.meta_id
+                        }, '${metodo.metodo_nombre}', ${
+          metodo.meta_anual
+        }, ${JSON.stringify(metodo.meses).replace(/"/g, "&quot;")})" 
+                        class="w-full px-4 py-2.5 bg-gradient-to-r from-green-600 to-teal-600 text-white font-semibold rounded-lg hover:from-green-700 hover:to-teal-700 transition-all flex items-center justify-center gap-2">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                        </svg>
+                        ${
+                          distribucionValida
+                            ? "Editar Distribución"
+                            : "Configurar Distribución"
+                        }
+                    </button>
+                </div>
+            `;
+      })
+      .join("");
+
+    modal.classList.remove("hidden");
+  },
+
+  // ===== CERRAR MODAL DE COMUNIDAD =====
+  cerrarModalComunidad() {
+    document.getElementById("modal-comunidad").classList.add("hidden");
+  },
+
+  // ===== EDITAR DISTRIBUCIÓN MENSUAL =====
+  editarDistribucion(metaId, metodoNombre, metaAnual, meses) {
+    this.state.metaActual = {
+      id: metaId,
+      nombre: metodoNombre,
+      meta_anual: metaAnual,
+    };
+    this.state.mesesActuales = [...meses];
+
+    // Actualizar modal
+    document.getElementById("modal-dist-titulo").textContent = metodoNombre;
+    document.getElementById("modal-dist-meta-anual").textContent = metaAnual;
+
+    // Generar inputs de meses
+    const gridMeses = document.getElementById("grid-meses");
+    const nombresMeses = [
+      "Enero",
+      "Febrero",
+      "Marzo",
+      "Abril",
+      "Mayo",
+      "Junio",
+      "Julio",
+      "Agosto",
+      "Septiembre",
+      "Octubre",
+      "Noviembre",
+      "Diciembre",
+    ];
+
+    gridMeses.innerHTML = nombresMeses
+      .map(
+        (mes, idx) => `
+            <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-2">${mes}</label>
+                <input 
+                    type="number" 
+                    min="0" 
+                    value="${meses[idx]}" 
+                    data-mes-index="${idx}"
+                    onchange="Planificacion.onMesChange(${idx}, this.value)"
+                    class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-green-500 focus:ring-2 focus:ring-green-200 transition-all text-center text-lg font-bold">
+            </div>
+        `
+      )
+      .join("");
+
+    // Calcular y mostrar validación inicial
+    this.actualizarValidacionMeses();
+
+    // Abrir modal
+    document.getElementById("modal-distribucion").classList.remove("hidden");
+  },
+
+  // ===== CUANDO CAMBIA UN MES =====
+  onMesChange(index, valor) {
+    this.state.mesesActuales[index] = parseInt(valor) || 0;
+    this.actualizarValidacionMeses();
+  },
+
+  // ===== ACTUALIZAR VALIDACIÓN DE MESES =====
+  actualizarValidacionMeses() {
+    const suma = this.state.mesesActuales.reduce((a, b) => a + b, 0);
+    const meta = this.state.metaActual.meta_anual;
+    const diferencia = suma - meta;
+    const porcentaje = meta > 0 ? (suma / meta) * 100 : 0;
+
+    // Actualizar indicadores
+    document.getElementById("suma-meses-actual").textContent = suma;
+    document.getElementById(
+      "porcentaje-suma-meses"
+    ).textContent = `${Math.round(porcentaje)}%`;
+
+    const barra = document.getElementById("barra-progreso-meses");
+    barra.style.width = `${Math.min(porcentaje, 100)}%`;
+
+    const mensaje = document.getElementById("mensaje-validacion-meses");
+    const btnGuardar = document.getElementById("btn-guardar-distribucion");
+
+    if (diferencia === 0) {
+      barra.className = "h-full bg-green-600 transition-all";
+      mensaje.textContent = "✓ Distribución correcta";
+      mensaje.className =
+        "text-sm mt-2 text-center font-semibold text-green-600";
+      btnGuardar.disabled = false;
+    } else if (diferencia > 0) {
+      barra.className = "h-full bg-red-600 transition-all";
+      mensaje.textContent = `✗ Sobran ${diferencia} unidades`;
+      mensaje.className = "text-sm mt-2 text-center font-semibold text-red-600";
+      btnGuardar.disabled = true;
+    } else {
+      barra.className = "h-full bg-yellow-600 transition-all";
+      mensaje.textContent = `⚠ Faltan ${Math.abs(diferencia)} unidades`;
+      mensaje.className =
+        "text-sm mt-2 text-center font-semibold text-yellow-600";
+      btnGuardar.disabled = true;
+    }
+  },
+
+  // ===== GUARDAR DISTRIBUCIÓN =====
+  async guardarDistribucion() {
+    try {
+      SGPF.showLoading(true);
+
+      const response = await SGPF.apiCall(
+        `/planificacion/distribucion/${this.state.metaActual.id}`,
+        "PUT",
+        {
+          meses: this.state.mesesActuales,
+        }
+      );
+
+      SGPF.showLoading(false);
+
+      if (response.success) {
+        SGPF.showToast("Distribución guardada exitosamente", "success");
+        this.cerrarModalDistribucion();
+
+        // Recargar detalle de la comunidad
+        await this.verDetalleComunidad(this.state.comunidadActual.comunidad_id);
+      } else {
+        SGPF.showToast(response.message || "Error al guardar", "error");
+      }
+    } catch (error) {
+      SGPF.showLoading(false);
+      console.error("❌ Error guardando distribución:", error);
+      SGPF.showToast(error.message || "Error al guardar distribución", "error");
+    }
+  },
+
+  // ===== CERRAR MODAL DE DISTRIBUCIÓN =====
+  cerrarModalDistribucion() {
+    document.getElementById("modal-distribucion").classList.add("hidden");
+  },
+
+  // ===== ABRIR MODAL DE PORCENTAJES GLOBALES =====
+  async abrirModalPorcentajes() {
+    try {
+      SGPF.showLoading(true);
+
+      const response = await SGPF.apiCall(
+        `/planificacion/porcentajes/${this.state.anioActual}`,
+        "GET"
+      );
+
+      SGPF.showLoading(false);
+
+      if (!response.success) {
+        SGPF.showToast("Error al cargar porcentajes", "error");
+        return;
+      }
+
+      this.state.porcentajes = response.data;
+
+      // Actualizar título
+      document.getElementById(
+        "modal-porcentajes-anio"
+      ).textContent = `Año ${this.state.anioActual}`;
+
+      // Generar formulario
+      const form = document.getElementById("form-porcentajes");
+
+      form.innerHTML = this.state.porcentajes
+        .map(
+          (metodo) => `
+                <div class="flex items-center gap-4 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                    <div class="flex-1">
+                        <label class="block text-sm font-semibold text-gray-900">${metodo.metodo_nombre}</label>
+                        <span class="text-xs text-gray-500">${metodo.categoria}</span>
+                    </div>
+                    <div class="w-32">
+                        <input 
+                            type="number" 
+                            step="0.01" 
+                            min="0" 
+                            max="100"
+                            value="${metodo.porcentaje_meta}" 
+                            data-metodo-id="${metodo.metodo_id}"
+                            onchange="Planificacion.onPorcentajeChange(${metodo.metodo_id}, this.value)"
+                            class="w-full px-3 py-2 border-2 border-gray-300 rounded-lg focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition-all text-right font-bold">
+                    </div>
+                    <span class="text-gray-500 font-bold">%</span>
+                </div>
+            `
+        )
+        .join("");
+
+      // Calcular suma inicial
+      this.actualizarValidacionPorcentajes();
+
+      // Abrir modal
+      document.getElementById("modal-porcentajes").classList.remove("hidden");
+    } catch (error) {
+      SGPF.showLoading(false);
+      console.error("❌ Error abriendo modal:", error);
+      SGPF.showToast("Error al cargar porcentajes", "error");
+    }
+  },
+
+  // ===== CUANDO CAMBIA UN PORCENTAJE =====
+  onPorcentajeChange(metodoId, valor) {
+    const metodo = this.state.porcentajes.find((m) => m.metodo_id === metodoId);
+    if (metodo) {
+      metodo.porcentaje_meta = parseFloat(valor) || 0;
+      this.actualizarValidacionPorcentajes();
+    }
+  },
+
+  // ===== ACTUALIZAR VALIDACIÓN DE PORCENTAJES =====
+  actualizarValidacionPorcentajes() {
+    const suma = this.state.porcentajes.reduce(
+      (acc, m) => acc + parseFloat(m.porcentaje_meta || 0),
+      0
+    );
+    const redondeado = Math.round(suma * 100) / 100;
+    const diferencia = redondeado - 100;
+
+    // Actualizar indicadores
+    document.getElementById(
+      "suma-porcentajes"
+    ).textContent = `${redondeado.toFixed(2)}%`;
+
+    const barra = document.getElementById("barra-progreso-suma");
+    const container = document.getElementById("indicador-suma-container");
+    const mensaje = document.getElementById("mensaje-validacion-suma");
+    const btnGuardar = document.getElementById("btn-guardar-porcentajes");
+
+    barra.style.width = `${Math.min(redondeado, 100)}%`;
+
+    if (Math.abs(diferencia) < 0.01) {
+      // Suma correcta (100%)
+      barra.className = "h-full bg-green-600 transition-all";
+      container.className =
+        "bg-green-50 rounded-xl p-4 border-2 border-green-500";
+      document.getElementById("suma-porcentajes").className =
+        "text-3xl font-bold text-green-600";
+      mensaje.textContent = "✓ Suma correcta: 100%";
+      mensaje.className =
+        "text-xs text-green-600 mt-2 text-center font-semibold";
+      btnGuardar.disabled = false;
+    } else if (diferencia > 0) {
+      // Sobra
+      barra.className = "h-full bg-red-600 transition-all";
+      container.className = "bg-red-50 rounded-xl p-4 border-2 border-red-500";
+      document.getElementById("suma-porcentajes").className =
+        "text-3xl font-bold text-red-600";
+      mensaje.textContent = `✗ Sobran ${diferencia.toFixed(2)}%`;
+      mensaje.className = "text-xs text-red-600 mt-2 text-center font-semibold";
+      btnGuardar.disabled = true;
+    } else {
+      // Falta
+      barra.className = "h-full bg-yellow-600 transition-all";
+      container.className =
+        "bg-yellow-50 rounded-xl p-4 border-2 border-yellow-500";
+      document.getElementById("suma-porcentajes").className =
+        "text-3xl font-bold text-yellow-600";
+      mensaje.textContent = `⚠ Faltan ${Math.abs(diferencia).toFixed(2)}%`;
+      mensaje.className =
+        "text-xs text-yellow-600 mt-2 text-center font-semibold";
+      btnGuardar.disabled = true;
+    }
+  },
+
+  // ===== GUARDAR PORCENTAJES =====
+  async guardarPorcentajes() {
+    try {
+      // Confirmación
+      if (
+        !confirm(
+          "¿Estás seguro? Esto recalculará TODAS las metas de TODAS las comunidades."
+        )
+      ) {
+        return;
+      }
+
+      SGPF.showLoading(true);
+
+      const porcentajes = this.state.porcentajes.map((m) => ({
+        metodo_id: m.metodo_id,
+        porcentaje_meta: m.porcentaje_meta,
+      }));
+
+      const response = await SGPF.apiCall(
+        `/planificacion/porcentajes/${this.state.anioActual}`,
+        "PUT",
+        {
+          porcentajes: porcentajes,
+        }
+      );
+
+      SGPF.showLoading(false);
+
+      if (response.success) {
+        SGPF.showToast("Porcentajes actualizados exitosamente", "success");
+
+        if (response.advertencia) {
+          setTimeout(() => {
+            alert(response.advertencia);
+          }, 1000);
+        }
+
+        this.cerrarModalPorcentajes();
+
+        // Recargar datos
+        await this.cargarAvanceTerritorio(this.state.territorioSeleccionado);
+      } else {
+        SGPF.showToast(response.message || "Error al guardar", "error");
+      }
+    } catch (error) {
+      SGPF.showLoading(false);
+      console.error("❌ Error guardando porcentajes:", error);
+      SGPF.showToast(error.message || "Error al guardar porcentajes", "error");
+    }
+  },
+
+  // ===== CERRAR MODAL DE PORCENTAJES =====
+  cerrarModalPorcentajes() {
+    document.getElementById("modal-porcentajes").classList.add("hidden");
+  },
+
+  // ===== INICIALIZAR AÑO (CREAR NUEVA CONFIGURACIÓN) =====
+  async inicializarAnio() {
+    const opcion = confirm(
+      "¿Deseas copiar la configuración del año anterior?\n\nOK = Copiar desde año anterior\nCancelar = Empezar desde cero"
+    );
+
+    try {
+      SGPF.showLoading(true);
+
+      const body = opcion ? { copiar_desde: this.state.anioActual - 1 } : {};
+
+      const response = await SGPF.apiCall(
+        `/planificacion/inicializar/${this.state.anioActual}`,
+        "POST",
+        body
+      );
+
+      SGPF.showLoading(false);
+
+      if (response.success) {
+        SGPF.showToast(
+          `Año ${this.state.anioActual} creado exitosamente`,
+          "success"
+        );
+
+        // Recargar años disponibles
+        await this.cargarAniosDisponibles();
+
+        // Recargar datos
+        await this.cargarAvanceTerritorio(this.state.territorioSeleccionado);
+      } else {
+        SGPF.showToast(response.message || "Error al inicializar año", "error");
+      }
+    } catch (error) {
+      SGPF.showLoading(false);
+      console.error("❌ Error inicializando año:", error);
+      SGPF.showToast(error.message || "Error al inicializar año", "error");
+    }
+  },
+
+  // ===== UTILIDADES =====
+  getColorEstado(estado) {
+    const colores = {
+      success: {
+        text: "text-green-600",
+        bar: "bg-green-600",
+        border: "border-green-200",
+        badge: "bg-green-100 text-green-800",
+      },
+      warning: {
+        text: "text-yellow-600",
+        bar: "bg-yellow-600",
+        border: "border-yellow-200",
+        badge: "bg-yellow-100 text-yellow-800",
+      },
+      danger: {
+        text: "text-red-600",
+        bar: "bg-red-600",
+        border: "border-red-200",
+        badge: "bg-red-100 text-red-800",
+      },
+    };
+
+    return colores[estado] || colores.danger;
+  },
+  // ===== EDITAR PROYECCIÓN MANUAL =====
+  async editarProyeccion(comunidadId, mef, metaActual, comunidadNombre) {
+    const nuevaMeta = prompt(
+      `📊 Editar Proyección Manual\n\n` +
+        `Comunidad: ${comunidadNombre}\n` +
+        `MEF: ${mef}\n` +
+        `Proyección actual: ${metaActual}\n\n` +
+        `Ingresa la nueva proyección manual:`,
+      metaActual
+    );
+
+    if (nuevaMeta === null) return; // Cancelado
+
+    const metaNum = parseInt(nuevaMeta);
+
+    if (isNaN(metaNum) || metaNum < 0) {
+      SGPF.showToast("Debe ser un número positivo", "error");
+      return;
+    }
+
+    try {
+      SGPF.showLoading(true);
+
+      const response = await SGPF.apiCall(
+        `/planificacion/proyeccion-manual/${comunidadId}/${this.state.anioActual}`,
+        "PUT",
+        { proyeccion_manual: metaNum }
+      );
+
+      SGPF.showLoading(false);
+
+      if (response.success) {
+        SGPF.showToast("Proyección manual guardada", "success");
+
+        // Recargar datos
+        await this.cargarAvanceTerritorio(this.state.territorioSeleccionado);
+      } else {
+        SGPF.showToast(response.message || "Error al guardar", "error");
+      }
+    } catch (error) {
+      SGPF.showLoading(false);
+      console.error("❌ Error guardando proyección:", error);
+      SGPF.showToast('Error al guardar proyección', 'error');
+    }
+},
+
+// ===== DISTRIBUCIÓN MANUAL DE PROYECCIÓN =====
+mostrarBannerDistribucionPendiente(comunidad, sinDistribuir) {
+    const metodosContainer = document.getElementById('modal-comunidad-metodos');
+    
+    const banner = `
+        <div class="bg-orange-50 border-2 border-orange-500 rounded-xl p-6 mb-6">
+            <div class="flex items-start gap-4 mb-4">
+                <svg class="w-10 h-10 text-orange-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                </svg>
+                <div class="flex-1">
+                    <h4 class="text-xl font-bold text-orange-800 mb-2">⚠️ ${sinDistribuir} Unidades Sin Distribuir</h4>
+                    <p class="text-sm text-orange-700 mb-1">
+                        <strong>Proyección total:</strong> ${comunidad.meta_anual} unidades
+                    </p>
+                    <p class="text-sm text-orange-700 mb-3">
+                        <strong>Pendiente de distribuir:</strong> ${sinDistribuir} unidades
+                    </p>
+                    <p class="text-xs text-orange-600">
+                        La proyección automática usó <code class="bg-orange-200 px-2 py-1 rounded">FLOOR()</code> 
+                        y quedaron unidades sin asignar. Distribúyelas manualmente entre los métodos.
+                    </p>
+                </div>
+            </div>
+            <button 
+                onclick="Planificacion.abrirModalDistribucionManual(${comunidad.comunidad_id})"
+                class="w-full px-6 py-3 bg-gradient-to-r from-orange-600 to-red-600 text-white font-bold rounded-xl hover:from-orange-700 hover:to-red-700 transition-all shadow-lg hover:shadow-xl flex items-center justify-center gap-2">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7h16M4 12h16m-7 5h7"/>
+                </svg>
+                Distribuir Unidades Manualmente
+            </button>
+        </div>
+    `;
+    
+    metodosContainer.insertAdjacentHTML('afterbegin', banner);
+},
+
+async abrirModalDistribucionManual(comunidadId) {
+    const comunidad = this.state.comunidadActual;
+    
+    if (!comunidad) {
+        SGPF.showToast('Error: comunidad no encontrada', 'error');
+        return;
+    }
+    
+    const proyeccionTotal = comunidad.meta_anual || 0;
+    const metodos = comunidad.metodos || [];
+    
+    // Calcular ya distribuido
+    const yaDistribuido = metodos.reduce((sum, m) => sum + (m.meta_anual || 0), 0);
+    const disponible = proyeccionTotal - yaDistribuido;
+    
+    const modalHTML = `
+        <div id="modal-distribucion-manual" class="fixed inset-0 bg-black bg-opacity-50 z-[9999] flex items-center justify-center p-4">
+            <div class="bg-white rounded-2xl max-w-5xl w-full max-h-[90vh] overflow-hidden shadow-2xl">
+                <!-- Header -->
+                <div class="bg-gradient-to-r from-orange-600 to-red-600 text-white px-8 py-6">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h3 class="text-2xl font-bold flex items-center gap-3">
+                                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7h16M4 12h16m-7 5h7"/>
+                                </svg>
+                                Distribuir Proyección Manualmente
+                            </h3>
+                            <p class="text-orange-100 mt-2">${comunidad.comunidad_nombre}</p>
+                        </div>
+                        <button 
+                            onclick="Planificacion.cerrarModalDistribucionManual()"
+                            class="text-white hover:bg-white hover:bg-opacity-20 rounded-lg p-2 transition-all">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Información Principal -->
+                <div class="bg-gradient-to-r from-blue-50 to-indigo-50 px-8 py-6 border-b-2 border-indigo-200">
+                    <div class="grid grid-cols-3 gap-6">
+                        <div class="text-center">
+                            <p class="text-sm text-gray-600 mb-1">Proyección Total</p>
+                            <p class="text-3xl font-bold text-blue-600">${proyeccionTotal}</p>
+                        </div>
+                        <div class="text-center">
+                            <p class="text-sm text-gray-600 mb-1">Ya Distribuido</p>
+                            <p class="text-3xl font-bold text-green-600" id="total-distribuido">${yaDistribuido}</p>
+                        </div>
+                        <div class="text-center">
+                            <p class="text-sm text-gray-600 mb-1">Faltan por Asignar</p>
+                            <p class="text-3xl font-bold text-orange-600" id="total-faltante">${disponible}</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Contenido -->
+                <div class="p-8 overflow-y-auto" style="max-height: calc(90vh - 340px);">
+                    <div class="space-y-3">
+                        ${metodos.map(m => `
+                            <div class="flex items-center gap-4 p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors border-2 border-transparent hover:border-orange-300">
+                                <div class="flex-1">
+                                    <p class="font-bold text-gray-900">${m.metodo_nombre}</p>
+                                    <p class="text-xs text-gray-500">${m.categoria}</p>
+                                </div>
+                                <div class="flex items-center gap-3">
+                                    <button 
+                                        onclick="Planificacion.ajustarDistribucion(${m.metodo_id}, -1)"
+                                        class="w-8 h-8 bg-red-500 text-white rounded-full hover:bg-red-600 transition-all font-bold">
+                                        −
+                                    </button>
+                                    <input 
+                                        type="number" 
+                                        min="0" 
+                                        value="${m.meta_anual || 0}"
+                                        data-metodo-id="${m.metodo_id}"
+                                        class="w-20 px-3 py-2 border-2 border-gray-300 rounded-lg text-center font-bold text-lg focus:border-orange-500 focus:ring-2 focus:ring-orange-200 transition-all"
+                                        onchange="Planificacion.recalcularDistribucion()">
+                                    <button 
+                                        onclick="Planificacion.ajustarDistribucion(${m.metodo_id}, 1)"
+                                        class="w-8 h-8 bg-green-500 text-white rounded-full hover:bg-green-600 transition-all font-bold">
+                                        +
+                                    </button>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+                
+                <!-- Footer -->
+                <div class="border-t bg-gray-50 px-8 py-4 flex gap-3 justify-end">
+                    <button 
+                        onclick="Planificacion.cerrarModalDistribucionManual()" 
+                        class="px-6 py-3 bg-gray-200 text-gray-700 font-semibold rounded-xl hover:bg-gray-300 transition-colors">
+                        Cancelar
+                    </button>
+                    <button 
+                        onclick="Planificacion.guardarDistribucionManual(${comunidadId}, ${proyeccionTotal})" 
+                        id="btn-guardar-distribucion-manual"
+                        disabled
+                        class="px-6 py-3 bg-gradient-to-r from-orange-600 to-red-600 text-white font-bold rounded-xl hover:from-orange-700 hover:to-red-700 transition-all shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed">
+                        Guardar Distribución
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+    
+    // Inicializar validación
+    this.recalcularDistribucion();
+},
+
+cerrarModalDistribucionManual() {
+    const modal = document.getElementById('modal-distribucion-manual');
+    if (modal) {
+        modal.remove();
+    }
+},
+
+ajustarDistribucion(metodoId, cambio) {
+    const input = document.querySelector(`#modal-distribucion-manual input[data-metodo-id="${metodoId}"]`);
+    if (input) {
+        const valorActual = parseInt(input.value) || 0;
+        const nuevoValor = Math.max(0, valorActual + cambio);
+        input.value = nuevoValor;
+        this.recalcularDistribucion();
+    }
+},
+
+recalcularDistribucion() {
+    const inputs = document.querySelectorAll('#modal-distribucion-manual input[data-metodo-id]');
+    let sumaDistribuida = 0;
+    
+    inputs.forEach(input => {
+        sumaDistribuida += parseInt(input.value) || 0;
+    });
+    
+    // Obtener proyección total del DOM
+    const proyeccionTotal = parseInt(document.querySelector('#modal-distribucion-manual .text-blue-600').textContent);
+    const faltante = proyeccionTotal - sumaDistribuida;
+    
+    // Actualizar indicadores
+    const distribuidoEl = document.getElementById('total-distribuido');
+    const faltanteEl = document.getElementById('total-faltante');
+    const btnGuardar = document.getElementById('btn-guardar-distribucion-manual');
+    
+    if (distribuidoEl) {
+        distribuidoEl.textContent = sumaDistribuida;
+        distribuidoEl.className = sumaDistribuida === proyeccionTotal 
+            ? 'text-3xl font-bold text-green-600' 
+            : 'text-3xl font-bold text-yellow-600';
+    }
+    
+    if (faltanteEl) {
+        faltanteEl.textContent = faltante;
+        faltanteEl.className = faltante === 0 
+            ? 'text-3xl font-bold text-green-600' 
+            : 'text-3xl font-bold text-orange-600';
+    }
+    
+    if (btnGuardar) {
+        btnGuardar.disabled = faltante !== 0;
+    }
+},
+
+async guardarDistribucionManual(comunidadId, proyeccionTotal) {
+    const inputs = document.querySelectorAll('#modal-distribucion-manual input[data-metodo-id]');
+    const distribucion = [];
+    
+    inputs.forEach(input => {
+        const metodoId = parseInt(input.dataset.metodoId);
+        const unidades = parseInt(input.value) || 0;
+        
+        distribucion.push({ metodo_id: metodoId, unidades: unidades });
+    });
+    
+    // Validar suma
+    const suma = distribucion.reduce((acc, d) => acc + d.unidades, 0);
+    
+    if (suma !== proyeccionTotal) {
+        SGPF.showToast(`La suma (${suma}) debe ser ${proyeccionTotal}`, 'error');
+        return;
+    }
+    
+    try {
+        SGPF.showLoading(true);
+        
+        const response = await SGPF.apiCall(
+            `/planificacion/distribuir-proyeccion-manual/${comunidadId}/${this.state.anioActual}`,
+            'POST',
+            { distribucion }
+        );
+        
+        SGPF.showLoading(false);
+        
+        if (response.success) {
+            SGPF.showToast('✅ Distribución guardada correctamente', 'success');
+            this.cerrarModalDistribucionManual();
+            
+            // Recargar datos
+            await this.cargarAvanceTerritorio(this.state.territorioSeleccionado);
+            
+            // Reabrir modal actualizado
+            setTimeout(async () => {
+                await this.verDetalleComunidad(comunidadId);
+            }, 500);
+        } else {
+            SGPF.showToast(response.message || 'Error al guardar', 'error');
+        }
+    } catch (error) {
+        SGPF.showLoading(false);
+        console.error('❌ Error:', error);
+        SGPF.showToast('Error de conexión', 'error');
+    }
+},
+
 };
