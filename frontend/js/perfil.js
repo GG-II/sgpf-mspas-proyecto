@@ -68,7 +68,7 @@ async cargarPerfilUsuario() {
 
         console.log('🔑 Token encontrado, haciendo petición...');
         
-        const response = await fetch('http://localhost:5000/api/perfil/', {  // ✅ URL completa
+        const response = await fetch(SGPFConfig.getEndpoint('/perfil/'), {
             method: 'GET',
             headers: {
                 'Authorization': `Bearer ${token}`,
@@ -258,7 +258,7 @@ async actualizarPerfil(event) {
             throw new Error('Nombres y apellidos son requeridos');
         }
 
-        const response = await fetch('http://localhost:5000/api/perfil/', {
+        const response = await fetch(SGPFConfig.getEndpoint('/perfil/'), {
             method: 'PUT',
             headers: {
                 'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
@@ -330,7 +330,7 @@ document.getElementById('loading-password').classList.remove('hidden');
                 throw new Error('La nueva contraseña debe tener al menos 6 caracteres');
             }
 
-            const response = await fetch('http://localhost:5000/api/perfil/password', {  // ✅ URL completa
+            const response = await fetch(SGPFConfig.getEndpoint('/perfil/password'), {
                 method: 'PUT',
                 headers: {
                     'Authorization': `Bearer ${localStorage.getItem('authToken')}`,

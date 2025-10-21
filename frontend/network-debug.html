@@ -1,0 +1,321 @@
+// ===== SCRIPT DE DIAGNÓSTICO DE RED =====
+// Guardar como: frontend/network-debug.html
+// Abrir desde el teléfono: http://192.168.1.9:3000/network-debug.html
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Diagnóstico de Red - SGPF</title>
+    <style>
+        body {
+            font-family: monospace;
+            padding: 20px;
+            background: #1e1e1e;
+            color: #d4d4d4;
+        }
+        .test {
+            margin: 15px 0;
+            padding: 15px;
+            border-radius: 8px;
+            background: #2d2d2d;
+        }
+        .success {
+            border-left: 4px solid #4caf50;
+        }
+        .error {
+            border-left: 4px solid #f44336;
+        }
+        .warning {
+            border-left: 4px solid #ff9800;
+        }
+        .info {
+            border-left: 4px solid #2196f3;
+        }
+        button {
+            background: #4caf50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 5px;
+        }
+        button:hover {
+            background: #45a049;
+        }
+        pre {
+            background: #1a1a1a;
+            padding: 10px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+        h2 {
+            color: #4caf50;
+        }
+        .status {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+        .status.ok {
+            background: #4caf50;
+            color: white;
+        }
+        .status.fail {
+            background: #f44336;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔍 Diagnóstico de Conectividad SGPF</h1>
+    
+    <button onclick="runAllTests()">▶️ Ejecutar Todas las Pruebas</button>
+    <button onclick="location.reload()">🔄 Recargar</button>
+    
+    <div id="results"></div>
+
+    <script>
+        const results = document.getElementById('results');
+
+        function log(message, type = 'info') {
+            const div = document.createElement('div');
+            div.className = `test ${type}`;
+            div.innerHTML = message;
+            results.appendChild(div);
+        }
+
+        function getStatusBadge(success) {
+            return success 
+                ? '<span class="status ok">✓ OK</span>' 
+                : '<span class="status fail">✗ FAIL</span>';
+        }
+
+        async function runAllTests() {
+            results.innerHTML = '<h2>Ejecutando pruebas...</h2>';
+
+            // Test 1: Información del cliente
+            testClientInfo();
+
+            // Test 2: Config.js
+            await testConfig();
+
+            // Test 3: Conectividad al backend
+            await testBackendConnectivity();
+
+            // Test 4: CORS
+            await testCORS();
+
+            // Test 5: Endpoint de login
+            await testLoginEndpoint();
+
+            log('<h2>✅ Diagnóstico Completo</h2>', 'success');
+        }
+
+        function testClientInfo() {
+            log('<h2>📱 Test 1: Información del Cliente</h2>', 'info');
+            
+            const info = {
+                hostname: window.location.hostname,
+                port: window.location.port,
+                protocol: window.location.protocol,
+                url_completa: window.location.href,
+                user_agent: navigator.userAgent,
+                online: navigator.onLine,
+                idioma: navigator.language
+            };
+
+            log(`
+                <strong>Hostname:</strong> ${info.hostname}<br>
+                <strong>Puerto:</strong> ${info.port}<br>
+                <strong>Protocolo:</strong> ${info.protocol}<br>
+                <strong>URL Completa:</strong> ${info.url_completa}<br>
+                <strong>Online:</strong> ${info.online ? '✓ Sí' : '✗ No'}<br>
+                <strong>User Agent:</strong> ${info.user_agent}
+            `);
+        }
+
+        async function testConfig() {
+            log('<h2>⚙️ Test 2: Configuración de SGPFConfig</h2>', 'info');
+
+            if (typeof SGPFConfig === 'undefined') {
+                log(`${getStatusBadge(false)} SGPFConfig no está cargado`, 'error');
+                return;
+            }
+
+            const config = {
+                environment: SGPFConfig.getEnvironment(),
+                api_url: SGPFConfig.getApiUrl(),
+                frontend_url: SGPFConfig.getFrontendUrl(),
+                is_development: SGPFConfig.isDevelopment()
+            };
+
+            log(`
+                ${getStatusBadge(true)} SGPFConfig cargado correctamente<br>
+                <strong>Entorno:</strong> ${config.environment}<br>
+                <strong>API URL:</strong> ${config.api_url}<br>
+                <strong>Frontend URL:</strong> ${config.frontend_url}<br>
+                <strong>Modo Desarrollo:</strong> ${config.is_development}
+            `);
+
+            // Verificar si detecta red local
+            if (window.location.hostname.startsWith('192.168.')) {
+                const detected = config.environment === 'development';
+                log(`
+                    ${getStatusBadge(detected)} 
+                    Detección de red local (192.168.x.x): ${detected ? 'Correcto' : 'INCORRECTO'}
+                `, detected ? 'success' : 'error');
+            }
+        }
+
+        async function testBackendConnectivity() {
+            log('<h2>🔌 Test 3: Conectividad al Backend</h2>', 'info');
+
+            const apiUrl = typeof SGPFConfig !== 'undefined' 
+                ? SGPFConfig.getApiUrl() 
+                : `http://${window.location.hostname}:5000/api`;
+
+            const healthUrl = `${apiUrl.replace('/api', '')}/api/health`;
+
+            log(`Intentando conectar a: <code>${healthUrl}</code>`);
+
+            try {
+                const startTime = Date.now();
+                const response = await fetch(healthUrl, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                const endTime = Date.now();
+                const responseTime = endTime - startTime;
+
+                if (response.ok) {
+                    const data = await response.json();
+                    log(`
+                        ${getStatusBadge(true)} Backend alcanzable<br>
+                        <strong>Status:</strong> ${response.status} ${response.statusText}<br>
+                        <strong>Tiempo de respuesta:</strong> ${responseTime}ms<br>
+                        <strong>Respuesta:</strong><br>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    `, 'success');
+                } else {
+                    log(`
+                        ${getStatusBadge(false)} Backend responde pero con error<br>
+                        <strong>Status:</strong> ${response.status} ${response.statusText}
+                    `, 'error');
+                }
+            } catch (error) {
+                log(`
+                    ${getStatusBadge(false)} No se puede conectar al backend<br>
+                    <strong>Error:</strong> ${error.message}<br>
+                    <strong>Tipo:</strong> ${error.name}<br><br>
+                    <strong>⚠️ Posibles causas:</strong><br>
+                    1. El backend no está corriendo en puerto 5000<br>
+                    2. El backend no está escuchando en 0.0.0.0<br>
+                    3. Firewall bloqueando el puerto<br>
+                    4. IP incorrecta (verifica con ipconfig/ifconfig)
+                `, 'error');
+            }
+        }
+
+        async function testCORS() {
+            log('<h2>🌐 Test 4: CORS (Cross-Origin)</h2>', 'info');
+
+            const apiUrl = typeof SGPFConfig !== 'undefined' 
+                ? SGPFConfig.getApiUrl() 
+                : `http://${window.location.hostname}:5000/api`;
+
+            const healthUrl = `${apiUrl.replace('/api', '')}/api/health`;
+
+            try {
+                const response = await fetch(healthUrl, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Origin': window.location.origin
+                    }
+                });
+
+                const corsHeaders = {
+                    'access-control-allow-origin': response.headers.get('access-control-allow-origin'),
+                    'access-control-allow-credentials': response.headers.get('access-control-allow-credentials'),
+                    'access-control-allow-methods': response.headers.get('access-control-allow-methods')
+                };
+
+                const corsOk = corsHeaders['access-control-allow-origin'] !== null;
+
+                log(`
+                    ${getStatusBadge(corsOk)} Headers CORS<br>
+                    <strong>Allow-Origin:</strong> ${corsHeaders['access-control-allow-origin'] || 'NO CONFIGURADO'}<br>
+                    <strong>Allow-Credentials:</strong> ${corsHeaders['access-control-allow-credentials'] || 'NO CONFIGURADO'}<br>
+                    <strong>Allow-Methods:</strong> ${corsHeaders['access-control-allow-methods'] || 'NO CONFIGURADO'}
+                `, corsOk ? 'success' : 'error');
+
+            } catch (error) {
+                log(`${getStatusBadge(false)} Error verificando CORS: ${error.message}`, 'error');
+            }
+        }
+
+        async function testLoginEndpoint() {
+            log('<h2>🔐 Test 5: Endpoint de Login</h2>', 'info');
+
+            const apiUrl = typeof SGPFConfig !== 'undefined' 
+                ? SGPFConfig.getApiUrl() 
+                : `http://${window.location.hostname}:5000/api`;
+
+            const loginUrl = `${apiUrl}/auth/login`;
+
+            log(`Probando endpoint: <code>${loginUrl}</code>`);
+
+            try {
+                // Intentar login con credenciales de prueba (esperamos 401 o 400, no error de red)
+                const response = await fetch(loginUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        email: 'test@test.com',
+                        password: 'test123'
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.status === 401 || response.status === 400) {
+                    log(`
+                        ${getStatusBadge(true)} Endpoint de login funcional<br>
+                        <strong>Status:</strong> ${response.status} (esperado: credenciales inválidas)<br>
+                        <strong>Respuesta:</strong><br>
+                        <pre>${JSON.stringify(data, null, 2)}</pre><br>
+                        ✅ Esto es correcto - el endpoint responde
+                    `, 'success');
+                } else {
+                    log(`
+                        ${getStatusBadge(false)} Respuesta inesperada<br>
+                        <strong>Status:</strong> ${response.status}<br>
+                        <strong>Respuesta:</strong><br>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    `, 'warning');
+                }
+
+            } catch (error) {
+                log(`
+                    ${getStatusBadge(false)} Error conectando al login<br>
+                    <strong>Error:</strong> ${error.message}
+                `, 'error');
+            }
+        }
+
+        // Auto-ejecutar al cargar
+        window.addEventListener('load', () => {
+            setTimeout(runAllTests, 500);
+        });
+    </script>
+</body>
+</html>

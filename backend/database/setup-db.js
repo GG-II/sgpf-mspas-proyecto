@@ -469,7 +469,7 @@ class DatabaseSetup {
   }
 
   insertTerritorios(callback) {
-    console.log("🗺️ Insertando 9 territorios y 45 comunidades...");
+    console.log("🗺️ Insertando 9 territorios y 50 comunidades...");
 
     const territorios = [
       {
@@ -572,7 +572,7 @@ class DatabaseSetup {
       },
       {
         id: 9,
-        nombre: "Territorio 9 - Quiché",
+        nombre: "Territorio 9",
         codigo: "T9",
         comunidades: [
           { nombre: "Llano Grande La Estancia", codigo: "T9-001", mef: 334 },
@@ -594,45 +594,73 @@ class DatabaseSetup {
       0
     );
 
+    // ===== CAMBIO CRÍTICO: Insertar territorios primero y obtener el ID real =====
     territorios.forEach((territorio) => {
       this.db.run(
         "INSERT OR IGNORE INTO territorios (distrito_id, nombre, codigo, descripcion) VALUES (?, ?, ?, ?)",
         [1, territorio.nombre, territorio.codigo, `${territorio.nombre}`],
-        (err) => {
-          if (err)
+        function(err) {  // ⚠️ Usar function() para acceder a this.lastID
+          if (err) {
             console.error(`Error insertando territorio ${territorio.nombre}:`, err);
+            return;
+          }
 
           insertedTerr++;
-
-          territorio.comunidades.forEach((com) => {
-            this.db.run(
-              `INSERT OR IGNORE INTO comunidades 
-               (territorio_id, nombre, codigo_comunidad, poblacion_mef, poblacion_total) 
-               VALUES (?, ?, ?, ?, ?)`,
-              [
-                territorio.id,
-                com.nombre,
-                com.codigo,
-                com.mef,
-                Math.floor(com.mef * 4.2),
-              ],
-              (err) => {
-                if (err)
-                  console.error(`Error insertando comunidad ${com.nombre}:`, err);
-
-                insertedCom++;
-                if (insertedCom === totalComunidades) {
-                  console.log(
-                    `✅ ${insertedTerr} territorios y ${insertedCom} comunidades insertadas`
-                  );
-                  callback();
+          
+          // ===== USAR EL ID REAL DE LA BASE DE DATOS =====
+          // Si ya existía (INSERT OR IGNORE), buscar el ID por código
+          const territorioIdReal = this.lastID || null;
+          
+          if (!territorioIdReal) {
+            // Si lastID es 0, significa que ya existía, buscarlo
+            this.get(
+              "SELECT id FROM territorios WHERE codigo = ?",
+              [territorio.codigo],
+              (err, row) => {
+                if (err || !row) {
+                  console.error(`❌ No se pudo obtener ID para territorio ${territorio.codigo}`);
+                  return;
                 }
+                insertarComunidades(row.id, territorio);
               }
             );
-          });
+          } else {
+            insertarComunidades(territorioIdReal, territorio);
+          }
         }
       );
     });
+
+    // Función auxiliar para insertar comunidades con el ID correcto
+    const insertarComunidades = (territorioIdReal, territorio) => {
+      territorio.comunidades.forEach((com) => {
+        this.db.run(
+          `INSERT OR IGNORE INTO comunidades 
+           (territorio_id, nombre, codigo_comunidad, poblacion_mef, poblacion_total) 
+           VALUES (?, ?, ?, ?, ?)`,
+          [
+            territorioIdReal,  // ✅ AHORA USA EL ID REAL DE LA BD
+            com.nombre,
+            com.codigo,
+            com.mef,
+            Math.floor(com.mef * 4.2),
+          ],
+          (err) => {
+            if (err) {
+              console.error(`Error insertando comunidad ${com.nombre}:`, err);
+            }
+
+            insertedCom++;
+            if (insertedCom === totalComunidades) {
+              console.log(
+                `✅ ${insertedTerr} territorios y ${insertedCom} comunidades insertadas`
+              );
+              callback();
+            }
+          }
+        );
+      });
+    };
   }
 
   insertRoles() {

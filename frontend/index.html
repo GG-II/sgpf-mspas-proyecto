@@ -4,15 +4,71 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
+        <!-- JavaScript Modular -->
+    <!-- JavaScript Modular con Cache Busting -->
+<script>
+    // Generar timestamp único para cada recarga (Cache Busting)
+    const cacheBuster = new Date().getTime();
+    
+    // Función para cargar scripts sin caché
+    function loadScript(src) {
+        const script = document.createElement('script');
+        script.src = `${src}?v=${cacheBuster}`;
+        script.async = false; // Cargar en orden
+        document.head.appendChild(script);
+        return new Promise((resolve, reject) => {
+            script.onload = resolve;
+            script.onerror = reject;
+        });
+    }
+    
+    // Lista de scripts en orden
+    const scripts = [
+        'js/config.js',
+        'js/shared.js',
+        'js/security.js',
+        'js/component-loader.js',
+        'js/auth.js',
+        'js/app.js'
+    ];
+    
+    // Cargar scripts secuencialmente
+    console.log('🔄 Cargando scripts con cache busting:', cacheBuster);
+    
+    (async () => {
+        for (const script of scripts) {
+            try {
+                await loadScript(script);
+                console.log(`✅ Cargado: ${script}?v=${cacheBuster}`);
+            } catch (error) {
+                console.error(`❌ Error cargando ${script}:`, error);
+            }
+        }
+        
+        // Verificar que SGPFConfig esté disponible
+        if (typeof SGPFConfig !== 'undefined') {
+            console.log('✅ SGPFConfig cargado correctamente');
+            SGPFConfig.logConfig();
+        } else {
+            console.error('❌ SGPFConfig NO se cargó');
+        }
+    })();
+</script>
+
+<!-- Meta tags anti-caché -->
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script>
-  // Asegurar que jsPDF esté disponible globalmente
-  if (typeof window.jspdf !== 'undefined' && window.jspdf.jsPDF) {
-    window.jsPDF = window.jspdf;
-  }
-</script>
+    <script>
+      // Asegurar que jsPDF esté disponible globalmente
+      if (typeof window.jspdf !== 'undefined' && window.jspdf.jsPDF) {
+        window.jsPDF = window.jspdf;
+      }
+    </script>
     <!-- jsPDF AutoTable -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -77,7 +133,7 @@
         flex-direction: column;
       }
 
-      /* === HEADER - SIEMPRE SÓLIDO === */
+      /* === HEADER - SIEMPRE SOLIDO === */
       .app-header {
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         color: white;
@@ -135,7 +191,7 @@
         transform: translateY(-1px);
       }
 
-      /* === NAVEGACIÓN DESKTOP (arriba) === */
+      /* === NAVEGACION DESKTOP (arriba) === */
       .desktop-nav {
         display: none;
         background: white;
@@ -191,7 +247,7 @@
         font-size: 0.875rem;
       }
 
-      /* === NAVEGACIÓN MÓVIL (abajo) === */
+      /* === NAVEGACION MOVIL (abajo) === */
       .mobile-nav {
         display: flex;
         background: white;
@@ -438,10 +494,10 @@
         </div>
       </header>
 
-      <!-- NAVEGACIÓN DESKTOP (arriba, estilo Office) -->
+      <!-- NAVEGACION DESKTOP (arriba, estilo Office) -->
       <nav id="desktop-nav" class="desktop-nav hidden">
         <div class="desktop-nav-content">
-          <!-- Se genera dinámicamente -->
+          <!-- Se genera dinamicamente -->
         </div>
       </nav>
 
@@ -454,9 +510,9 @@
         </div>
       </main>
 
-      <!-- NAVEGACIÓN MÓVIL (abajo, estilo YouTube/X) -->
+      <!-- NAVEGACION MOVIL (abajo, estilo YouTube/X) -->
       <nav id="mobile-nav" class="mobile-nav hidden">
-        <!-- Se genera dinámicamente -->
+        <!-- Se genera dinamicamente -->
       </nav>
 
       <!-- LOADING OVERLAY -->
@@ -468,14 +524,6 @@
       <!-- TOAST CONTAINER -->
       <div id="toast-container" class="toast-container"></div>
     </div>
-
-    <!-- JavaScript Modular -->
-    <script src="js/config.js"></script>
-    <script src="js/shared.js"></script>
-    <script src="js/security.js"></script>
-    <script src="js/component-loader.js"></script>
-    <script src="js/auth.js"></script>
-    <script src="js/app.js"></script>
 
     <script>
       if (

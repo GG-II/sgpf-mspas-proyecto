@@ -234,7 +234,9 @@ const AuthManager = {
     async performLogin(email, password) {
         console.log(`🌐 Enviando solicitud de login: ${email}`);
         
-        const response = await fetch('http://localhost:5000/api/auth/login', {
+        const loginUrl = SGPFConfig.getEndpoint('/auth/login');
+console.log('🌐 URL de login:', loginUrl);
+const response = await fetch(loginUrl, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',

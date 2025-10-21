@@ -200,13 +200,13 @@ window.UsuariosAdmin = window.UsuariosAdmin || {
     if (!tablaBody) return;
 
     if (this.usuariosFiltrados.length === 0) {
-      if (tablaWrapper) tablaWrapper.style.display = "none";
-      if (emptyElement) emptyElement.style.display = "block";
+      if (tablaWrapper) tablaWrapper.classList.add('hidden');
+      if (emptyElement) emptyElement.classList.remove('hidden');
       return;
     }
 
-    if (tablaWrapper) tablaWrapper.style.display = "block";
-    if (emptyElement) emptyElement.style.display = "none";
+    if (tablaWrapper) tablaWrapper.classList.remove('hidden');
+    if (emptyElement) emptyElement.classList.add('hidden');
 
     tablaBody.innerHTML = this.usuariosFiltrados
       .map((usuario) => {
@@ -215,49 +215,73 @@ window.UsuariosAdmin = window.UsuariosAdmin || {
           usuario.apellidos
         );
         const rolNormalizado = this.normalizarRol(usuario.codigo_rol);
+        
+        // Badges de estado mejorados
         const estadoBadge = usuario.activo
-          ? '<span class="badge-estado activo">✓ Activo</span>'
-          : '<span class="badge-estado inactivo">✗ Inactivo</span>';
+          ? '<span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-800">✓ Activo</span>'
+          : '<span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-800">✗ Inactivo</span>';
 
+        // Badges de rol mejorados con gradientes
+        const rolBadges = {
+          coordinador: 'bg-gradient-to-r from-purple-600 to-indigo-600',
+          encargado: 'bg-gradient-to-r from-pink-500 to-rose-500',
+          asistente: 'bg-gradient-to-r from-blue-500 to-cyan-500',
+          auxiliar: 'bg-gradient-to-r from-green-500 to-emerald-500'
+        };
+        
+        const rolClass = rolBadges[rolNormalizado] || 'bg-gray-500';
         const rolDisplay = usuario.rol_nombre || "Sin rol";
 
         return `
-            <tr>
-                <td>
-                    <div class="usuario-info">
-                        <div class="usuario-avatar">${iniciales}</div>
+            <tr class="hover:bg-gray-50 transition-colors">
+                <td class="px-6 py-4">
+                    <div class="flex items-center gap-3">
+                        <div class="w-11 h-11 rounded-full ${rolClass} text-white font-bold text-lg flex items-center justify-center shadow-md">
+                            ${iniciales}
+                        </div>
                         <div>
-                            <div class="usuario-nombre">${usuario.nombres} ${
-          usuario.apellidos
-        }</div>
-                            <div class="usuario-email">${
-                              usuario.email || "Sin email"
-                            }</div>
+                            <div class="font-semibold text-gray-900">${usuario.nombres} ${usuario.apellidos}</div>
+                            <div class="text-sm text-gray-500">${usuario.email || "Sin email"}</div>
                         </div>
                     </div>
                 </td>
-                <td><span class="badge-rol ${rolNormalizado}">${rolDisplay}</span></td>
-                <td>${
-                  usuario.territorio_nombre || usuario.distrito_nombre || "-"
-                }</td>
-                <td>${estadoBadge}</td>
-                <td>
-                    <div class="acciones-usuario">
-                        <button class="btn-accion btn-editar" 
+                <td class="px-6 py-4">
+                    <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold text-white ${rolClass} shadow-sm">
+                        ${rolDisplay}
+                    </span>
+                </td>
+                <td class="px-6 py-4 text-gray-700">${usuario.territorio_nombre || usuario.distrito_nombre || "-"}</td>
+                <td class="px-6 py-4">${estadoBadge}</td>
+                <td class="px-6 py-4">
+                    <div class="flex items-center gap-2">
+                        <button 
                             onclick="UsuariosAdmin.editarUsuario(${usuario.id})"
-                            title="Editar">✏️</button>
-                        <button class="btn-accion btn-password" 
-                            onclick="UsuariosAdmin.abrirModalResetPassword(${
-                              usuario.id
-                            }, '${usuario.nombres} ${usuario.apellidos}')"
-                            title="Restablecer contraseña">🔐</button>
-                        <button class="btn-accion btn-toggle-estado" 
-                            onclick="UsuariosAdmin.toggleEstadoUsuario(${
-                              usuario.id
-                            }, ${!usuario.activo})"
-                            title="${
-                              usuario.activo ? "Desactivar" : "Activar"
-                            }">${usuario.activo ? "🔴" : "🟢"}</button>
+                            class="p-2 bg-cyan-500 hover:bg-cyan-600 text-white rounded-lg transition-all shadow-sm hover:shadow-md transform hover:-translate-y-0.5"
+                            title="Editar"
+                        >
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                            </svg>
+                        </button>
+                        <button 
+                            onclick="UsuariosAdmin.abrirModalResetPassword(${usuario.id}, '${usuario.nombres} ${usuario.apellidos}')"
+                            class="p-2 bg-yellow-500 hover:bg-yellow-600 text-white rounded-lg transition-all shadow-sm hover:shadow-md transform hover:-translate-y-0.5"
+                            title="Restablecer contraseña"
+                        >
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"></path>
+                            </svg>
+                        </button>
+                        <button 
+                            onclick="UsuariosAdmin.toggleEstadoUsuario(${usuario.id}, ${!usuario.activo})"
+                            class="p-2 ${usuario.activo ? 'bg-red-500 hover:bg-red-600' : 'bg-green-500 hover:bg-green-600'} text-white rounded-lg transition-all shadow-sm hover:shadow-md transform hover:-translate-y-0.5"
+                            title="${usuario.activo ? 'Desactivar' : 'Activar'}"
+                        >
+                            ${usuario.activo ? 
+                                '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>' : 
+                                '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>'
+                            }
+                        </button>
                     </div>
                 </td>
             </tr>
@@ -649,13 +673,25 @@ window.UsuariosAdmin = window.UsuariosAdmin || {
 
   // ===== TOGGLE CAMPOS ESPECÍFICOS =====
   async toggleCamposEspecificos(rol) {
+    console.log('🔄 toggleCamposEspecificos llamado con rol:', rol);
+    
     const territorioGroup = document.getElementById("usuario-territorio-group");
     const comunidadesGroup = document.getElementById("usuario-comunidades-group");
     const codigoInput = document.getElementById("usuario-codigo");
 
+    // Verificar que los elementos existen
+    if (!territorioGroup) console.error('❌ usuario-territorio-group no encontrado');
+    if (!comunidadesGroup) console.error('❌ usuario-comunidades-group no encontrado');
+
     // Ocultar todos primero
-    if (territorioGroup) territorioGroup.style.display = "none";
-    if (comunidadesGroup) comunidadesGroup.style.display = "none";
+    if (territorioGroup) {
+        territorioGroup.style.display = "none";
+        territorioGroup.classList.add('hidden');
+    }
+    if (comunidadesGroup) {
+        comunidadesGroup.style.display = "none";
+        comunidadesGroup.classList.add('hidden');
+    }
 
     // Generar código automático si NO estamos en modo edición
     if (!this.modoEdicion && rol && codigoInput) {
@@ -663,44 +699,71 @@ window.UsuariosAdmin = window.UsuariosAdmin || {
       codigoInput.value = codigo;
     }
 
-    // ===== CAMBIO AQUÍ: LLAMAR A cargarTerritoriosEnLista =====
+    // Mostrar campos según el rol
     if (rol === "asistente_tecnico") {
-      if (territorioGroup) {
-        territorioGroup.style.display = "block";
-        this.cargarTerritoriosEnLista([]);
-      }
+        console.log('👤 Mostrando territorios para asistente técnico');
+        console.log('📊 Territorios disponibles:', this.territorios.length);
+        
+        if (territorioGroup) {
+            territorioGroup.style.display = "block";
+            territorioGroup.classList.remove('hidden');
+            
+            // Esperar un momento para que el DOM se actualice
+            await new Promise(resolve => setTimeout(resolve, 100));
+            
+            // Cargar territorios
+            this.cargarTerritoriosEnLista([]);
+            
+            console.log('✅ territorioGroup visible');
+        }
     } else if (rol === "auxiliar_enfermeria") {
-      if (comunidadesGroup) {
-        comunidadesGroup.style.display = "block";
-        this.cargarComunidadesEnLista([]);
-      }
+        console.log('👤 Mostrando comunidades para auxiliar de enfermería');
+        console.log('📊 Comunidades disponibles:', this.comunidades.length);
+        
+        if (comunidadesGroup) {
+            comunidadesGroup.style.display = "block";
+            comunidadesGroup.classList.remove('hidden');
+            
+            // Esperar un momento para que el DOM se actualice
+            await new Promise(resolve => setTimeout(resolve, 100));
+            
+            // Cargar comunidades
+            this.cargarComunidadesEnLista([]);
+            
+            console.log('✅ comunidadesGroup visible');
+        }
+    } else {
+        console.log('ℹ️ Rol no requiere territorios ni comunidades:', rol);
     }
-  },
+},
 
   // ===== CARGAR TERRITORIOS EN LISTA CON CHECKBOXES =====
   cargarTerritoriosEnLista(idsSeleccionados = []) {
     const container = document.getElementById('usuario-territorios-list');
     if (!container) return;
 
-    let html = '';
+    let html = '<div class="space-y-2">';
     this.territorios.forEach(territorio => {
         const checked = idsSeleccionados.includes(territorio.id) ? 'checked' : '';
         html += `
-            <label style="display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem; cursor: pointer; border-radius: 4px; transition: background 0.2s;"
-                   onmouseover="this.style.backgroundColor='#f5f5f5'" 
-                   onmouseout="this.style.backgroundColor='transparent'">
-                <input type="checkbox" value="${territorio.id}" ${checked} 
-                       style="cursor: pointer; width: 18px; height: 18px;">
-                <span style="line-height: 1.5; font-size: 0.9rem; flex: 1;">
-                    <strong>${territorio.nombre}</strong>
-                    <small style="color: #888; font-size: 0.85rem; display: block;">(${territorio.codigo})</small>
-                </span>
+            <label class="flex items-center gap-3 p-3 rounded-lg hover:bg-white cursor-pointer transition-all border border-transparent hover:border-indigo-200">
+                <input 
+                    type="checkbox" 
+                    value="${territorio.id}" 
+                    ${checked} 
+                    class="w-5 h-5 text-indigo-600 border-gray-300 rounded focus:ring-2 focus:ring-indigo-500 cursor-pointer"
+                >
+                <div class="flex-1">
+                    <div class="font-semibold text-gray-900">${territorio.nombre}</div>
+                    <div class="text-xs text-gray-500">${territorio.codigo}</div>
+                </div>
             </label>
         `;
     });
+    html += '</div>';
 
     container.innerHTML = html;
-  },
+},
 
   // ===== CARGAR TERRITORIOS ASIGNADOS A USUARIO =====
   async cargarTerritoriosAsignadosUsuario(usuarioId) {
@@ -873,53 +936,63 @@ window.UsuariosAdmin = window.UsuariosAdmin || {
         comunidadesPorTerritorio[territorio].push(comunidad);
     });
 
-    let html = '';
+    let html = '<div class="space-y-4">';
     Object.keys(comunidadesPorTerritorio).sort().forEach((territorio, idx) => {
         const territorioId = `territorio-${idx}`;
         const comunidadesDelTerritorio = comunidadesPorTerritorio[territorio];
         const todasSeleccionadas = comunidadesDelTerritorio.every(c => idsSeleccionados.includes(c.id));
         
-        html += `<div style="margin-bottom: 1.25rem;">`;
+        html += `<div class="border border-gray-200 rounded-lg overflow-hidden">`;
         
         // Header del territorio con checkbox "Seleccionar todas"
         html += `
-            <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.75rem; padding: 0.5rem; background: linear-gradient(135deg, #f0f4ff 0%, #e8f0fe 100%); border-radius: 6px;">
-                <input type="checkbox" 
-                       id="${territorioId}" 
-                       ${todasSeleccionadas ? 'checked' : ''}
-                       onchange="UsuariosAdmin.toggleTodasComunidades('${territorio}')"
-                       style="cursor: pointer; width: 18px; height: 18px;">
-                <label for="${territorioId}" style="cursor: pointer; font-weight: 600; color: var(--mspas-primary); font-size: 0.95rem; flex: 1;">
+            <div class="bg-gradient-to-r from-indigo-50 to-purple-50 p-3 flex items-center gap-3">
+                <input 
+                    type="checkbox" 
+                    id="${territorioId}" 
+                    ${todasSeleccionadas ? 'checked' : ''}
+                    onchange="UsuariosAdmin.toggleTodasComunidades('${territorio}')"
+                    class="w-5 h-5 text-indigo-600 border-gray-300 rounded focus:ring-2 focus:ring-indigo-500 cursor-pointer"
+                >
+                <label for="${territorioId}" class="flex-1 cursor-pointer font-semibold text-indigo-700">
                     ${territorio}
                 </label>
-                <small style="color: #666; font-size: 0.85rem;">${comunidadesDelTerritorio.length} comunidades</small>
+                <span class="text-xs text-gray-600 bg-white px-2 py-1 rounded-full">
+                    ${comunidadesDelTerritorio.length} comunidades
+                </span>
             </div>
         `;
         
         // Lista de comunidades
-        html += `<div style="padding-left: 1.5rem;">`;
+        html += `<div class="p-2 bg-white space-y-1">`;
         comunidadesDelTerritorio.forEach(comunidad => {
             const checked = idsSeleccionados.includes(comunidad.id) ? 'checked' : '';
             html += `
-                <label class="comunidad-item" data-territorio="${territorio}" style="display: grid; grid-template-columns: 30px 1fr; gap: 0.5rem; align-items: start; padding: 0.4rem 0.25rem; cursor: pointer; border-radius: 4px; transition: background 0.2s;" 
-                       onmouseover="this.style.backgroundColor='#f5f5f5'" 
-                       onmouseout="this.style.backgroundColor='transparent'">
-                    <input type="checkbox" value="${comunidad.id}" ${checked} 
-                           onchange="UsuariosAdmin.verificarTerritorioCompleto('${territorio}')"
-                           style="cursor: pointer; margin-top: 0.25rem; width: 18px; height: 18px;">
-                    <span style="line-height: 1.5; font-size: 0.9rem;">
-                        ${comunidad.nombre} 
-                        <small style="color: #888; font-size: 0.85rem; display: block; margin-top: 0.1rem;">(${comunidad.codigo_comunidad})</small>
-                    </span>
+                <label 
+                    class="comunidad-item flex items-start gap-3 p-2 rounded-lg hover:bg-gray-50 cursor-pointer transition-all" 
+                    data-territorio="${territorio}"
+                >
+                    <input 
+                        type="checkbox" 
+                        value="${comunidad.id}" 
+                        ${checked} 
+                        onchange="UsuariosAdmin.verificarTerritorioCompleto('${territorio}')"
+                        class="w-5 h-5 text-indigo-600 border-gray-300 rounded focus:ring-2 focus:ring-indigo-500 cursor-pointer mt-0.5"
+                    >
+                    <div class="flex-1">
+                        <div class="font-medium text-gray-900 text-sm">${comunidad.nombre}</div>
+                        <div class="text-xs text-gray-500">${comunidad.codigo_comunidad}</div>
+                    </div>
                 </label>
             `;
         });
         html += `</div>`;
         html += `</div>`;
     });
+    html += '</div>';
 
     container.innerHTML = html;
-  },
+},
 
   // ===== FUNCIONES AUXILIARES PARA CHECKBOXES DE COMUNIDADES =====
   toggleTodasComunidades(territorio) {

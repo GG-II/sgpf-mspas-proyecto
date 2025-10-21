@@ -17,9 +17,12 @@ app.use(helmet({
     crossOriginEmbedderPolicy: false
 }));
 
+// CORS simple y permisivo
 app.use(cors({
-    origin: ['http://localhost:3000', 'http://127.0.0.1:3000', 'http://localhost:5500', 'http://127.0.0.1:5500'],
-    credentials: true
+    origin: '*',  // Acepta cualquier origen
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
 // Rate limiting - Configuración para desarrollo
@@ -50,6 +53,21 @@ app.use((req, res, next) => {
     console.log(`[${timestamp}] ${req.method} ${req.path} - IP: ${req.ip}`);
     next();
 });
+
+// ===== MIDDLEWARE ANTI-CACHÉ (DESARROLLO) =====
+app.use((req, res, next) => {
+    // Solo aplicar en desarrollo
+    if (process.env.NODE_ENV !== 'production') {
+        // Headers para prevenir caché
+        res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+        res.setHeader('Pragma', 'no-cache');
+        res.setHeader('Expires', '0');
+        res.setHeader('Surrogate-Control', 'no-store');
+    }
+    next();
+});
+
+console.log('🚫 Cache deshabilitado en desarrollo');
 
 // ===== CONEXIÓN A BASE DE DATOS =====
 const dbPath = path.join(__dirname, 'database/sgpf_complete.db');
@@ -300,8 +318,36 @@ process.on('SIGINT', () => {
 });
 
 // ===== INICIAR SERVIDOR =====
-app.listen(PORT, () => {
+const HOST = '0.0.0.0'; // ⚠️ CRÍTICO: Escuchar en todas las interfaces
+
+app.listen(PORT, HOST, () => {
     console.log('\n🚀 ===== SERVIDOR SGPF-MSPAS (MODULAR) =====');
+    console.log(`📡 Servidor corriendo en: http://${HOST}:${PORT}`);
+    console.log(`🔧 Modo: ${process.env.NODE_ENV || 'development'}`);
+    console.log(`📊 API Health Check: http://localhost:${PORT}/api/health`);
+    
+    // Obtener IPs de red local
+    const os = require('os');
+    const networkInterfaces = os.networkInterfaces();
+    const addresses = [];
+    
+    for (const interfaceName in networkInterfaces) {
+        for (const iface of networkInterfaces[interfaceName]) {
+            if (iface.family === 'IPv4' && !iface.internal) {
+                addresses.push(iface.address);
+            }
+        }
+    }
+    
+    if (addresses.length > 0) {
+        console.log('\n📱 Acceso desde red local:');
+        addresses.forEach(addr => {
+            console.log(`   http://${addr}:${PORT}`);
+        });
+        console.log('\n💡 Usa estas direcciones desde tu teléfono/tablet\n');
+    }
+    
+    console.log(`🗄️ Base de datos: ${db ? 'Conectada' : 'Desconectada'}`);
     console.log(`📡 Servidor corriendo en: http://localhost:${PORT}`);
     console.log(`🔧 Modo: ${process.env.NODE_ENV || 'development'}`);
     console.log(`📊 API Health Check: http://localhost:${PORT}/api/health`);
