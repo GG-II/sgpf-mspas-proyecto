@@ -1,734 +1,420 @@
-// ===== js/reportes.js - SISTEMA DE REPORTES =====
-window.ReportesSystem = window.ReportesSystem || {
-  // Estado del sistema
-  tipoReporteActual: "mensual",
-  datosReporte: null,
-  filtrosActuales: {
-    año: 2025,
-    mes: 9,
+// ===== SISTEMA DE REPORTES V2.0 - ORQUESTADOR MODULAR =====
+window.Reportes = window.Reportes || {
+  // ===== ESTADO GLOBAL =====
+  state: {
+    anioActual: new Date().getFullYear(),
+    tabActual: 'general',
+    modulosCargados: {},
+    datosCache: {}
   },
 
-  // ===== INICIALIZACIÓN =====
+  // ===== INICIALIZAR SISTEMA =====
   async init() {
-    console.log("🚀 Inicializando Sistema de Reportes");
-
-    // CRÍTICO: Delay para renderizado DOM
-    await new Promise((resolve) => setTimeout(resolve, 300));
+    console.log('📊 Inicializando Sistema de Reportes V2.0');
 
     try {
       const user = SGPF.getCurrentUser();
-      const rolNormalizado = SGPF.getNormalizedRole();
 
-      console.log("📊 Usuario:", user.nombres, user.apellidos);
-      console.log("🎭 Rol normalizado:", rolNormalizado);
-
-      // Configurar filtros por defecto
-      this.configurarFiltrosDefault();
-
-      // Configurar event listeners
-      this.configurarEventListeners();
-
-      // Cargar datos iniciales si es necesario
-      await this.actualizarResumen();
-
-      console.log("✅ Sistema de Reportes inicializado");
-    } catch (error) {
-      console.error("❌ Error inicializando reportes:", error);
-      SGPF.showToast("Error inicializando sistema de reportes", "error");
-    }
-  },
-
-  // ===== CONFIGURAR FILTROS DEFAULT =====
-  configurarFiltrosDefault() {
-    const fechaActual = new Date();
-    const añoActual = fechaActual.getFullYear();
-    const mesActual = fechaActual.getMonth() + 1;
-
-    // Establecer valores por defecto
-    const selectAño = document.getElementById("filtro-año");
-    const selectMes = document.getElementById("filtro-mes");
-
-    if (selectAño) {
-      selectAño.value = añoActual.toString();
-      this.filtrosActuales.año = añoActual;
-    }
-
-    if (selectMes) {
-      selectMes.value = mesActual.toString();
-      this.filtrosActuales.mes = mesActual;
-    }
-
-    console.log("📅 Filtros configurados:", this.filtrosActuales);
-  },
-
-  // ===== CONFIGURAR EVENT LISTENERS =====
-  configurarEventListeners() {
-    // Tabs de reportes
-    document.querySelectorAll(".tab-button").forEach((button) => {
-      button.addEventListener("click", (e) => {
-        this.cambiarTipoReporte(e.target.dataset.tab);
-      });
-    });
-
-    // Botón generar reporte
-    const btnGenerar = document.getElementById("btn-generar-reporte");
-    if (btnGenerar) {
-      btnGenerar.addEventListener("click", () => {
-        this.generarReporte();
-      });
-    }
-
-    // Filtros
-    const selectAño = document.getElementById("filtro-año");
-    const selectMes = document.getElementById("filtro-mes");
-
-    if (selectAño) {
-      selectAño.addEventListener("change", (e) => {
-        this.filtrosActuales.año = parseInt(e.target.value);
-      });
-    }
-
-    if (selectMes) {
-      selectMes.addEventListener("change", (e) => {
-        this.filtrosActuales.mes = parseInt(e.target.value);
-      });
-    }
-
-    // Botones de exportación
-    const btnExportarCSV = document.getElementById("btn-exportar-csv");
-    const btnExportarExcel = document.getElementById("btn-exportar-excel");
-    const btnImprimir = document.getElementById("btn-imprimir");
-
-    if (btnExportarCSV) {
-      btnExportarCSV.addEventListener("click", () => {
-        this.exportarCSV();
-      });
-    }
-
-    if (btnExportarExcel) {
-      btnExportarExcel.addEventListener("click", () => {
-        this.exportarExcel();
-      });
-    }
-
-    if (btnImprimir) {
-      btnImprimir.addEventListener("click", () => {
-        this.imprimir();
-      });
-    }
-
-    console.log("🎯 Event listeners configurados");
-  },
-
-  // ===== CAMBIAR TIPO DE REPORTE =====
-  cambiarTipoReporte(tipo) {
-    console.log("🔄 Cambiando tipo de reporte a:", tipo);
-
-    // Actualizar estado
-    this.tipoReporteActual = tipo;
-
-    // Actualizar tabs activos
-    document.querySelectorAll(".tab-button").forEach((button) => {
-      button.classList.toggle("active", button.dataset.tab === tipo);
-    });
-
-    // Mostrar/ocultar filtro de mes
-    const filtroMesGrupo = document.getElementById("filtro-mes-grupo");
-    if (filtroMesGrupo) {
-      filtroMesGrupo.style.display = tipo === "mensual" ? "flex" : "none";
-    }
-
-    // Limpiar contenido anterior
-    this.limpiarContenidoReporte();
-  },
-
-  // ===== GENERAR REPORTE =====
-  async generarReporte() {
-    console.log(
-      "📊 Generando reporte:",
-      this.tipoReporteActual,
-      this.filtrosActuales
-    );
-
-    try {
-      // Mostrar loading
-      this.mostrarLoading();
-
-      let endpoint, titulo;
-
-      if (this.tipoReporteActual === "mensual") {
-        endpoint = `/reportes/mensual/${this.filtrosActuales.año}/${this.filtrosActuales.mes}`;
-        titulo = `Reporte Mensual - ${this.obtenerNombreMes(
-          this.filtrosActuales.mes
-        )} ${this.filtrosActuales.año}`;
-      } else {
-        endpoint = `/reportes/anual/${this.filtrosActuales.año}`;
-        titulo = `Reporte Anual - ${this.filtrosActuales.año}`;
+      if (!user) {
+        console.error('❌ Usuario no autenticado');
+        SGPF.showToast('Debes iniciar sesión', 'error');
+        return;
       }
 
-      console.log("🌐 Llamando endpoint:", endpoint);
+      console.log('✅ Usuario autenticado:', user.nombre);
 
-      const response = await SGPF.apiCall(endpoint);
+      // Cargar años disponibles
+      await this.cargarAniosDisponibles();
 
-      if (response.success) {
-        this.datosReporte = response.data;
-        this.actualizarTituloReporte(titulo);
+      // Configurar selector de año
+      this.configurarSelectorAnio();
 
-        if (this.tipoReporteActual === "mensual") {
-          this.renderizarReporteMensual(response.data);
-        } else {
-          this.renderizarReporteAnual(response.data);
-        }
+      // Configurar navegación por tabs
+      this.configurarTabs();
 
-        this.actualizarResumenConDatos(response.data);
-        SGPF.showToast("Reporte generado exitosamente", "success");
-      } else {
-        throw new Error(response.message || "Error generando reporte");
-      }
+      // Cargar pestaña inicial
+      await this.cambiarTab('general');
+
+      console.log('✅ Sistema de reportes inicializado correctamente');
     } catch (error) {
-      console.error("❌ Error generando reporte:", error);
-      this.mostrarError(
-        "Error generando el reporte. Verifique los filtros e intente nuevamente."
-      );
-      SGPF.showToast("Error generando reporte", "error");
+      console.error('❌ Error inicializando reportes:', error);
+      this.mostrarError('Error al inicializar el sistema de reportes');
     }
   },
 
-  // ===== RENDERIZAR REPORTE MENSUAL =====
-  renderizarReporteMensual(data) {
-    console.log("📅 Renderizando reporte mensual:", data);
-
-    const contenedor = document.getElementById("contenido-reporte");
-    const template = document.getElementById("template-tabla-mensual");
-
-    if (!contenedor || !template) {
-      console.error("❌ Elementos no encontrados para renderizar");
-      return;
-    }
-
-    // Clonar template
-    const tabla = template.content.cloneNode(true);
-    const tbody = tabla.querySelector("#tbody-mensual");
-
-    // Llenar datos
-    if (data.registros && data.registros.length > 0) {
-      data.registros.forEach((registro) => {
-        const fila = document.createElement("tr");
-        fila.innerHTML = `
-                    <td>${registro.territorio || "N/A"}</td>
-                    <td>${registro.comunidad || "N/A"}</td>
-                    <td>${registro.metodo || "N/A"}</td>
-                    <td>${registro.cantidad_administrada || 0}</td>
-                    <td>${registro.porcentaje_poblacion || 0}%</td>
-                    <td>${registro.registrado_por || "N/A"}</td>
-                    <td>${this.formatearFecha(registro.fecha_registro)}</td>
-                `;
-        tbody.appendChild(fila);
-      });
-    } else {
-      const fila = document.createElement("tr");
-      fila.innerHTML = `
-                <td colspan="7" class="sin-datos">
-                    No hay datos disponibles para el período seleccionado
-                </td>
-            `;
-      tbody.appendChild(fila);
-    }
-
-    // Insertar en contenedor
-    contenedor.innerHTML = "";
-    contenedor.appendChild(tabla);
-  },
-
-  // ===== RENDERIZAR REPORTE ANUAL =====
-  renderizarReporteAnual(data) {
-    console.log("📆 Renderizando reporte anual:", data);
-
-    const contenedor = document.getElementById("contenido-reporte");
-    const template = document.getElementById("template-tabla-anual");
-
-    if (!contenedor || !template) {
-      console.error("❌ Elementos no encontrados para renderizar");
-      return;
-    }
-
-    // Clonar template
-    const tabla = template.content.cloneNode(true);
-    const tbody = tabla.querySelector("#tbody-anual");
-
-    // Llenar datos
-    if (data.detalle_completo && data.detalle_completo.length > 0) {
-      data.detalle_completo.forEach((registro) => {
-        const fila = document.createElement("tr");
-        fila.innerHTML = `
-                    <td>${registro.territorio || "N/A"}</td>
-                    <td>${registro.comunidad || "N/A"}</td>
-                    <td>${registro.metodo || "N/A"}</td>
-                    <td>${registro.total_anual || 0}</td>
-                    <td>${registro.meses_con_registros || 0}</td>
-                    <td>${registro.poblacion_mef || 0}</td>
-                `;
-        tbody.appendChild(fila);
-      });
-    } else {
-      const fila = document.createElement("tr");
-      fila.innerHTML = `
-                <td colspan="6" class="sin-datos">
-                    No hay datos disponibles para el año seleccionado
-                </td>
-            `;
-      tbody.appendChild(fila);
-    }
-
-    // Insertar en contenedor
-    contenedor.innerHTML = "";
-    contenedor.appendChild(tabla);
-  },
-
-  // ===== ACTUALIZAR RESUMEN =====
-  async actualizarResumen() {
+  // ===== CARGAR AÑOS DISPONIBLES =====
+  async cargarAniosDisponibles() {
     try {
-      // Obtener datos básicos para el resumen
-      const response = await SGPF.apiCall("/dashboard/ejecutivo");
+      const response = await SGPF.apiCall('/planificacion/anios', 'GET');
 
       if (response.success && response.data) {
-        const data = response.data;
+        const anios = response.data;
+        const selector = document.getElementById('reporte-anio-global');
 
-        // Actualizar tarjetas de resumen
-        this.actualizarElemento("total-reportes", data.total_registros || 0);
-        this.actualizarElemento(
-          "total-comunidades-reportes",
-          data.comunidades_activas || 0
-        );
-        this.actualizarElemento(
-          "total-usuarias-reportes",
-          data.total_usuarias || 0
-        );
-        this.actualizarElemento("total-metodos-reportes", "11"); // Métodos disponibles
+        if (selector) {
+          selector.innerHTML = anios
+            .map(
+              (anio) =>
+                `<option value="${anio}" ${anio === this.state.anioActual ? 'selected' : ''}>${anio}</option>`
+            )
+            .join('');
+
+          // Si no hay años, agregar el actual
+          if (anios.length === 0) {
+            selector.innerHTML = `<option value="${this.state.anioActual}" selected>${this.state.anioActual}</option>`;
+          }
+        }
+
+        console.log('✅ Años cargados:', anios);
       }
     } catch (error) {
-      console.error("⚠️ Error actualizando resumen:", error);
-      // No mostrar error al usuario, es información complementaria
+      console.error('❌ Error cargando años:', error);
+      // Fallback: usar año actual
+      const selector = document.getElementById('reporte-anio-global');
+      if (selector) {
+        selector.innerHTML = `<option value="${this.state.anioActual}" selected>${this.state.anioActual}</option>`;
+      }
     }
   },
 
-  // ===== ACTUALIZAR RESUMEN CON DATOS DEL REPORTE =====
-  actualizarResumenConDatos(data) {
-    if (this.tipoReporteActual === "mensual" && data.resumen) {
-      this.actualizarElemento("total-reportes", data.registros?.length || 0);
-      this.actualizarElemento(
-        "total-comunidades-reportes",
-        data.resumen.total_comunidades || 0
-      );
-      this.actualizarElemento(
-        "total-usuarias-reportes",
-        data.resumen.total_usuarias || 0
-      );
-      this.actualizarElemento(
-        "total-metodos-reportes",
-        data.resumen.metodos_utilizados || 0
-      );
-    } else if (this.tipoReporteActual === "anual" && data.resumen) {
-      this.actualizarElemento(
-        "total-reportes",
-        data.detalle_completo?.length || 0
-      );
-      this.actualizarElemento(
-        "total-comunidades-reportes",
-        data.resumen.comunidades_participantes || 0
-      );
-      this.actualizarElemento(
-        "total-usuarias-reportes",
-        data.resumen.total_usuarias_atendidas || 0
-      );
-      this.actualizarElemento(
-        "total-metodos-reportes",
-        data.resumen.metodos_utilizados || 0
-      );
+  // ===== CONFIGURAR SELECTOR DE AÑO =====
+  configurarSelectorAnio() {
+    const selector = document.getElementById('reporte-anio-global');
+
+    if (selector) {
+      selector.addEventListener('change', async (e) => {
+        const nuevoAnio = parseInt(e.target.value);
+        
+        if (nuevoAnio !== this.state.anioActual) {
+          this.state.anioActual = nuevoAnio;
+          console.log('📅 Año cambiado a:', this.state.anioActual);
+
+          // Limpiar caché
+          this.state.datosCache = {};
+
+          // Recargar contenido de la pestaña actual
+          await this.cambiarTab(this.state.tabActual);
+        }
+      });
     }
   },
 
-  // ===== EXPORTAR CSV =====
-  exportarCSV() {
-    if (!this.datosReporte) {
-      SGPF.showToast(
-        "No hay datos para exportar. Genere un reporte primero.",
-        "warning"
-      );
-      return;
-    }
+  // ===== CONFIGURAR NAVEGACIÓN POR TABS =====
+  configurarTabs() {
+    const tabs = document.querySelectorAll('.tab-reporte');
+
+    tabs.forEach((tab) => {
+      tab.addEventListener('click', async () => {
+        const tabName = tab.dataset.tab;
+        await this.cambiarTab(tabName);
+      });
+    });
+
+    console.log('✅ Tabs configurados:', tabs.length);
+  },
+
+  // ===== CAMBIAR DE PESTAÑA =====
+  async cambiarTab(tabName) {
+    console.log('🔄 Cambiando a pestaña:', tabName);
+
+    this.state.tabActual = tabName;
+
+    // Actualizar estilos de tabs
+    this.actualizarEstilosTabs(tabName);
+
+    // Limpiar estados previos
+    this.ocultarError();
+    this.limpiarContenido();
+
+    // Mostrar loading
+    this.mostrarLoading(true);
 
     try {
-      let csv = "";
-      let filename = "";
-
-      if (this.tipoReporteActual === "mensual") {
-        csv = this.generarCSVMensual(this.datosReporte);
-        filename = `reporte_mensual_${this.filtrosActuales.mes}_${this.filtrosActuales.año}.csv`;
-      } else {
-        csv = this.generarCSVAnual(this.datosReporte);
-        filename = `reporte_anual_${this.filtrosActuales.año}.csv`;
-      }
-
-      this.descargarArchivo(csv, filename, "text/csv");
-      SGPF.showToast("CSV exportado exitosamente", "success");
+      // Cargar módulo específico
+      await this.cargarModulo(tabName);
     } catch (error) {
-      console.error("❌ Error exportando CSV:", error);
-      SGPF.showToast("Error exportando CSV", "error");
+      console.error(`❌ Error en pestaña ${tabName}:`, error);
+      this.mostrarError(`Error al cargar el reporte: ${error.message}`);
+    } finally {
+      this.mostrarLoading(false);
     }
   },
 
-  // ===== GENERAR CSV MENSUAL =====
-  generarCSVMensual(data) {
-    const encabezados = [
-      "Territorio",
-      "Comunidad",
-      "Método",
-      "Cantidad",
-      "Porcentaje Población",
-      "Registrado Por",
-      "Fecha",
-    ];
+  // ===== ACTUALIZAR ESTILOS DE TABS =====
+  actualizarEstilosTabs(tabActivo) {
+    document.querySelectorAll('.tab-reporte').forEach((tab) => {
+      const isActive = tab.dataset.tab === tabActivo;
 
-    let csv = encabezados.join(",") + "\n";
-
-    if (data.registros && data.registros.length > 0) {
-      data.registros.forEach((registro) => {
-        const fila = [
-          `"${registro.territorio || ""}"`,
-          `"${registro.comunidad || ""}"`,
-          `"${registro.metodo || ""}"`,
-          registro.cantidad_administrada || 0,
-          registro.porcentaje_poblacion || 0,
-          `"${registro.registrado_por || ""}"`,
-          `"${this.formatearFecha(registro.fecha_registro)}"`,
-        ];
-        csv += fila.join(",") + "\n";
-      });
-    }
-
-    return csv;
+      if (isActive) {
+        tab.classList.add('text-purple-600', 'border-purple-600');
+        tab.classList.remove('text-gray-500', 'border-transparent');
+      } else {
+        tab.classList.remove('text-purple-600', 'border-purple-600');
+        tab.classList.add('text-gray-500', 'border-transparent');
+      }
+    });
   },
 
-  // ===== GENERAR CSV ANUAL =====
-  generarCSVAnual(data) {
-    const encabezados = [
-      "Territorio",
-      "Comunidad",
-      "Método",
-      "Total Anual",
-      "Meses Activos",
-      "Población MEF",
-    ];
-
-    let csv = encabezados.join(",") + "\n";
-
-    if (data.detalle_completo && data.detalle_completo.length > 0) {
-      data.detalle_completo.forEach((registro) => {
-        const fila = [
-          `"${registro.territorio || ""}"`,
-          `"${registro.comunidad || ""}"`,
-          `"${registro.metodo || ""}"`,
-          registro.total_anual || 0,
-          registro.meses_con_registros || 0,
-          registro.poblacion_mef || 0,
-        ];
-        csv += fila.join(",") + "\n";
-      });
-    }
-
-    return csv;
-  },
-
-  // ===== EXPORTAR EXCEL =====
-  exportarExcel() {
-    if (!this.datosReporte) {
-      SGPF.showToast(
-        "No hay datos para exportar. Genere un reporte primero.",
-        "warning"
-      );
-      return;
-    }
-
-    if (typeof XLSX === "undefined") {
-      SGPF.showToast(
-        "Librería Excel no disponible. Usando CSV como alternativa.",
-        "warning"
-      );
-      this.exportarCSV();
-      return;
-    }
-
+  // ===== CARGAR MÓDULO ESPECÍFICO =====
+  async cargarModulo(moduloNombre) {
     try {
-      let filename = "";
-      let worksheetData = [];
-
-      if (this.tipoReporteActual === "mensual") {
-        worksheetData = this.prepararDatosExcelMensual(this.datosReporte);
-        filename = `reporte_mensual_${this.filtrosActuales.mes}_${this.filtrosActuales.año}.xlsx`;
-      } else {
-        worksheetData = this.prepararDatosExcelAnual(this.datosReporte);
-        filename = `reporte_anual_${this.filtrosActuales.año}.xlsx`;
+      // Verificar si el script ya está cargado
+      if (!this.state.modulosCargados[moduloNombre]) {
+        console.log(`📦 Cargando script: js/reportes/${moduloNombre}.js`);
+        await this.cargarScript(`js/reportes/${moduloNombre}.js`);
+        this.state.modulosCargados[moduloNombre] = true;
       }
 
-      // Crear workbook y worksheet
-      const workbook = XLSX.utils.book_new();
-      const worksheet = XLSX.utils.aoa_to_sheet(worksheetData);
+      // Obtener el módulo
+      const nombreModulo = `Reporte${this.capitalize(moduloNombre)}`;
+      const modulo = window[nombreModulo];
 
-      // Configurar anchos de columnas
-      const columnWidths = worksheetData[0].map(() => ({ width: 15 }));
-      worksheet["!cols"] = columnWidths;
+      if (!modulo) {
+        throw new Error(`Módulo ${nombreModulo} no encontrado en window`);
+      }
 
-      // Agregar worksheet al workbook
-      XLSX.utils.book_append_sheet(workbook, worksheet, "Reporte");
+      if (typeof modulo.init !== 'function') {
+        throw new Error(`Módulo ${nombreModulo} no tiene método init()`);
+      }
 
-      // Descargar archivo
-      XLSX.writeFile(workbook, filename);
-      SGPF.showToast("Excel exportado exitosamente", "success");
+      // Inicializar módulo con el año actual
+      console.log(`🚀 Inicializando módulo: ${nombreModulo}`);
+      await modulo.init(this.state.anioActual);
+
+      console.log(`✅ Módulo ${nombreModulo} cargado exitosamente`);
     } catch (error) {
-      console.error("❌ Error exportando Excel:", error);
-      SGPF.showToast(
-        "Error exportando Excel. Usando CSV como alternativa.",
-        "warning"
-      );
-      this.exportarCSV();
+      console.error(`❌ Error cargando módulo ${moduloNombre}:`, error);
+      throw error;
     }
   },
 
-  // ===== PREPARAR DATOS EXCEL MENSUAL =====
-  prepararDatosExcelMensual(data) {
-    const encabezados = [
-      "Territorio",
-      "Comunidad",
-      "Código Comunidad",
-      "Método",
-      "Categoría",
-      "Cantidad",
-      "Población MEF",
-      "% Población",
-      "Registrado Por",
-      "Fecha Registro",
-      "Estado",
-    ];
+  // ===== CARGAR SCRIPT DINÁMICAMENTE =====
+  cargarScript(src) {
+    return new Promise((resolve, reject) => {
+      // Verificar si ya existe
+      const scriptExistente = document.querySelector(`script[src="${src}"]`);
+      if (scriptExistente) {
+        console.log(`✅ Script ya cargado: ${src}`);
+        resolve();
+        return;
+      }
 
-    const filas = [encabezados];
+      const script = document.createElement('script');
+      script.src = src;
+      script.type = 'text/javascript';
 
-    if (data.registros && data.registros.length > 0) {
-      data.registros.forEach((registro) => {
-        filas.push([
-          registro.territorio || "",
-          registro.comunidad || "",
-          registro.codigo_comunidad || "",
-          registro.metodo || "",
-          registro.categoria || "",
-          registro.cantidad_administrada || 0,
-          registro.poblacion_mef || 0,
-          registro.porcentaje_poblacion || 0,
-          registro.registrado_por || "",
-          this.formatearFecha(registro.fecha_registro),
-          registro.estado || "",
-        ]);
-      });
-    }
+      script.onload = () => {
+        console.log(`✅ Script cargado: ${src}`);
+        resolve();
+      };
 
-    // Agregar fila de resumen
-    if (data.resumen) {
-      filas.push([]);
-      filas.push(["RESUMEN"]);
-      filas.push(["Total Usuarias:", data.resumen.total_usuarias || 0]);
-      filas.push(["Comunidades:", data.resumen.total_comunidades || 0]);
-      filas.push(["Territorios:", data.resumen.total_territorios || 0]);
-      filas.push(["Métodos Utilizados:", data.resumen.metodos_utilizados || 0]);
-    }
+      script.onerror = () => {
+        const error = new Error(`Error al cargar script: ${src}`);
+        console.error('❌', error);
+        reject(error);
+      };
 
-    return filas;
+      document.head.appendChild(script);
+    });
   },
 
-  // ===== PREPARAR DATOS EXCEL ANUAL =====
-  prepararDatosExcelAnual(data) {
-    const encabezados = [
-      "Territorio",
-      "Comunidad",
-      "Método",
-      "Categoría",
-      "Total Anual",
-      "Meses Activos",
-      "Población MEF",
-      "Promedio Mensual",
-    ];
-
-    const filas = [encabezados];
-
-    if (data.detalle_completo && data.detalle_completo.length > 0) {
-      data.detalle_completo.forEach((registro) => {
-        const promedioMensual =
-          registro.meses_con_registros > 0
-            ? Math.round(registro.total_anual / registro.meses_con_registros)
-            : 0;
-
-        filas.push([
-          registro.territorio || "",
-          registro.comunidad || "",
-          registro.metodo || "",
-          registro.categoria || "",
-          registro.total_anual || 0,
-          registro.meses_con_registros || 0,
-          registro.poblacion_mef || 0,
-          promedioMensual,
-        ]);
-      });
-    }
-
-    // Agregar fila de resumen
-    if (data.resumen) {
-      filas.push([]);
-      filas.push(["RESUMEN ANUAL"]);
-      filas.push(["Año:", data.resumen.año || this.filtrosActuales.año]);
-      filas.push([
-        "Total Usuarias Atendidas:",
-        data.resumen.total_usuarias_atendidas || 0,
-      ]);
-      filas.push([
-        "Comunidades Participantes:",
-        data.resumen.comunidades_participantes || 0,
-      ]);
-      filas.push([
-        "Territorios Activos:",
-        data.resumen.territorios_activos || 0,
-      ]);
-      filas.push(["Métodos Utilizados:", data.resumen.metodos_utilizados || 0]);
-    }
-
-    return filas;
-  },
-
-  // ===== IMPRIMIR =====
-  imprimir() {
-    const contenido = document.getElementById("contenido-reporte");
-    const titulo =
-      document.getElementById("titulo-reporte")?.textContent || "Reporte";
-
-    if (!contenido || !contenido.querySelector("table")) {
-      SGPF.showToast(
-        "No hay datos para imprimir. Genere un reporte primero.",
-        "warning"
-      );
-      return;
-    }
-
-    const ventanaImpresion = window.open("", "_blank");
-
-    ventanaImpresion.document.write(`
-            <html>
-            <head>
-                <title>${titulo}</title>
-                <style>
-                    body { font-family: Arial, sans-serif; margin: 20px; }
-                    table { width: 100%; border-collapse: collapse; }
-                    th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-                    th { background-color: #f2f2f2; }
-                    h1 { color: #333; }
-                </style>
-            </head>
-            <body>
-                <h1>${titulo}</h1>
-                ${contenido.innerHTML}
-            </body>
-            </html>
-        `);
-
-    ventanaImpresion.document.close();
-    ventanaImpresion.focus();
-    ventanaImpresion.print();
-    ventanaImpresion.close();
-  },
-
-  // ===== UTILIDADES =====
-  actualizarTituloReporte(titulo) {
-    const elemento = document.getElementById("titulo-reporte");
-    if (elemento) {
-      elemento.textContent = titulo;
-    }
-  },
-
-  actualizarElemento(id, valor) {
-    const elemento = document.getElementById(id);
-    if (elemento) {
-      elemento.textContent = valor;
-    }
-  },
-
-  obtenerNombreMes(mes) {
-    const meses = [
-      "Enero",
-      "Febrero",
-      "Marzo",
-      "Abril",
-      "Mayo",
-      "Junio",
-      "Julio",
-      "Agosto",
-      "Septiembre",
-      "Octubre",
-      "Noviembre",
-      "Diciembre",
-    ];
-    return meses[mes - 1] || "Mes desconocido";
-  },
-
-  formatearFecha(fecha) {
-    if (!fecha) return "N/A";
-
-    const date = new Date(fecha);
-    if (isNaN(date.getTime())) return "N/A";
-
-    return date.toLocaleDateString("es-GT");
-  },
-
-  mostrarLoading() {
-    const contenedor = document.getElementById("contenido-reporte");
-    if (contenedor) {
-      contenedor.innerHTML = `
-                <div class="loading-reportes">
-                    <div>Generando reporte...</div>
-                </div>
-            `;
+  // ===== UTILIDADES DE UI =====
+  mostrarLoading(mostrar) {
+    const loading = document.getElementById('reporte-loading');
+    if (loading) {
+      loading.classList.toggle('hidden', !mostrar);
     }
   },
 
   mostrarError(mensaje) {
-    const contenedor = document.getElementById("contenido-reporte");
-    if (contenedor) {
-      contenedor.innerHTML = `
-                <div class="sin-datos">
-                    <div>❌ ${mensaje}</div>
-                </div>
-            `;
+    const errorDiv = document.getElementById('reporte-error');
+    const errorMensaje = document.getElementById('reporte-error-mensaje');
+
+    if (errorDiv && errorMensaje) {
+      errorMensaje.textContent = mensaje;
+      errorDiv.classList.remove('hidden');
+    }
+
+    // También limpiar el contenido
+    this.limpiarContenido();
+  },
+
+  ocultarError() {
+    const errorDiv = document.getElementById('reporte-error');
+    if (errorDiv) {
+      errorDiv.classList.add('hidden');
     }
   },
 
-  limpiarContenidoReporte() {
-    const contenedor = document.getElementById("contenido-reporte");
-    if (contenedor) {
-      contenedor.innerHTML = `
-                <div class="sin-datos">
-                    <div>Configurar filtros y hacer clic en "Generar Reporte"</div>
-                    <p>Seleccione el tipo de reporte, año y mes para comenzar</p>
-                </div>
-            `;
+  limpiarContenido() {
+    const content = document.getElementById('reporte-content');
+    if (content) {
+      content.innerHTML = '';
     }
   },
 
-  descargarArchivo(contenido, nombreArchivo, tipoMime) {
-    const blob = new Blob([contenido], { type: tipoMime });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.style.display = "none";
-    a.href = url;
-    a.download = nombreArchivo;
-    document.body.appendChild(a);
-    a.click();
-    window.URL.revokeObjectURL(url);
-    document.body.removeChild(a);
+  // ===== FUNCIONES COMUNES DE EXPORTACIÓN =====
+  async exportarExcel(datos, nombreArchivo, nombreHoja = 'Reporte') {
+    try {
+      if (!Array.isArray(datos) || datos.length === 0) {
+        SGPF.showToast('No hay datos para exportar', 'warning');
+        return;
+      }
+
+      // Verificar que SheetJS esté disponible
+      if (typeof XLSX === 'undefined') {
+        throw new Error('Librería XLSX no está cargada');
+      }
+
+      const wb = XLSX.utils.book_new();
+      const ws = XLSX.utils.json_to_sheet(datos);
+
+      // Aplicar estilos básicos (ancho de columnas)
+      const cols = Object.keys(datos[0]).map(() => ({ wch: 15 }));
+      ws['!cols'] = cols;
+
+      XLSX.utils.book_append_sheet(wb, ws, nombreHoja);
+
+      const filename = `${nombreArchivo}_${this.state.anioActual}.xlsx`;
+      XLSX.writeFile(wb, filename);
+
+      SGPF.showToast('✅ Excel exportado exitosamente', 'success');
+      console.log('✅ Excel exportado:', filename);
+    } catch (error) {
+      console.error('❌ Error exportando Excel:', error);
+      SGPF.showToast('Error al exportar Excel', 'error');
+    }
   },
+
+  async exportarPDF(elementoId, nombreArchivo, orientacion = 'landscape') {
+    try {
+      // Verificar que html2pdf esté disponible
+      if (typeof html2pdf === 'undefined') {
+        throw new Error('Librería html2pdf no está cargada');
+      }
+
+      const elemento = document.getElementById(elementoId);
+
+      if (!elemento) {
+        throw new Error(`Elemento ${elementoId} no encontrado`);
+      }
+
+      const opt = {
+        margin: 10,
+        filename: `${nombreArchivo}_${this.state.anioActual}.pdf`,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { 
+          scale: 2,
+          logging: false,
+          useCORS: true
+        },
+        jsPDF: { 
+          unit: 'mm', 
+          format: 'a4', 
+          orientation: orientacion 
+        }
+      };
+
+      await html2pdf().set(opt).from(elemento).save();
+
+      SGPF.showToast('✅ PDF exportado exitosamente', 'success');
+      console.log('✅ PDF exportado:', opt.filename);
+    } catch (error) {
+      console.error('❌ Error exportando PDF:', error);
+      SGPF.showToast('Error al exportar PDF', 'error');
+    }
+  },
+
+  async exportarPNG(canvasId, nombreArchivo) {
+    try {
+      const canvas = document.getElementById(canvasId);
+
+      if (!canvas) {
+        throw new Error(`Canvas ${canvasId} no encontrado`);
+      }
+
+      const url = canvas.toDataURL('image/png');
+      const link = document.createElement('a');
+      link.download = `${nombreArchivo}_${this.state.anioActual}.png`;
+      link.href = url;
+      link.click();
+
+      SGPF.showToast('✅ Imagen exportada exitosamente', 'success');
+      console.log('✅ PNG exportado:', link.download);
+    } catch (error) {
+      console.error('❌ Error exportando PNG:', error);
+      SGPF.showToast('Error al exportar imagen', 'error');
+    }
+  },
+
+  // ===== FUNCIONES AUXILIARES =====
+  capitalize(str) {
+    return str.charAt(0).toUpperCase() + str.slice(1);
+  },
+
+  formatearNumero(numero) {
+    return new Intl.NumberFormat('es-GT').format(numero);
+  },
+
+  formatearPorcentaje(valor) {
+    return `${Math.round(valor * 100) / 100}%`;
+  },
+
+  obtenerColorPorcentaje(porcentaje) {
+    if (porcentaje >= 90) {
+      return {
+        text: 'text-green-600',
+        bg: 'bg-green-100',
+        border: 'border-green-300',
+        bar: 'bg-green-600'
+      };
+    } else if (porcentaje >= 70) {
+      return {
+        text: 'text-yellow-600',
+        bg: 'bg-yellow-100',
+        border: 'border-yellow-300',
+        bar: 'bg-yellow-600'
+      };
+    } else {
+      return {
+        text: 'text-red-600',
+        bg: 'bg-red-100',
+        border: 'border-red-300',
+        bar: 'bg-red-600'
+      };
+    }
+  },
+
+  // ===== CACHÉ DE DATOS =====
+  guardarEnCache(clave, datos) {
+    this.state.datosCache[clave] = {
+      datos: datos,
+      timestamp: Date.now()
+    };
+    console.log(`💾 Datos guardados en caché: ${clave}`);
+  },
+
+  obtenerDeCache(clave, maxEdad = 300000) { // 5 minutos por defecto
+    const cache = this.state.datosCache[clave];
+
+    if (!cache) {
+      return null;
+    }
+
+    const edad = Date.now() - cache.timestamp;
+
+    if (edad > maxEdad) {
+      console.log(`⏰ Caché expirado: ${clave}`);
+      delete this.state.datosCache[clave];
+      return null;
+    }
+
+    console.log(`✅ Datos obtenidos de caché: ${clave}`);
+    return cache.datos;
+  },
+
+  limpiarCache() {
+    this.state.datosCache = {};
+    console.log('🗑️ Caché limpiado');
+  }
 };
