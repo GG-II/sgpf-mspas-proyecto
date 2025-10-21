@@ -98,6 +98,7 @@ const comunidadesRouter = require('./routes/comunidades');
 const dashboardAuxiliarRoutes = require('./routes/dashboard-auxiliar');
 const validacionVisitasRoutes = require('./routes/validacion-visitas');
 const planificacionRoutes = require('./routes/planificacion');
+const backupRoutes = require('./routes/backup');
 
 // Registrar rutas
 app.use('/api/auth', authRoutes);
@@ -113,6 +114,7 @@ app.use('/api/comunidades', comunidadesRouter);
 app.use('/api/dashboard-auxiliar', dashboardAuxiliarRoutes);
 app.use('/api/validacion', validacionVisitasRoutes);
 app.use('/api/planificacion', planificacionRoutes);
+app.use('/api/backup', backupRoutes);
 
 // ===== RUTAS BÁSICAS (mantener compatibilidad) =====
 // Estas las moveré gradualmente a módulos específicos

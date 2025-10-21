@@ -8,8 +8,11 @@
     "dev": "nodemon server.js",
     "setup-db": "node scripts/setup-database.js",
     "reset-db": "rm -f database/sgpf_complete.db && npm run setup-db",
+    "backup": "node scripts/backup-database.js",
+    "backup:compress": "node scripts/backup-database.js --compress",
+    "backup:list": "node scripts/backup-database.js --list",
     "test": "echo \"Tests pendientes\" && exit 0"
-  },
+},
   "keywords": ["mspas", "planificacion-familiar", "salud", "guatemala"],
   "author": "Gerbert David García Loaiza - Universidad Mariano Gálvez",
   "license": "MIT",
