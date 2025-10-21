@@ -1,331 +1,288 @@
-<!-- ===== SISTEMA DE REPORTES SGPF ===== -->
+<!-- ===== SISTEMA DE REPORTES V2.0 ===== -->
 
+<div class="max-w-7xl mx-auto p-4 space-y-6">
+  
+  <!-- ===== HEADER PRINCIPAL ===== -->
+  <div class="bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-2xl shadow-xl p-8">
+    <div class="flex items-center justify-between flex-wrap gap-4">
+      
+      <!-- Título -->
+      <div class="flex items-center gap-4">
+        <div class="w-16 h-16 bg-white bg-opacity-20 rounded-full flex items-center justify-center backdrop-blur-sm">
+          <svg class="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+          </svg>
+        </div>
+        <div>
+          <h1 class="text-3xl font-bold">Sistema de Reportes</h1>
+          <p class="text-purple-100 text-lg mt-1">Análisis y exportación de datos</p>
+        </div>
+      </div>
+      
+      <!-- Selector de Año -->
+      <div class="flex items-center gap-3">
+        <label class="text-white font-semibold text-lg">Año:</label>
+        <select id="selector-anio-reportes" 
+                class="px-6 py-3 bg-white bg-opacity-20 text-white font-bold text-lg rounded-xl border-2 border-white border-opacity-30 backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-white cursor-pointer">
+          <option value="">Cargando años...</option>
+        </select>
+      </div>
+      
+    </div>
+  </div>
+
+  <!-- ===== SISTEMA DE PESTAÑAS ===== -->
+  <div class="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-200">
+    
+    <!-- Navegación de Pestañas -->
+    <div class="border-b border-gray-200 bg-gray-50">
+      <nav class="flex overflow-x-auto" id="tabs-reportes">
+        
+        <button onclick="ReportesSystem.cambiarPestana('proyeccion-general')" 
+                data-tab="proyeccion-general"
+                class="tab-reporte px-6 py-4 text-sm font-medium border-b-2 transition-all whitespace-nowrap border-purple-600 text-purple-600">
+          📊 Proyección General
+        </button>
+        
+        <button onclick="ReportesSystem.cambiarPestana('proyeccion-metodo')" 
+                data-tab="proyeccion-metodo"
+                class="tab-reporte px-6 py-4 text-sm font-medium border-b-2 transition-all whitespace-nowrap border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300">
+          💉 Proyección por Método
+        </button>
+        
+        <button onclick="ReportesSystem.cambiarPestana('proyeccion-territorio')" 
+                data-tab="proyeccion-territorio"
+                class="tab-reporte px-6 py-4 text-sm font-medium border-b-2 transition-all whitespace-nowrap border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300">
+          🗺️ Proyección por Territorio
+        </button>
+        
+        <button onclick="ReportesSystem.cambiarPestana('fichas-usuarias')" 
+                data-tab="fichas-usuarias"
+                class="tab-reporte px-6 py-4 text-sm font-medium border-b-2 transition-all whitespace-nowrap border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300">
+          👤 Fichas de Usuarias
+        </button>
+        
+        <button onclick="ReportesSystem.cambiarPestana('consultas-rapidas')" 
+                data-tab="consultas-rapidas"
+                class="tab-reporte px-6 py-4 text-sm font-medium border-b-2 transition-all whitespace-nowrap border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300">
+          ⚡ Consultas Rápidas
+        </button>
+        
+      </nav>
+    </div>
+
+    <!-- ===== CONTENIDO DE LAS PESTAÑAS ===== -->
+    <div class="p-6">
+      
+      <!-- Loading General -->
+      <div id="loading-reportes" class="hidden py-16 text-center">
+        <div class="animate-spin rounded-full h-16 w-16 border-b-2 border-purple-600 mx-auto mb-4"></div>
+        <p class="text-gray-500 text-lg">Cargando datos...</p>
+      </div>
+
+      <!-- ===== PESTAÑA 1: PROYECCIÓN GENERAL ===== -->
+      <div id="contenido-proyeccion-general" class="tab-content">
+        <div class="mb-4 flex items-center justify-between">
+          <h2 class="text-2xl font-bold text-gray-800">Proyección de Usuarias en Métodos</h2>
+          <div class="flex gap-2">
+            <button onclick="ReportesSystem.exportarExcel('proyeccion-general')" 
+                    class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center gap-2">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+              </svg>
+              Excel
+            </button>
+            <button onclick="ReportesSystem.exportarPDF('proyeccion-general')" 
+                    class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors flex items-center gap-2">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+              </svg>
+              PDF
+            </button>
+          </div>
+        </div>
+        <div id="tabla-proyeccion-general" class="overflow-x-auto">
+          <!-- Tabla se llenará dinámicamente -->
+        </div>
+      </div>
+
+      <!-- ===== PESTAÑA 2: PROYECCIÓN POR MÉTODO ===== -->
+      <div id="contenido-proyeccion-metodo" class="tab-content hidden">
+        <div class="mb-4 space-y-4">
+          <div class="flex items-center justify-between flex-wrap gap-4">
+            <h2 class="text-2xl font-bold text-gray-800">Proyección por Método</h2>
+            <div class="flex gap-2">
+              <button onclick="ReportesSystem.exportarExcel('proyeccion-metodo')" 
+                      class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center gap-2">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                </svg>
+                Excel
+              </button>
+              <button onclick="ReportesSystem.exportarPDF('proyeccion-metodo')" 
+                      class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors flex items-center gap-2">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+                </svg>
+                PDF
+              </button>
+            </div>
+          </div>
+          
+          <!-- Selector de Método -->
+          <div class="flex items-center gap-3">
+            <label class="text-gray-700 font-semibold">Seleccionar Método:</label>
+            <select id="selector-metodo" 
+                    onchange="ReportesSystem.cargarProyeccionMetodo()"
+                    class="flex-1 px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition-all">
+              <option value="">-- Seleccione un método --</option>
+            </select>
+          </div>
+        </div>
+        <div id="tabla-proyeccion-metodo" class="overflow-x-auto">
+          <!-- Tabla se llenará dinámicamente -->
+        </div>
+      </div>
+
+      <!-- ===== PESTAÑA 3: PROYECCIÓN POR TERRITORIO ===== -->
+      <div id="contenido-proyeccion-territorio" class="tab-content hidden">
+        <div class="mb-4 space-y-4">
+          <div class="flex items-center justify-between flex-wrap gap-4">
+            <h2 class="text-2xl font-bold text-gray-800">Proyección por Territorio</h2>
+            <div class="flex gap-2">
+              <button onclick="ReportesSystem.exportarExcel('proyeccion-territorio')" 
+                      class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center gap-2">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                </svg>
+                Excel
+              </button>
+              <button onclick="ReportesSystem.exportarPDF('proyeccion-territorio')" 
+                      class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors flex items-center gap-2">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+                </svg>
+                PDF
+              </button>
+            </div>
+          </div>
+          
+          <!-- Selector de Territorio -->
+          <div class="flex items-center gap-3">
+            <label class="text-gray-700 font-semibold">Seleccionar Territorio:</label>
+            <select id="selector-territorio" 
+                    onchange="ReportesSystem.cargarProyeccionTerritorio()"
+                    class="flex-1 px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition-all">
+              <option value="">-- Seleccione un territorio --</option>
+            </select>
+          </div>
+        </div>
+        <div id="tabla-proyeccion-territorio" class="overflow-x-auto">
+          <!-- Tabla se llenará dinámicamente -->
+        </div>
+      </div>
+
+      <!-- ===== PESTAÑA 4: FICHAS DE USUARIAS ===== -->
+      <div id="contenido-fichas-usuarias" class="tab-content hidden">
+        <div class="mb-4">
+          <h2 class="text-2xl font-bold text-gray-800 mb-4">Fichas de Usuarias</h2>
+          
+          <!-- Buscador -->
+          <div class="mb-4">
+            <input type="text" 
+                   id="buscador-usuarias" 
+                   placeholder="🔍 Buscar por nombre, DPI o comunidad..."
+                   onkeyup="ReportesSystem.filtrarUsuarias()"
+                   class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition-all text-lg">
+          </div>
+          
+          <!-- Tabla de Usuarias -->
+          <div id="tabla-listado-usuarias" class="overflow-x-auto mb-6">
+            <!-- Lista se llenará dinámicamente -->
+          </div>
+        </div>
+        
+        <!-- Ficha Individual (oculta por defecto) -->
+        <div id="ficha-usuaria-detalle" class="hidden">
+          <!-- Contenido de ficha se llenará dinámicamente -->
+        </div>
+      </div>
+
+      <!-- ===== PESTAÑA 5: CONSULTAS RÁPIDAS ===== -->
+      <div id="contenido-consultas-rapidas" class="tab-content hidden">
+        <div class="mb-4 flex items-center justify-between">
+          <h2 class="text-2xl font-bold text-gray-800">Consultas Rápidas</h2>
+          <div class="flex gap-2">
+            <button onclick="ReportesSystem.exportarPDF('consultas-rapidas')" 
+                    class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors flex items-center gap-2">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+              </svg>
+              PDF
+            </button>
+            <button onclick="ReportesSystem.exportarImagen()" 
+                    class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+              </svg>
+              Imagen
+            </button>
+          </div>
+        </div>
+        
+        <!-- Selector de tipo de consulta -->
+        <div class="mb-6">
+          <div class="flex gap-2 flex-wrap">
+            <button onclick="ReportesSystem.cambiarConsulta('general')" 
+                    data-consulta="general"
+                    class="consulta-btn px-6 py-3 bg-purple-600 text-white font-semibold rounded-lg hover:bg-purple-700 transition-colors">
+              📊 Cumplimiento General
+            </button>
+            <button onclick="ReportesSystem.cambiarConsulta('territorios')" 
+                    data-consulta="territorios"
+                    class="consulta-btn px-6 py-3 bg-gray-200 text-gray-700 font-semibold rounded-lg hover:bg-gray-300 transition-colors">
+              🗺️ Por Territorio
+            </button>
+            <button onclick="ReportesSystem.cambiarConsulta('metodos')" 
+                    data-consulta="metodos"
+                    class="consulta-btn px-6 py-3 bg-gray-200 text-gray-700 font-semibold rounded-lg hover:bg-gray-300 transition-colors">
+              💉 Por Método
+            </button>
+          </div>
+        </div>
+        
+        <!-- Contenedor de gráficos -->
+        <div id="contenedor-graficos" class="bg-white rounded-xl p-6 border-2 border-gray-200">
+          <!-- Gráficos se llenarán dinámicamente -->
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+<!-- ===== ESTILOS ADICIONALES ===== -->
 <style>
-/* ===== ESTILOS ESPECÍFICOS REPORTES ===== */
-.filtros-reportes {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 1rem;
-    margin-bottom: 1.5rem;
-    padding: 1rem;
-    background: #f8f9fa;
-    border-radius: 8px;
-}
-
-.filtro-grupo {
-    display: flex;
-    flex-direction: column;
-}
-
-.filtro-grupo label {
-    font-weight: 600;
-    margin-bottom: 0.5rem;
-    color: #333;
-    font-size: 0.9rem;
-}
-
-.filtro-grupo select,
-.filtro-grupo input {
-    padding: 0.5rem;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    font-size: 0.9rem;
-}
-
-.reporte-tabs {
-    display: flex;
-    background: white;
-    border-radius: 8px;
-    margin-bottom: 1rem;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    overflow: hidden;
-}
-
-.tab-button {
-    flex: 1;
-    padding: 1rem;
-    background: #f8f9fa;
-    border: none;
-    cursor: pointer;
-    font-weight: 600;
-    color: #666;
-    transition: all 0.3s ease;
-    border-bottom: 3px solid transparent;
-}
-
-.tab-button.active {
-    background: white;
-    color: var(--mspas-primary);
-    border-bottom-color: var(--mspas-primary);
-}
-
-.tab-button:hover {
-    background: #e9ecef;
-}
-
-.exportar-botones {
-    display: flex;
-    gap: 0.5rem;
-    margin-bottom: 1rem;
-}
-
-.btn-exportar {
-    padding: 0.5rem 1rem;
-    border: 1px solid #ddd;
-    background: white;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 0.9rem;
-    transition: all 0.3s ease;
-}
-
-.btn-exportar:hover {
-    background: var(--mspas-primary);
-    color: white;
-    border-color: var(--mspas-primary);
-}
-
-.tabla-reportes {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 1rem;
-    background: white;
-    border-radius: 8px;
-    overflow: hidden;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-}
-
-.tabla-reportes th {
-    background: var(--mspas-primary);
-    color: white;
-    padding: 0.75rem 0.5rem;
-    text-align: left;
-    font-weight: 600;
-    font-size: 0.9rem;
-}
-
-.tabla-reportes td {
-    padding: 0.75rem 0.5rem;
-    border-bottom: 1px solid #eee;
-    font-size: 0.9rem;
-}
-
-.tabla-reportes tr:hover {
-    background: #f8f9fa;
-}
-
-.sin-datos {
-    text-align: center;
-    padding: 3rem;
-    color: #666;
-    font-style: italic;
-}
-
-.sin-datos::before {
-    content: "📊";
-    display: block;
-    font-size: 3rem;
-    margin-bottom: 1rem;
-}
-
-.loading-reportes {
-    text-align: center;
-    padding: 3rem;
-    color: #666;
-}
-
-.loading-reportes::before {
-    content: "";
-    display: block;
-    width: 40px;
-    height: 40px;
-    border: 4px solid #f3f3f3;
-    border-top: 4px solid var(--mspas-primary);
-    border-radius: 50%;
-    animation: spin 1s linear infinite;
-    margin: 0 auto 1rem;
-}
-
-@keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-}
-
-/* Responsive */
-@media (max-width: 768px) {
-    .filtros-reportes {
-        grid-template-columns: 1fr;
-        gap: 0.75rem;
-    }
-    
-    .reporte-tabs {
-        flex-direction: column;
-    }
-    
-    .exportar-botones {
-        flex-direction: column;
-    }
-    
-    .tabla-reportes {
-        font-size: 0.8rem;
-    }
-    
-    .tabla-reportes th,
-    .tabla-reportes td {
-        padding: 0.5rem 0.25rem;
-    }
-}
+  /* Tabs activos */
+  .tab-reporte.active {
+    border-color: #7c3aed !important;
+    color: #7c3aed !important;
+  }
+  
+  /* Botones de consulta activos */
+  .consulta-btn.active {
+    background-color: #7c3aed !important;
+    color: white !important;
+  }
+  
+  /* Animación suave */
+  .tab-content {
+    animation: fadeIn 0.3s ease-in;
+  }
+  
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
 </style>
-
-<!-- Header -->
-<div class="dashboard-hero">
-    <h2>📈 Sistema de Reportes</h2>
-    <p>Generación de reportes mensuales y anuales de planificación familiar</p>
-</div>
-
-<!-- Tarjetas de resumen -->
-<div class="stats-grid">
-    <div class="stat-card">
-        <span class="stat-value" id="total-reportes">0</span>
-        <div class="stat-label">Registros</div>
-    </div>
-    
-    <div class="stat-card">
-        <span class="stat-value" id="total-comunidades-reportes">0</span>
-        <div class="stat-label">Comunidades</div>
-    </div>
-    
-    <div class="stat-card">
-        <span class="stat-value" id="total-usuarias-reportes">0</span>
-        <div class="stat-label">Usuarias</div>
-    </div>
-    
-    <div class="stat-card">
-        <span class="stat-value" id="total-metodos-reportes">0</span>
-        <div class="stat-label">Métodos</div>
-    </div>
-</div>
-
-<!-- Tabs de reportes -->
-<div class="reporte-tabs">
-    <button class="tab-button active" data-tab="mensual">
-        📅 Reporte Mensual
-    </button>
-    <button class="tab-button" data-tab="anual">
-        📆 Reporte Anual
-    </button>
-</div>
-
-<!-- Filtros -->
-<div class="card">
-    <div class="card-title">Filtros de Reporte</div>
-    <div class="card-body">
-        <div class="filtros-reportes">
-            <div class="filtro-grupo">
-                <label for="filtro-año">Año:</label>
-                <select id="filtro-año">
-                    <option value="2025">2025</option>
-                    <option value="2024">2024</option>
-                    <option value="2023">2023</option>
-                </select>
-            </div>
-            
-            <div class="filtro-grupo" id="filtro-mes-grupo">
-                <label for="filtro-mes">Mes:</label>
-                <select id="filtro-mes">
-                    <option value="1">Enero</option>
-                    <option value="2">Febrero</option>
-                    <option value="3">Marzo</option>
-                    <option value="4">Abril</option>
-                    <option value="5">Mayo</option>
-                    <option value="6">Junio</option>
-                    <option value="7">Julio</option>
-                    <option value="8">Agosto</option>
-                    <option value="9">Septiembre</option>
-                    <option value="10">Octubre</option>
-                    <option value="11">Noviembre</option>
-                    <option value="12">Diciembre</option>
-                </select>
-            </div>
-            
-            <div class="filtro-grupo">
-                <label>&nbsp;</label>
-                <button id="btn-generar-reporte" class="btn btn-primary">
-                    📊 Generar Reporte
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Acciones de exportación -->
-<div class="card">
-    <div class="card-title">Exportar Datos</div>
-    <div class="card-body">
-        <div class="exportar-botones">
-            <button id="btn-exportar-csv" class="btn-exportar">
-                📄 Exportar CSV
-            </button>
-            <button id="btn-exportar-excel" class="btn-exportar">
-                📊 Exportar Excel
-            </button>
-            <button id="btn-imprimir" class="btn-exportar">
-                🖨️ Imprimir
-            </button>
-        </div>
-    </div>
-</div>
-
-<!-- Contenido del reporte -->
-<div class="card">
-    <div class="card-title">
-        <span id="titulo-reporte">Seleccione filtros y genere un reporte</span>
-    </div>
-    <div class="card-body">
-        <div id="contenido-reporte">
-            <div class="sin-datos">
-                <div>Configurar filtros y hacer clic en "Generar Reporte"</div>
-                <p>Seleccione el tipo de reporte, año y mes para comenzar</p>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Template para tabla mensual -->
-<template id="template-tabla-mensual">
-    <table class="tabla-reportes">
-        <thead>
-            <tr>
-                <th>Territorio</th>
-                <th>Comunidad</th>
-                <th>Método</th>
-                <th>Cantidad</th>
-                <th>% Población</th>
-                <th>Registrado Por</th>
-                <th>Fecha</th>
-            </tr>
-        </thead>
-        <tbody id="tbody-mensual">
-            <!-- Se llena dinámicamente -->
-        </tbody>
-    </table>
-</template>
-
-<!-- Template para tabla anual -->
-<template id="template-tabla-anual">
-    <table class="tabla-reportes">
-        <thead>
-            <tr>
-                <th>Territorio</th>
-                <th>Comunidad</th>
-                <th>Método</th>
-                <th>Total Anual</th>
-                <th>Meses Activos</th>
-                <th>Población MEF</th>
-            </tr>
-        </thead>
-        <tbody id="tbody-anual">
-            <!-- Se llena dinámicamente -->
-        </tbody>
-    </table>
-</template>

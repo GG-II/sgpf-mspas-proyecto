@@ -17,12 +17,8 @@ app.use(helmet({
     crossOriginEmbedderPolicy: false
 }));
 
-const allowedOrigins = process.env.NODE_ENV === 'production' 
-    ? process.env.ALLOWED_ORIGINS?.split(',') || []
-    : ['http://localhost:3000', 'http://127.0.0.1:3000', 'http://localhost:5500', 'http://127.0.0.1:5500'];
-
 app.use(cors({
-    origin: allowedOrigins,
+    origin: ['http://localhost:3000', 'http://127.0.0.1:3000', 'http://localhost:5500', 'http://127.0.0.1:5500'],
     credentials: true
 }));
 
@@ -56,9 +52,7 @@ app.use((req, res, next) => {
 });
 
 // ===== CONEXIÓN A BASE DE DATOS =====
-const dbPath = process.env.DB_PATH 
-    ? path.resolve(process.env.DB_PATH)
-    : path.join(__dirname, 'database/sgpf_complete.db');
+const dbPath = path.join(__dirname, 'database/sgpf_complete.db');
 
 let db;
 try {
@@ -94,19 +88,31 @@ app.get('/api/health', (req, res) => {
 const authRoutes = require('./routes/auth');
 const registrosRoutes = require('./routes/registros');
 const adminRoutes = require('./routes/admin');
-const validacionRoutes = require('./routes/validacion');
+//const validacionRoutes = require('./routes/validacion');
 const reportesRoutes = require('./routes/reportes');
 const dashboardRoutes = require('./routes/dashboard');
 const perfilRoutes = require('./routes/perfil');
+const usuariasRoutes = require('./routes/usuarias');
+const visitasRoutes = require('./routes/visitas');
+const comunidadesRouter = require('./routes/comunidades');
+const dashboardAuxiliarRoutes = require('./routes/dashboard-auxiliar');
+const validacionVisitasRoutes = require('./routes/validacion-visitas');
+const planificacionRoutes = require('./routes/planificacion');
 
 // Registrar rutas
 app.use('/api/auth', authRoutes);
 app.use('/api/registros', registrosRoutes);
 app.use('/api/admin', adminRoutes);
-app.use('/api/validacion', validacionRoutes);
+//app.use('/api/validacion', validacionRoutes);
 app.use('/api/reportes', reportesRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/perfil', perfilRoutes);
+app.use('/api/usuarias', usuariasRoutes);
+app.use('/api/visitas', visitasRoutes);
+app.use('/api/comunidades', comunidadesRouter);
+app.use('/api/dashboard-auxiliar', dashboardAuxiliarRoutes);
+app.use('/api/validacion', validacionVisitasRoutes);
+app.use('/api/planificacion', planificacionRoutes);
 
 // ===== RUTAS BÁSICAS (mantener compatibilidad) =====
 // Estas las moveré gradualmente a módulos específicos

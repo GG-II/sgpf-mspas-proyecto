@@ -83,78 +83,160 @@ router.post('/usuarios', authenticateToken, requirePermission('admin'), async (r
             });
         }
 
-        // Verificar si el email ya existe
-        db.get('SELECT id FROM usuarios WHERE email = ?', [email], async (err, existingUser) => {
-            if (err) {
-                return res.status(500).json({
-                    success: false,
-                    message: 'Error verificando email'
-                });
-            }
+        // Normalizar email a minúsculas
+        const emailNormalizado = email.toLowerCase().trim();
 
-            if (existingUser) {
+        // Verificar si el email ya existe
+        const emailExistente = await new Promise((resolve, reject) => {
+            db.get('SELECT id FROM usuarios WHERE LOWER(email) = ?', [emailNormalizado], (err, user) => {
+                if (err) reject(err);
+                else resolve(user);
+            });
+        });
+
+        if (emailExistente) {
+            return res.status(400).json({
+                success: false,
+                message: 'El email ya está registrado'
+            });
+        }
+
+        // Verificar DPI solo si se proporciona
+        if (dpi && dpi.trim() !== '') {
+            const dpiCheck = await new Promise((resolve, reject) => {
+                db.get('SELECT id FROM usuarios WHERE dpi = ?', [dpi.trim()], (err, user) => {
+                    if (err) reject(err);
+                    else resolve(user);
+                });
+            });
+
+            if (dpiCheck) {
                 return res.status(400).json({
                     success: false,
-                    message: 'El email ya está registrado'
+                    message: 'El DPI ya está registrado'
+                });
+            }
+        }
+
+        // Verificar código empleado solo si se proporciona
+        if (codigo_empleado && codigo_empleado.trim() !== '') {
+            const codigoCheck = await new Promise((resolve, reject) => {
+                db.get('SELECT id FROM usuarios WHERE codigo_empleado = ?', [codigo_empleado.trim()], (err, user) => {
+                    if (err) reject(err);
+                    else resolve(user);
+                });
+            });
+
+            if (codigoCheck) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'El código de empleado ya está registrado'
+                });
+            }
+        }
+
+        // Obtener ID del rol
+        db.get('SELECT id FROM roles WHERE codigo_rol = ?', [rol_codigo], async (err, rol) => {
+            if (err || !rol) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Rol no válido'
                 });
             }
 
-            // Obtener ID del rol
-            db.get('SELECT id FROM roles WHERE codigo_rol = ?', [rol_codigo], async (err, rol) => {
-                if (err || !rol) {
-                    return res.status(400).json({
-                        success: false,
-                        message: 'Rol no válido'
-                    });
-                }
+            try {
+                // Hashear contraseña
+                const hashedPassword = await bcrypt.hash(password, 10);
 
-                try {
-                    // Hashear contraseña
-                    const hashedPassword = await bcrypt.hash(password, 10);
+                // Insertar usuario
+                const insertQuery = `
+                    INSERT INTO usuarios 
+                    (codigo_empleado, dpi, nombres, apellidos, email, telefono, password_hash, 
+                     rol_id, cargo, territorio_id, distrito_id, fecha_ingreso)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_DATE)
+                `;
 
-                    // Insertar usuario
-                    const insertQuery = `
-                        INSERT INTO usuarios 
-                        (codigo_empleado, dpi, nombres, apellidos, email, telefono, password_hash, 
-                         rol_id, cargo, territorio_id, distrito_id, fecha_ingreso)
-                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_DATE)
-                    `;
-
-                    db.run(insertQuery, [
-                        codigo_empleado, dpi, nombres, apellidos, email, telefono,
-                        hashedPassword, rol.id, cargo, territorio_id || null, distrito_id || null
-                    ], function(err) {
-                        if (err) {
-                            console.error('Error creando usuario:', err);
-                            return res.status(500).json({
-                                success: false,
-                                message: 'Error creando usuario'
-                            });
+                db.run(insertQuery, [
+                    codigo_empleado && codigo_empleado.trim() !== '' ? codigo_empleado.trim() : null,
+                    dpi && dpi.trim() !== '' ? dpi.trim() : null,
+                    nombres.trim(), 
+                    apellidos.trim(), 
+                    emailNormalizado,  // Usar email normalizado
+                    telefono && telefono.trim() !== '' ? telefono.trim() : null,
+                    hashedPassword, 
+                    rol.id, 
+                    cargo && cargo.trim() !== '' ? cargo.trim() : null,
+                    territorio_id || null, 
+                    distrito_id || null
+                ], function(err) {
+                    if (err) {
+                        console.error('Error creando usuario:', err);
+                        
+                        // Mensajes de error más específicos
+                        let mensaje = 'Error creando usuario';
+                        if (err.message.includes('email')) {
+                            mensaje = 'El email ya está registrado';
+                        } else if (err.message.includes('codigo_empleado')) {
+                            mensaje = 'El código de empleado ya está registrado';
+                        } else if (err.message.includes('dpi')) {
+                            mensaje = 'El DPI ya está registrado';
                         }
-
-                        console.log(`✅ Usuario creado: ${nombres} ${apellidos} (${rol_codigo}) por ${req.user.email}`);
-
-                        res.json({
-                            success: true,
-                            message: 'Usuario creado exitosamente',
-                            data: {
-                                id: this.lastID,
-                                nombres: nombres,
-                                apellidos: apellidos,
-                                email: email,
-                                rol: rol_codigo
-                            }
+                        
+                        return res.status(500).json({
+                            success: false,
+                            message: mensaje
                         });
-                    });
+                    }
 
-                } catch (hashError) {
-                    console.error('Error hasheando contraseña:', hashError);
-                    res.status(500).json({
-                        success: false,
-                        message: 'Error procesando contraseña'
+                    console.log(`✅ Usuario creado: ${nombres} ${apellidos} (${rol_codigo}) por ${req.user.email}`);
+
+                    // ===== ASIGNAR TERRITORIOS SI ES ASISTENTE TÉCNICO =====
+                    if (rol_codigo === 'asistente_tecnico' && req.body.territorios_ids && Array.isArray(req.body.territorios_ids)) {
+                        const usuarioId = this.lastID;
+                        const territoriosIds = req.body.territorios_ids;
+                        
+                        console.log(`🗺️ Asignando ${territoriosIds.length} territorios al nuevo asistente...`);
+                        
+                        let insertedTerr = 0;
+                        territoriosIds.forEach(territorioId => {
+                            db.run(
+                                'INSERT INTO user_territorios (usuario_id, territorio_id, asignado_por) VALUES (?, ?, ?)',
+                                [usuarioId, territorioId, req.user.id],
+                                (err) => {
+                                    if (err) {
+                                        console.error(`❌ Error asignando territorio ${territorioId}:`, err);
+                                    }
+                                    
+                                    insertedTerr++;
+                                    if (insertedTerr === territoriosIds.length) {
+                                        console.log(`✅ ${insertedTerr} territorios asignados al asistente`);
+                                    }
+                                }
+                            );
+                        });
+                    }
+
+
+                    res.json({
+                        success: true,
+                        message: 'Usuario creado exitosamente',
+                        data: {
+                            id: this.lastID,
+                            nombres: nombres,
+                            apellidos: apellidos,
+                            email: emailNormalizado,
+                            rol: rol_codigo
+                        }
                     });
-                }
-            });
+                });
+
+            } catch (hashError) {
+                console.error('Error hasheando contraseña:', hashError);
+                res.status(500).json({
+                    success: false,
+                    message: 'Error procesando contraseña'
+                });
+            }
         });
 
     } catch (error) {
@@ -958,15 +1040,15 @@ router.put(
   }
 );
 
-// ===== ASIGNAR COMUNIDADES A USUARIO =====
-router.post(
-  "/usuarios/:id/comunidades",
+// ===== CAMBIAR ESTADO DE USUARIO (ACTIVAR/DESACTIVAR) =====
+router.put(
+  "/usuarios/:id/estado",
   authenticateToken,
   requirePermission("admin"),
   (req, res) => {
     try {
       const userId = req.params.id;
-      const { comunidades_ids } = req.body; // Array de IDs de comunidades
+      const { activo } = req.body;
       const db = getDb(req);
 
       if (!db) {
@@ -976,23 +1058,360 @@ router.post(
         });
       }
 
-      if (!Array.isArray(comunidades_ids) || comunidades_ids.length === 0) {
+      // Validar que activo sea booleano
+      if (typeof activo !== "boolean") {
         return res.status(400).json({
           success: false,
-          message: "Se requiere un array de IDs de comunidades",
+          message: "El campo 'activo' debe ser true o false",
+        });
+      }
+
+      // No permitir desactivar el propio usuario
+      if (parseInt(userId) === req.user.id && !activo) {
+        return res.status(400).json({
+          success: false,
+          message: "No puedes desactivar tu propia cuenta",
+        });
+      }
+
+      const updateQuery = `
+        UPDATE usuarios 
+        SET activo = ?, updated_at = CURRENT_TIMESTAMP
+        WHERE id = ?
+      `;
+
+      db.run(updateQuery, [activo ? 1 : 0, userId], function (err) {
+        if (err) {
+          console.error("Error cambiando estado de usuario:", err);
+          return res.status(500).json({
+            success: false,
+            message: "Error cambiando estado de usuario",
+          });
+        }
+
+        if (this.changes === 0) {
+          return res.status(404).json({
+            success: false,
+            message: "Usuario no encontrado",
+          });
+        }
+
+        const accion = activo ? "activado" : "desactivado";
+        console.log(
+          `✅ Usuario ${accion} ID:${userId} por ${req.user.email}`
+        );
+
+        res.json({
+          success: true,
+          message: `Usuario ${accion} exitosamente`,
+          data: {
+            id: userId,
+            activo: activo,
+            modificado_por: req.user.email,
+          },
+        });
+      });
+    } catch (error) {
+      console.error("❌ Error cambiando estado de usuario:", error);
+      res.status(500).json({
+        success: false,
+        message: "Error interno del servidor",
+      });
+    }
+  }
+);
+
+// ===== RESTABLECER CONTRASEÑA DE USUARIO =====
+router.put(
+  "/usuarios/:id/reset-password",
+  authenticateToken,
+  requirePermission("admin"),
+  async (req, res) => {
+    try {
+      const userId = req.params.id;
+      const { nueva_password } = req.body;
+      const db = getDb(req);
+
+      if (!db) {
+        return res.status(500).json({
+          success: false,
+          message: "Base de datos no disponible",
+        });
+      }
+
+      // Validaciones
+      if (!nueva_password || nueva_password.length < 6) {
+        return res.status(400).json({
+          success: false,
+          message: "La contraseña debe tener al menos 6 caracteres",
         });
       }
 
       // Verificar que el usuario existe
       db.get(
-        "SELECT id, nombres, apellidos FROM usuarios WHERE id = ?",
+        "SELECT id, nombres, apellidos, email FROM usuarios WHERE id = ?",
         [userId],
-        (err, usuario) => {
+        async (err, usuario) => {
           if (err || !usuario) {
             return res.status(404).json({
               success: false,
               message: "Usuario no encontrado",
             });
+          }
+
+          try {
+            // Hashear nueva contraseña
+            const hashedPassword = await bcrypt.hash(nueva_password, 10);
+
+            const updateQuery = `
+              UPDATE usuarios 
+              SET password_hash = ?, 
+                  debe_cambiar_password = 1,
+                  updated_at = CURRENT_TIMESTAMP
+              WHERE id = ?
+            `;
+
+            db.run(updateQuery, [hashedPassword, userId], function (err) {
+              if (err) {
+                console.error("Error actualizando contraseña:", err);
+                return res.status(500).json({
+                  success: false,
+                  message: "Error actualizando contraseña",
+                });
+              }
+
+              console.log(
+                `🔐 Contraseña restablecida para usuario ${usuario.email} por ${req.user.email}`
+              );
+
+              res.json({
+                success: true,
+                message: "Contraseña restablecida exitosamente",
+                data: {
+                  id: userId,
+                  usuario: `${usuario.nombres} ${usuario.apellidos}`,
+                  email: usuario.email,
+                  debe_cambiar_password: true,
+                  modificado_por: req.user.email,
+                },
+              });
+            });
+          } catch (hashError) {
+            console.error("Error hasheando contraseña:", hashError);
+            return res.status(500).json({
+              success: false,
+              message: "Error procesando contraseña",
+            });
+          }
+        }
+      );
+    } catch (error) {
+      console.error("❌ Error restableciendo contraseña:", error);
+      res.status(500).json({
+        success: false,
+        message: "Error interno del servidor",
+      });
+    }
+  }
+);
+
+// ===== OBTENER DETALLE COMPLETO DE USUARIO =====
+router.get(
+  "/usuarios/:id",
+  authenticateToken,
+  requirePermission("admin"),
+  (req, res) => {
+    try {
+      const userId = req.params.id;
+      const db = getDb(req);
+
+      if (!db) {
+        return res.status(500).json({
+          success: false,
+          message: "Base de datos no disponible",
+        });
+      }
+
+      // Obtener información del usuario
+      const userQuery = `
+        SELECT 
+          u.id, u.codigo_empleado, u.dpi, u.nombres, u.apellidos, 
+          u.email, u.telefono, u.cargo, u.fecha_ingreso, u.ultimo_acceso,
+          u.activo, u.bloqueado, u.debe_cambiar_password,
+          r.codigo_rol, r.nombre as rol_nombre, r.nivel_jerarquico,
+          t.id as territorio_id, t.nombre as territorio_nombre,
+          d.id as distrito_id, d.nombre as distrito_nombre
+        FROM usuarios u
+        JOIN roles r ON u.rol_id = r.id
+        LEFT JOIN territorios t ON u.territorio_id = t.id
+        LEFT JOIN distritos_salud d ON u.distrito_id = d.id
+        WHERE u.id = ?
+      `;
+
+      db.get(userQuery, [userId], (err, usuario) => {
+        if (err) {
+          console.error("Error obteniendo usuario:", err);
+          return res.status(500).json({
+            success: false,
+            message: "Error obteniendo usuario",
+          });
+        }
+
+        if (!usuario) {
+          return res.status(404).json({
+            success: false,
+            message: "Usuario no encontrado",
+          });
+        }
+
+        // Obtener estadísticas del usuario
+        const statsQuery = `
+          SELECT 
+            COUNT(DISTINCT r.id) as total_registros,
+            COUNT(DISTINCT r.comunidad_id) as comunidades_activas,
+            MIN(r.fecha_registro) as primer_registro,
+            MAX(r.fecha_registro) as ultimo_registro,
+            SUM(r.cantidad) as total_usuarias_atendidas
+          FROM registros_planificacion r
+          WHERE r.registrado_por_id = ?
+        `;
+
+        db.get(statsQuery, [userId], (err, stats) => {
+          if (err) {
+            console.error("Error obteniendo estadísticas:", err);
+            // Continuar sin estadísticas
+            stats = {
+              total_registros: 0,
+              comunidades_activas: 0,
+              primer_registro: null,
+              ultimo_registro: null,
+              total_usuarias_atendidas: 0,
+            };
+          }
+
+          // Obtener comunidades asignadas (si es auxiliar)
+          if (usuario.codigo_rol === "auxiliar_enfermeria") {
+            const comunidadesQuery = `
+              SELECT 
+                c.id, c.nombre, c.codigo_comunidad, c.poblacion_mef,
+                t.nombre as territorio
+              FROM permisos_comunidad pc
+              JOIN comunidades c ON pc.comunidad_id = c.id
+              JOIN territorios t ON c.territorio_id = t.id
+              WHERE pc.usuario_id = ? AND pc.activo = 1
+              ORDER BY t.nombre, c.nombre
+            `;
+
+            db.all(comunidadesQuery, [userId], (err, comunidades) => {
+              if (err) {
+                console.error("Error obteniendo comunidades:", err);
+                comunidades = [];
+              }
+
+              res.json({
+                success: true,
+                data: {
+                  usuario: usuario,
+                  estadisticas: stats,
+                  comunidades_asignadas: comunidades,
+                },
+              });
+            });
+          } else {
+            // Para otros roles, no hay comunidades asignadas
+            res.json({
+              success: true,
+              data: {
+                usuario: usuario,
+                estadisticas: stats,
+                comunidades_asignadas: [],
+              },
+            });
+          }
+        });
+      });
+    } catch (error) {
+      console.error("❌ Error obteniendo detalle de usuario:", error);
+      res.status(500).json({
+        success: false,
+        message: "Error interno del servidor",
+      });
+    }
+  }
+);
+
+// ===== ASIGNAR COMUNIDADES A USUARIO =====
+router.post(
+  "/usuarios/:id/comunidades",
+  authenticateToken,
+  requirePermission("admin"),
+  (req, res) => {
+    try {
+      const userId = req.params.id;
+      const { comunidades_ids } = req.body;
+      const db = getDb(req);
+
+      console.log(`📍 Asignando comunidades a usuario ${userId}:`, comunidades_ids);
+
+      if (!db) {
+        return res.status(500).json({
+          success: false,
+          message: "Base de datos no disponible",
+        });
+      }
+
+      // Validar que comunidades_ids exista y sea un array
+      if (!comunidades_ids || !Array.isArray(comunidades_ids)) {
+        console.error('❌ comunidades_ids no es un array:', comunidades_ids);
+        return res.status(400).json({
+          success: false,
+          message: "Se requiere un array de IDs de comunidades (comunidades_ids)",
+        });
+      }
+
+      // Verificar que el usuario existe
+      db.get(
+        "SELECT id, nombres, apellidos, rol_id FROM usuarios WHERE id = ?",
+        [userId],
+        (err, usuario) => {
+          if (err) {
+            console.error('Error buscando usuario:', err);
+            return res.status(500).json({
+              success: false,
+              message: "Error verificando usuario"
+            });
+          }
+
+          if (!usuario) {
+            return res.status(404).json({
+              success: false,
+              message: "Usuario no encontrado",
+            });
+          }
+
+          // Permitir array vacío para deseleccionar todas
+          if (comunidades_ids.length === 0) {
+            db.run("DELETE FROM permisos_comunidad WHERE usuario_id = ?", [userId], (err) => {
+              if (err) {
+                console.error("Error eliminando asignaciones:", err);
+                return res.status(500).json({
+                  success: false,
+                  message: "Error eliminando asignaciones previas"
+                });
+              }
+
+              console.log(`✅ Comunidades desasignadas para usuario ${userId}`);
+              
+              res.json({
+                success: true,
+                message: "Todas las comunidades fueron desasignadas",
+                data: {
+                  usuario_id: userId,
+                  comunidades_asignadas: 0
+                }
+              });
+            });
+            return;
           }
 
           // Eliminar asignaciones existentes
@@ -1010,46 +1429,57 @@ router.post(
 
               // Insertar nuevas asignaciones
               let insertedCount = 0;
+              let successCount = 0;
               let errors = [];
 
               comunidades_ids.forEach((comunidadId) => {
-                const insertQuery = `
-                        INSERT INTO permisos_comunidad 
-                        (usuario_id, comunidad_id, puede_registrar, activo)
-                        VALUES (?, ?, 1, 1)
-                    `;
+                // Validar que sea un número
+                const idNumerico = parseInt(comunidadId);
+                if (isNaN(idNumerico)) {
+                  console.error(`❌ ID de comunidad inválido: ${comunidadId}`);
+                  errors.push(`ID inválido: ${comunidadId}`);
+                  insertedCount++;
+                  return;
+                }
 
-                db.run(insertQuery, [userId, comunidadId], (err) => {
+                const insertQuery = `
+                  INSERT INTO permisos_comunidad 
+                  (usuario_id, comunidad_id, puede_registrar, activo)
+                  VALUES (?, ?, 1, 1)
+                `;
+
+                db.run(insertQuery, [userId, idNumerico], function(err) {
                   if (err) {
-                    console.error(
-                      `Error asignando comunidad ${comunidadId}:`,
-                      err
-                    );
-                    errors.push(`Error en comunidad ${comunidadId}`);
+                    console.error(`❌ Error asignando comunidad ${idNumerico}:`, err);
+                    errors.push(`Error en comunidad ${idNumerico}: ${err.message}`);
+                  } else {
+                    successCount++;
                   }
 
                   insertedCount++;
 
+                  // Cuando se hayan procesado todas
                   if (insertedCount === comunidades_ids.length) {
-                    if (errors.length > 0) {
+                    if (errors.length > 0 && successCount === 0) {
                       return res.status(400).json({
                         success: false,
-                        message: "Errores en algunas asignaciones",
+                        message: "Error asignando todas las comunidades",
                         errors: errors,
                       });
                     }
 
                     console.log(
-                      `✅ ${comunidades_ids.length} comunidades asignadas a usuario ${userId} por ${req.user.email}`
+                      `✅ ${successCount}/${comunidades_ids.length} comunidades asignadas a usuario ${userId}`
                     );
 
                     res.json({
                       success: true,
-                      message: "Comunidades asignadas exitosamente",
+                      message: `${successCount} comunidades asignadas exitosamente`,
                       data: {
                         usuario_id: userId,
                         usuario_nombre: `${usuario.nombres} ${usuario.apellidos}`,
-                        comunidades_asignadas: comunidades_ids.length,
+                        comunidades_asignadas: successCount,
+                        errores: errors.length > 0 ? errors : undefined
                       },
                     });
                   }
@@ -1063,7 +1493,7 @@ router.post(
       console.error("❌ Error asignando comunidades:", error);
       res.status(500).json({
         success: false,
-        message: "Error interno del servidor",
+        message: "Error interno del servidor: " + error.message,
       });
     }
   }
@@ -1125,5 +1555,193 @@ router.get(
     }
   }
 );
+
+// ===== VER TERRITORIOS ASIGNADOS A USUARIO =====
+router.get('/usuarios/:id/territorios', authenticateToken, requirePermission('admin'), (req, res) => {
+    try {
+        const userId = req.params.id;
+        const db = getDb(req);
+
+        const query = `
+            SELECT 
+                t.id, t.nombre, t.codigo,
+                ut.created_at as fecha_asignacion
+            FROM user_territorios ut
+            JOIN territorios t ON ut.territorio_id = t.id
+            WHERE ut.usuario_id = ? AND ut.activo = 1
+            ORDER BY t.nombre
+        `;
+
+        db.all(query, [userId], (err, territorios) => {
+            if (err) {
+                console.error('Error obteniendo territorios asignados:', err);
+                return res.status(500).json({
+                    success: false,
+                    message: 'Error obteniendo territorios asignados'
+                });
+            }
+
+            res.json({
+                success: true,
+                data: {
+                    usuario_id: userId,
+                    territorios_asignados: territorios || [],
+                    total_territorios: territorios.length
+                }
+            });
+        });
+
+    } catch (error) {
+        console.error('❌ Error obteniendo territorios asignados:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error interno del servidor'
+        });
+    }
+});
+
+// ===== ASIGNAR TERRITORIOS A USUARIO (MÚLTIPLES) =====
+router.post('/usuarios/:id/territorios', authenticateToken, requirePermission('admin'), (req, res) => {
+    try {
+        const userId = req.params.id;
+        const { territorios_ids } = req.body;
+        const db = getDb(req);
+
+        console.log(`🗺️ Asignando territorios a usuario ${userId}:`, territorios_ids);
+
+        // Validar que territorios_ids exista y sea un array
+        if (!Array.isArray(territorios_ids)) {
+            return res.status(400).json({
+                success: false,
+                message: 'Se requiere un array de IDs de territorios (territorios_ids)'
+            });
+        }
+
+        // Verificar que el usuario existe y es asistente técnico
+        db.get(`
+            SELECT u.id, u.nombres, u.apellidos, r.codigo_rol
+            FROM usuarios u
+            JOIN roles r ON u.rol_id = r.id
+            WHERE u.id = ?
+        `, [userId], (err, usuario) => {
+            if (err || !usuario) {
+                return res.status(404).json({
+                    success: false,
+                    message: 'Usuario no encontrado'
+                });
+            }
+
+            // OPCIONAL: Validar que solo asistentes técnicos tengan múltiples territorios
+            if (usuario.codigo_rol !== 'asistente_tecnico' && territorios_ids.length > 1) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Solo los asistentes técnicos pueden tener múltiples territorios'
+                });
+            }
+
+            // Permitir array vacío para deseleccionar todos
+            if (territorios_ids.length === 0) {
+                db.run('DELETE FROM user_territorios WHERE usuario_id = ?', [userId], (err) => {
+                    if (err) {
+                        console.error('Error eliminando asignaciones:', err);
+                        return res.status(500).json({
+                            success: false,
+                            message: 'Error eliminando asignaciones previas'
+                        });
+                    }
+
+                    console.log(`✅ Territorios desasignados para usuario ${userId}`);
+                    
+                    res.json({
+                        success: true,
+                        message: 'Todos los territorios fueron desasignados',
+                        data: {
+                            usuario_id: userId,
+                            territorios_asignados: 0
+                        }
+                    });
+                });
+                return;
+            }
+
+            // Eliminar asignaciones existentes
+            db.run('DELETE FROM user_territorios WHERE usuario_id = ?', [userId], (err) => {
+                if (err) {
+                    console.error('Error eliminando asignaciones existentes:', err);
+                    return res.status(500).json({
+                        success: false,
+                        message: 'Error actualizando asignaciones'
+                    });
+                }
+
+                // Insertar nuevas asignaciones
+                let insertedCount = 0;
+                let successCount = 0;
+                let errors = [];
+
+                territorios_ids.forEach(territorioId => {
+                    const idNumerico = parseInt(territorioId);
+                    
+                    if (isNaN(idNumerico)) {
+                        console.error(`❌ ID de territorio inválido: ${territorioId}`);
+                        errors.push(`ID inválido: ${territorioId}`);
+                        insertedCount++;
+                        return;
+                    }
+
+                    const insertQuery = `
+                        INSERT INTO user_territorios 
+                        (usuario_id, territorio_id, asignado_por)
+                        VALUES (?, ?, ?)
+                    `;
+
+                    db.run(insertQuery, [userId, idNumerico, req.user.id], function(err) {
+                        if (err) {
+                            console.error(`❌ Error asignando territorio ${idNumerico}:`, err);
+                            errors.push(`Error en territorio ${idNumerico}: ${err.message}`);
+                        } else {
+                            successCount++;
+                        }
+
+                        insertedCount++;
+
+                        // Cuando se hayan procesado todas
+                        if (insertedCount === territorios_ids.length) {
+                            if (errors.length > 0 && successCount === 0) {
+                                return res.status(400).json({
+                                    success: false,
+                                    message: 'Error asignando todos los territorios',
+                                    errors: errors
+                                });
+                            }
+
+                            console.log(`✅ ${successCount}/${territorios_ids.length} territorios asignados a usuario ${userId}`);
+
+                            res.json({
+                                success: true,
+                                message: `${successCount} territorio(s) asignado(s) exitosamente`,
+                                data: {
+                                    usuario_id: userId,
+                                    usuario_nombre: `${usuario.nombres} ${usuario.apellidos}`,
+                                    territorios_asignados: successCount,
+                                    errores: errors.length > 0 ? errors : undefined
+                                }
+                            });
+                        }
+                    });
+                });
+            });
+        });
+
+    } catch (error) {
+        console.error('❌ Error asignando territorios:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error interno del servidor: ' + error.message
+        });
+    }
+});
+
+
 
 module.exports = router;

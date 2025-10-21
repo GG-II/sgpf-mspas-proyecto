@@ -1,53 +1,91 @@
-<!-- ===== DASHBOARD ASISTENTE TÉCNICO ===== -->
+<!-- ===== DASHBOARD ASISTENTE TÉCNICO V2.0 - CORREGIDO ===== -->
 
-<!-- Header personalizado -->
-<div class="dashboard-hero">
-    <h2>Panel Territorial, <span id="asistente-nombre">{{userName}}</span></h2>
-    <p id="asistente-territorio">Territorio: {{territorioAsignado}}</p>
-</div>
+<div class="max-w-6xl mx-auto p-4 space-y-6">
+  
+  <!-- Header Moderno -->
+  <div class="bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-2xl shadow-xl p-8">
+    <div class="flex items-center gap-4">
+      <div class="w-16 h-16 bg-white bg-opacity-20 rounded-full flex items-center justify-center backdrop-blur-sm">
+        <svg class="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"/>
+        </svg>
+      </div>
+      <div>
+        <h1 class="text-3xl font-bold">Panel de Validación</h1>
+        <p class="text-indigo-100 text-lg mt-1" id="asistente-nombre">Cargando...</p>
+      </div>
+    </div>
+  </div>
 
-<!-- Tarjetas de estado territorial (2x2) -->
-<div class="stats-grid">
-    <div class="stat-card">
-        <span class="stat-value" id="comunidades-activas">0</span>
-        <div class="stat-label">Comunidades Activas</div>
-    </div>
-    
-    <div class="stat-card">
-        <span class="stat-value" id="registros-pendientes">0</span>
-        <div class="stat-label">Registros Pendientes</div>
-    </div>
-    
-    <div class="stat-card">
-        <span class="stat-value" id="cumplimiento-territorial">0%</span>
-        <div class="stat-label">Cumplimiento Territorial</div>
-    </div>
-    
-    <div class="stat-card">
-        <span class="stat-value" id="auxiliares-activos">0</span>
-        <div class="stat-label">Auxiliares Activos</div>
-    </div>
-</div>
-
-<!-- Vista territorial -->
-<div class="card">
-    <div class="card-title">Mi Territorio</div>
-    <div class="card-body">
-        <div id="info-territorio">
-            <div class="loading">Cargando información del territorio...</div>
+  <!-- Métrica Principal: Pendientes de Validar -->
+  <div class="bg-white rounded-xl shadow-lg p-8 border-l-4 border-orange-500">
+    <div class="flex items-center justify-between">
+      <div class="flex items-center gap-4">
+        <div class="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center">
+          <svg class="w-8 h-8 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          </svg>
         </div>
+        <div>
+          <p class="text-sm font-medium text-gray-500 uppercase tracking-wide">Pendientes de Validación</p>
+          <p class="text-5xl font-bold text-orange-600 mt-1" id="registros-pendientes">0</p>
+          <p class="text-sm text-gray-600 mt-2">Registros que requieren tu atención</p>
+        </div>
+      </div>
+      <button 
+        onclick="ComponentLoader.navigateToView('validacion')" 
+        class="px-8 py-4 bg-gradient-to-r from-orange-600 to-red-600 text-white font-bold rounded-xl hover:from-orange-700 hover:to-red-700 transition-all shadow-lg hover:shadow-xl flex items-center gap-2">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+        Validar Ahora
+      </button>
     </div>
+  </div>
+
+  <!-- Últimos Registros Pendientes -->
+  <div class="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-200">
+    <div class="px-6 py-5 border-b bg-gradient-to-r from-gray-50 to-gray-100 flex items-center justify-between">
+      <h2 class="font-bold text-gray-900 text-lg flex items-center gap-3">
+        <svg class="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+        </svg>
+        Últimos Registros Pendientes
+      </h2>
+      <span class="text-sm font-semibold text-gray-600 bg-white px-4 py-2 rounded-full" id="total-pendientes-texto">
+        Cargando...
+      </span>
+    </div>
+    
+    <div id="lista-pendientes">
+      <!-- Loading state -->
+      <div class="px-6 py-12 text-center">
+        <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-600 mx-auto mb-4"></div>
+        <p class="text-gray-500">Cargando registros pendientes...</p>
+      </div>
+    </div>
+    
+    <!-- Sin pendientes -->
+    <div id="sin-pendientes" class="hidden px-6 py-16 text-center">
+      <div class="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+        <svg class="w-10 h-10 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+      </div>
+      <p class="text-xl font-bold text-gray-800 mb-2">¡Excelente trabajo!</p>
+      <p class="text-gray-600">No hay registros pendientes de validación</p>
+    </div>
+  </div>
+
 </div>
 
-<!-- Script específico del dashboard asistente -->
+<!-- Script de inicialización -->
 <script>
-// Inicializar dashboard del asistente cuando se carga el template
 document.addEventListener('DOMContentLoaded', () => {
-    if (typeof AsistenteDashboard !== 'undefined') {
-        setTimeout(() => {
-            AsistenteDashboard.init();
-        }, 100);
-    }
+    setTimeout(() => {
+        if (typeof window.AsistenteDashboard !== 'undefined') {
+            window.AsistenteDashboard.init();
+        }
+    }, 500);
 });
-
 </script>

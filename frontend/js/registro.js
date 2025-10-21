@@ -1,6 +1,6 @@
 // ===== SISTEMA DE REGISTRO DE DATOS SGPF =====
 // Evitar múltiples declaraciones
-console.log('📝 ARCHIVO REGISTRO.JS CARGADO');
+console.log("📝 ARCHIVO REGISTRO.JS CARGADO");
 window.RegistroSystem = window.RegistroSystem || {
   // Estado actual del formulario
   currentData: {
@@ -16,7 +16,7 @@ window.RegistroSystem = window.RegistroSystem || {
   // Inicializar el sistema de registro
   async init() {
     console.log("🚀 FUNCIÓN INIT LLAMADA - INICIANDO DEBUG");
-    
+
     // PREVENIR MÚLTIPLES INICIALIZACIONES
     if (this.initialized) {
       console.log("⚠️ Sistema ya inicializado, saltando...");
@@ -28,7 +28,7 @@ window.RegistroSystem = window.RegistroSystem || {
       this.setupEventListeners();
       this.initializeForm();
       this.updateTotal();
-      
+
       this.initialized = true;
       console.log("✅ Sistema de registro inicializado");
     } catch (error) {
@@ -40,12 +40,14 @@ window.RegistroSystem = window.RegistroSystem || {
   // Configurar todos los event listeners
   setupEventListeners() {
     console.log("📋 Configurando event listeners...");
-    
+
     // REMOVER EVENT LISTENERS EXISTENTES PRIMERO
     this.removeEventListeners();
 
     // Selector de comunidad
-    const comunidadSelect = document.getElementById("comunidad-registro-select");
+    const comunidadSelect = document.getElementById(
+      "comunidad-registro-select"
+    );
     if (comunidadSelect) {
       comunidadSelect.addEventListener("change", (e) => {
         this.currentData.comunidadId = e.target.value;
@@ -57,12 +59,12 @@ window.RegistroSystem = window.RegistroSystem || {
     document.querySelectorAll(".counter-btn").forEach((btn) => {
       // Remover cualquier listener previo
       btn.removeEventListener("click", this.handleCounterBound);
-      
+
       // Crear función bound para poder removerla después
       if (!this.handleCounterBound) {
         this.handleCounterBound = (e) => this.handleCounter(e);
       }
-      
+
       btn.addEventListener("click", this.handleCounterBound);
     });
 
@@ -298,11 +300,11 @@ window.RegistroSystem = window.RegistroSystem || {
   // Manejar incrementadores (+/-) - FUNCIÓN CORREGIDA
   handleCounter(event) {
     console.log("🔢 HandleCounter ejecutado"); // Debug
-    
+
     // PREVENIR PROPAGACIÓN MULTIPLE
     event.preventDefault();
     event.stopPropagation();
-    
+
     const button = event.target;
     const targetId = button.getAttribute("data-target");
     const input = document.getElementById(targetId);
@@ -315,7 +317,9 @@ window.RegistroSystem = window.RegistroSystem || {
     let currentValue = parseInt(input.value) || 0;
     const isIncrement = button.classList.contains("plus");
 
-    console.log(`🔢 Valor actual: ${currentValue}, Incrementar: ${isIncrement}`);
+    console.log(
+      `🔢 Valor actual: ${currentValue}, Incrementar: ${isIncrement}`
+    );
 
     // INCREMENTAR/DECREMENTAR DE 1 EN 1
     if (isIncrement) {
@@ -381,16 +385,16 @@ window.RegistroSystem = window.RegistroSystem || {
 
     // Mapeo de IDs a nombres de métodos para el backend
     const metodosMap = {
-        'inyeccion-mensual': 'inyeccion-mensual',
-        'inyeccion-bimensual': 'inyeccion-bimensual', 
-        'inyeccion-trimestral': 'inyeccion-trimestral',
-        'pildoras': 'pildoras',
-        'pildora-emergencia': 'pildora-emergencia',
-        'diu': 'diu',
-        'implante': 'implante',
-        'condon-masculino': 'condon-masculino',
-        'condon-femenino': 'condon-femenino',
-        'mela': 'mela'
+      "inyeccion-mensual": "inyeccion-mensual",
+      "inyeccion-bimensual": "inyeccion-bimensual",
+      "inyeccion-trimestral": "inyeccion-trimestral",
+      pildoras: "pildoras",
+      "pildora-emergencia": "pildora-emergencia",
+      diu: "diu",
+      implante: "implante",
+      "condon-masculino": "condon-masculino",
+      "condon-femenino": "condon-femenino",
+      mela: "mela",
     };
 
     // Recopilar valores de cada método
@@ -409,109 +413,112 @@ window.RegistroSystem = window.RegistroSystem || {
 
   // Guardar registro en el backend
   async guardarRegistro() {
-    console.log('💾 Iniciando guardado de registro');
-    
+    console.log("💾 Iniciando guardado de registro");
+
     try {
-        // Mostrar loading
-        this.showLoading(true);
+      // Mostrar loading
+      this.showLoading(true);
 
-        // Recopilar datos
-        const formData = this.gatherFormData();
-        const total = this.updateTotal();
+      // Recopilar datos
+      const formData = this.gatherFormData();
+      const total = this.updateTotal();
 
-        // Validación básica
-        if (total === 0) {
-            this.showError('Debe registrar al menos una usuaria');
-            this.showLoading(false);
-            return;
-        }
-
-        if (!this.currentData.comunidadId) {
-            this.showError('Debe seleccionar una comunidad');
-            this.showLoading(false);
-            return;
-        }
-
-        console.log('📊 Datos a enviar:', formData);
-
-        // Obtener IDs de métodos
-        const metodosIds = await this.obtenerMetodosIds();
-        
-        // Enviar cada método por separado
-        let registrosExitosos = 0;
-        let registrosTotal = Object.keys(formData.registros).length;
-        
-        for (const [metodoClave, cantidad] of Object.entries(formData.registros)) {
-            if (cantidad > 0) {
-                const metodoId = metodosIds[metodoClave];
-                if (metodoId) {
-                    await this.enviarRegistroIndividual({
-                        comunidad_id: this.currentData.comunidadId,
-                        metodo_id: metodoId,
-                        año: formData.año,
-                        mes: formData.mes,
-                        cantidad: cantidad
-                    });
-                    registrosExitosos++;
-                }
-            }
-        }
-
-        if (registrosExitosos > 0) {
-            this.showSuccess(`${registrosExitosos} registros guardados exitosamente`);
-            
-            // Regresar al dashboard después de 2 segundos
-            setTimeout(() => {
-                this.regresarDashboard();
-            }, 2000);
-        } else {
-            this.showError('No se pudieron guardar los registros');
-        }
-
-    } catch (error) {
-        console.error('❌ Error al guardar:', error);
-        this.showError('Error de conexión. Verifique su conexión a internet');
-    } finally {
+      // Validación básica
+      if (total === 0) {
+        this.showError("Debe registrar al menos una usuaria");
         this.showLoading(false);
+        return;
+      }
+
+      if (!this.currentData.comunidadId) {
+        this.showError("Debe seleccionar una comunidad");
+        this.showLoading(false);
+        return;
+      }
+
+      console.log("📊 Datos a enviar:", formData);
+
+      // Obtener IDs de métodos
+      const metodosIds = await this.obtenerMetodosIds();
+
+      // Enviar cada método por separado
+      let registrosExitosos = 0;
+      let registrosTotal = Object.keys(formData.registros).length;
+
+      for (const [metodoClave, cantidad] of Object.entries(
+        formData.registros
+      )) {
+        if (cantidad > 0) {
+          const metodoId = metodosIds[metodoClave];
+          if (metodoId) {
+            await this.enviarRegistroIndividual({
+              comunidad_id: this.currentData.comunidadId,
+              metodo_id: metodoId,
+              año: formData.año,
+              mes: formData.mes,
+              cantidad: cantidad,
+            });
+            registrosExitosos++;
+          }
+        }
+      }
+
+      if (registrosExitosos > 0) {
+        this.showSuccess(
+          `${registrosExitosos} registros guardados exitosamente`
+        );
+
+        // Regresar al dashboard después de 2 segundos
+        setTimeout(() => {
+          this.regresarDashboard();
+        }, 2000);
+      } else {
+        this.showError("No se pudieron guardar los registros");
+      }
+    } catch (error) {
+      console.error("❌ Error al guardar:", error);
+      this.showError("Error de conexión. Verifique su conexión a internet");
+    } finally {
+      this.showLoading(false);
     }
   },
 
   // Obtener IDs de métodos del backend
   async obtenerMetodosIds() {
     return {
-        'inyeccion-mensual': 1,
-        'inyeccion-bimensual': 2,
-        'inyeccion-trimestral': 3,
-        'pildoras': 4,
-        'pildora-emergencia': 4,
-        'diu': 5,
-        'implante': 6,
-        'condon-masculino': 7,
-        'condon-femenino': 7,
-        'mela': 9
+      "inyeccion-mensual": 1,
+      "inyeccion-bimensual": 2,
+      "inyeccion-trimestral": 3,
+      pildoras: 4,
+      "pildora-emergencia": 4,
+      diu: 5,
+      implante: 6,
+      "condon-masculino": 7,
+      "condon-femenino": 7,
+      mela: 9,
     };
   },
 
   // Enviar un registro individual
   async enviarRegistroIndividual(data) {
-    const token = localStorage.getItem('authToken');
-    
+    const token = localStorage.getItem("authToken");
+
     if (!token) {
-        throw new Error('No hay sesión activa');
+      throw new Error("No hay sesión activa");
     }
 
-    const response = await fetch('http://localhost:5000/api/registros', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify(data)
+    const response = await fetch("http://localhost:5000/api/registros", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(data),
     });
 
     if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`Error en método: ${errorText}`);
+      const errorText = await response.text();
+      throw new Error(`Error en método: ${errorText}`);
     }
 
     return await response.json();
@@ -627,32 +634,36 @@ window.RegistroSystem = window.RegistroSystem || {
   },
 };
 
-console.log('📝 Sistema de registro cargado y listo');
-console.log('📝 OBJETO RegistroSystem CREADO:', window.RegistroSystem);
+console.log("📝 Sistema de registro cargado y listo");
+console.log("📝 OBJETO RegistroSystem CREADO:", window.RegistroSystem);
 
 // SCRIPT DE DEBUG TEMPORAL - Agregar al final de registro.js
 
 // Debug function para detectar múltiples event listeners
 function debugCounterButtons() {
   console.log("=== DEBUG COUNTER BUTTONS ===");
-  
+
   const buttons = document.querySelectorAll(".counter-btn");
   console.log(`Total botones encontrados: ${buttons.length}`);
-  
+
   buttons.forEach((btn, index) => {
     const targetId = btn.getAttribute("data-target");
     const isPlus = btn.classList.contains("plus");
-    console.log(`Botón ${index}: target=${targetId}, tipo=${isPlus ? 'plus' : 'minus'}`);
-    
+    console.log(
+      `Botón ${index}: target=${targetId}, tipo=${isPlus ? "plus" : "minus"}`
+    );
+
     // Verificar cuántos listeners tiene
-    const listeners = getEventListeners ? getEventListeners(btn) : 'No disponible';
+    const listeners = getEventListeners
+      ? getEventListeners(btn)
+      : "No disponible";
     console.log(`Listeners en botón ${index}:`, listeners);
   });
-  
+
   // Verificar inputs
   const inputs = document.querySelectorAll(".counter-input input");
   console.log(`Total inputs encontrados: ${inputs.length}`);
-  
+
   inputs.forEach((input, index) => {
     console.log(`Input ${index}: id=${input.id}, valor=${input.value}`);
   });
@@ -661,23 +672,23 @@ function debugCounterButtons() {
 // Función de test manual
 function testSingleIncrement(inputId) {
   console.log(`=== TEST MANUAL para ${inputId} ===`);
-  
+
   const input = document.getElementById(inputId);
   if (!input) {
     console.log("Input no encontrado");
     return;
   }
-  
+
   const valorAntes = parseInt(input.value) || 0;
   console.log(`Valor antes: ${valorAntes}`);
-  
+
   // Incrementar manualmente
   input.value = valorAntes + 1;
-  
+
   const valorDespues = parseInt(input.value) || 0;
   console.log(`Valor después: ${valorDespues}`);
   console.log(`Diferencia: ${valorDespues - valorAntes}`);
-  
+
   // Llamar updateTotal para ver si hay problema ahí
   if (window.RegistroSystem && window.RegistroSystem.updateTotal) {
     window.RegistroSystem.updateTotal();
@@ -687,20 +698,24 @@ function testSingleIncrement(inputId) {
 // Interceptar clics en botones para debug
 function interceptCounterClicks() {
   console.log("=== INTERCEPTANDO CLICS ===");
-  
+
   document.querySelectorAll(".counter-btn").forEach((btn) => {
-    btn.addEventListener("click", function(e) {
-      console.log("CLIC INTERCEPTADO:", {
-        target: e.target.getAttribute("data-target"),
-        tipo: e.target.classList.contains("plus") ? "plus" : "minus",
-        timestamp: Date.now()
-      });
-    }, true); // true = capture phase, se ejecuta antes que otros listeners
+    btn.addEventListener(
+      "click",
+      function (e) {
+        console.log("CLIC INTERCEPTADO:", {
+          target: e.target.getAttribute("data-target"),
+          tipo: e.target.classList.contains("plus") ? "plus" : "minus",
+          timestamp: Date.now(),
+        });
+      },
+      true
+    ); // true = capture phase, se ejecuta antes que otros listeners
   });
 }
 
 // Ejecutar debug cuando se cargue la página
-document.addEventListener("DOMContentLoaded", function() {
+document.addEventListener("DOMContentLoaded", function () {
   setTimeout(() => {
     console.log("EJECUTANDO DEBUG...");
     debugCounterButtons();
@@ -715,13 +730,13 @@ window.testIncrement = testSingleIncrement;
 // REEMPLAZO TEMPORAL DE LA FUNCIÓN handleCounter
 // Agregar esto al final de registro.js para sobrescribir la función problemática
 
-window.RegistroSystem.handleCounter = function(event) {
+window.RegistroSystem.handleCounter = function (event) {
   console.log("🔢 NUEVO HandleCounter ejecutado");
-  
+
   // Prevenir comportamiento por defecto y propagación
   event.preventDefault();
   event.stopImmediatePropagation();
-  
+
   const button = event.target;
   const targetId = button.getAttribute("data-target");
   const input = document.getElementById(targetId);
@@ -734,8 +749,12 @@ window.RegistroSystem.handleCounter = function(event) {
   // Obtener valor actual
   let currentValue = parseInt(input.value) || 0;
   const isIncrement = button.classList.contains("plus");
-  
-  console.log(`🔢 Antes - Input: ${targetId}, Valor: ${currentValue}, Acción: ${isIncrement ? 'sumar' : 'restar'}`);
+
+  console.log(
+    `🔢 Antes - Input: ${targetId}, Valor: ${currentValue}, Acción: ${
+      isIncrement ? "sumar" : "restar"
+    }`
+  );
 
   // Cambiar valor EXACTAMENTE en 1
   if (isIncrement) {
@@ -750,9 +769,9 @@ window.RegistroSystem.handleCounter = function(event) {
 
   // Asignar directamente
   input.value = currentValue;
-  
+
   // Disparar evento de input para que se actualice el total
-  input.dispatchEvent(new Event('input', { bubbles: true }));
+  input.dispatchEvent(new Event("input", { bubbles: true }));
 
   // Feedback visual
   button.style.transform = "scale(0.9)";
@@ -766,9 +785,9 @@ window.RegistroSystem.handleCounter = function(event) {
 };
 
 // TAMBIÉN reemplazar la configuración de event listeners
-window.RegistroSystem.setupCounterListeners = function() {
+window.RegistroSystem.setupCounterListeners = function () {
   console.log("🔧 Configurando nuevos listeners...");
-  
+
   // Remover TODOS los listeners existentes
   document.querySelectorAll(".counter-btn").forEach((btn) => {
     // Clonar el botón para remover todos los event listeners
@@ -777,13 +796,17 @@ window.RegistroSystem.setupCounterListeners = function() {
   });
 
   // Agregar nuevos listeners con delegación de eventos
-  document.addEventListener('click', function(e) {
-    // Verificar si el elemento clickeado es un botón contador
-    if (e.target.classList.contains('counter-btn')) {
-      console.log("🎯 Delegación de evento detectada");
-      window.RegistroSystem.handleCounter(e);
-    }
-  }, true);
+  document.addEventListener(
+    "click",
+    function (e) {
+      // Verificar si el elemento clickeado es un botón contador
+      if (e.target.classList.contains("counter-btn")) {
+        console.log("🎯 Delegación de evento detectada");
+        window.RegistroSystem.handleCounter(e);
+      }
+    },
+    true
+  );
 
   console.log("✅ Nuevos listeners configurados");
 };
