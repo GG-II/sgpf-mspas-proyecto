@@ -3,7 +3,7 @@
 // Ejecutar con: npm run setup-db
 
 const path = require('path');
-const DatabaseSetup = require('../database/setup-complete');
+const DatabaseSetup = require('../database/setup-db');
 
 console.log('🚀 ===== CONFIGURACIÓN INICIAL SGPF-MSPAS =====');
 console.log('📊 Configurando base de datos completa...');
