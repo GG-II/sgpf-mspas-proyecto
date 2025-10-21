@@ -193,4 +193,62 @@ const SGPF = {
       return false;
     }
   },
+
+  // ===== RENOVACIÓN DE TOKEN =====
+  async renewToken() {
+    try {
+      console.log("🔄 Renovando token...");
+
+      const token = localStorage.getItem(window.SGPFConfig.TOKEN_KEY);
+      if (!token) {
+        console.warn("⚠️ No hay token para renovar");
+        return false;
+      }
+
+      const response = await this.apiCall("/auth/renew", "POST");
+
+      if (response.success && response.token) {
+        // Guardar nuevo token
+        localStorage.setItem(window.SGPFConfig.TOKEN_KEY, response.token);
+        console.log("✅ Token renovado exitosamente");
+
+        // Log de evento de seguridad
+        if (window.SGPFConfig) {
+          window.SGPFConfig.logSecurityEvent("token_renewed", {
+            timestamp: new Date().toISOString(),
+          });
+        }
+
+        return true;
+      } else {
+        console.error("❌ Respuesta de renovación inválida:", response);
+        return false;
+      }
+    } catch (error) {
+      console.error("❌ Error renovando token:", error);
+
+      // Si el token expiró o es inválido, cerrar sesión
+      if (error.message.includes("401") || error.message.includes("403")) {
+        console.warn("⚠️ Token expirado, cerrando sesión");
+        await this.logout();
+      }
+
+      return false;
+    }
+  },
+
+  // ===== ENVIAR LOG DE SEGURIDAD AL SERVIDOR =====
+  async sendSecurityLog(eventData) {
+    try {
+      // Solo enviar en producción
+      if (!window.SGPFConfig || window.SGPFConfig.isDevelopment()) {
+        return;
+      }
+
+      await this.apiCall("/auth/security-log", "POST", eventData);
+    } catch (error) {
+      // No mostrar error al usuario, solo loguear
+      console.warn("⚠️ Error enviando log de seguridad:", error);
+    }
+  },
 };

@@ -260,25 +260,33 @@ const AuthManager = {
 
     // ===== MANEJAR LOGIN EXITOSO =====
     async handleLoginSuccess(response) {
-        console.log('✅ Login exitoso:', response.user);
-        
-        // Validar estructura de respuesta
-        if (!response.user || !response.token) {
-            throw new Error('Respuesta del servidor incompleta');
-        }
-        
-        // Guardar datos de autenticación
-        this.saveAuthData(response.user, response.token);
-        
-        // Mostrar mensaje de éxito brevemente
-        this.showSuccess(`Bienvenido, ${response.user.nombres}`);
-        
-        // Pequeño delay para UX antes de redirigir
-        setTimeout(() => {
-            console.log('🏠 Redirigiendo al dashboard');
-            window.location.href = 'index.html';
-        }, 1000);
-    },
+    console.log('✅ Login exitoso:', response.user);
+    
+    // Validar estructura de respuesta
+    if (!response.user || !response.token) {
+        throw new Error('Respuesta del servidor incompleta');
+    }
+    
+    // Guardar datos de autenticación
+    this.saveAuthData(response.user, response.token);
+    
+    // Mostrar mensaje de éxito brevemente
+    this.showSuccess(`Bienvenido, ${response.user.nombres}`);
+    
+    // Log de evento de seguridad
+    if (window.SGPFConfig) {
+        window.SGPFConfig.logSecurityEvent('login_success', {
+            user_email: response.user.email,
+            user_role: response.user.rol
+        });
+    }
+    
+    // Pequeño delay para UX antes de redirigir
+    setTimeout(() => {
+        console.log('🏠 Redirigiendo al dashboard');
+        window.location.href = 'index.html';
+    }, 1000);
+},
 
     // ===== GUARDAR DATOS DE AUTENTICACIÓN =====
     saveAuthData(user, token) {

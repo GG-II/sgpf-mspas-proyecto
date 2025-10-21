@@ -223,4 +223,105 @@ router.post('/logout', authenticateToken, (req, res) => {
     });
 });
 
+// ===== RENOVAR TOKEN =====
+router.post('/renew', authenticateToken, (req, res) => {
+    try {
+        console.log(`🔄 Renovación de token solicitada: ${req.user.email}`);
+        
+        // Generar nuevo token con la misma información
+        const newToken = jwt.sign({
+            id: req.user.id,
+            email: req.user.email,
+            rol: req.user.rol,
+            nivel: req.user.nivel,
+            territorio_id: req.user.territorio_id,
+            permisos: req.user.permisos
+        }, JWT_SECRET, { expiresIn: '24h' });
+
+        // Actualizar último acceso en BD
+        const db = req.app.locals.db;
+        if (db) {
+            db.run(
+                'UPDATE usuarios SET ultimo_acceso = CURRENT_TIMESTAMP WHERE id = ?',
+                [req.user.id],
+                (err) => {
+                    if (err) {
+                        console.error('Error actualizando último acceso:', err);
+                    }
+                }
+            );
+        }
+
+        console.log(`✅ Token renovado para: ${req.user.email}`);
+
+        res.json({
+            success: true,
+            message: 'Token renovado exitosamente',
+            token: newToken
+        });
+
+    } catch (error) {
+        console.error('❌ Error renovando token:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error renovando token'
+        });
+    }
+});
+
+// ===== NOTIFICACIÓN DE CIERRE DE PESTAÑA =====
+router.post('/tab-closed', (req, res) => {
+    try {
+        const { token, tabId, timestamp } = req.body;
+        
+        console.log(`🚪 Pestaña cerrada - Tab ID: ${tabId} - Timestamp: ${timestamp}`);
+        
+        // En una implementación más compleja, aquí podrías:
+        // 1. Registrar el evento en una tabla de auditoría
+        // 2. Marcar el token para invalidación después del grace period
+        // 3. Actualizar estado de sesión del usuario
+        
+        // Por ahora, solo confirmamos la recepción
+        res.status(200).json({
+            success: true,
+            message: 'Tab close event received'
+        });
+
+    } catch (error) {
+        console.error('❌ Error procesando cierre de pestaña:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error procesando evento'
+        });
+    }
+});
+
+// ===== LOG DE EVENTOS DE SEGURIDAD =====
+router.post('/security-log', authenticateToken, (req, res) => {
+    try {
+        const eventData = req.body;
+        const userEmail = req.user.email;
+        
+        console.log(`🔒 Security Event [${eventData.type}] - User: ${userEmail}`, eventData);
+        
+        // En una implementación más completa, aquí deberías:
+        // 1. Guardar en una tabla de auditoría/logs de seguridad
+        // 2. Alertar a administradores en eventos críticos
+        // 3. Implementar rate limiting específico por tipo de evento
+        
+        // Por ahora, solo confirmamos la recepción
+        res.json({
+            success: true,
+            message: 'Security log received'
+        });
+
+    } catch (error) {
+        console.error('❌ Error procesando log de seguridad:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error procesando log'
+        });
+    }
+});
+
 module.exports = router;
