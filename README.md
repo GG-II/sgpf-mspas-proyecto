@@ -1,12 +1,3 @@
-# 📚 Documentación Profesional para el Repositorio
-
-Voy a crear una estructura de documentación completa y profesional para tu proyecto.
-
----
-
-## 📄 Archivo 1: `README.md` (Principal)
-
-```markdown
 # 🏥 SGPF MSPAS - Sistema de Gestión de Planificación Familiar
 
 <div align="center">
