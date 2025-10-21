@@ -1,5 +1,3 @@
-# sgpf-mspas-proyecto
-
 # 📚 Documentación Profesional para el Repositorio
 
 Voy a crear una estructura de documentación completa y profesional para tu proyecto.
