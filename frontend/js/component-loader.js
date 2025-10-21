@@ -141,8 +141,12 @@ const ComponentLoader = {
     // Mapear vistas a templates según el rol
     switch (viewName) {
       case "dashboard":
-        templatePath = `templates/dashboard/${role}.html`;
-        break;
+  if (role === 'coordinador') {
+    templatePath = `templates/dashboard/coordinador-v2.html`;
+  } else {
+    templatePath = `templates/dashboard/${role}.html`;
+  }
+  break;
       
       case "registro":
         templatePath = "templates/registro/formulario.html";
@@ -244,7 +248,7 @@ const ComponentLoader = {
             // Cargar script del coordinador si no existe
             if (!window.CoordinadorDashboard) {
               const script = document.createElement("script");
-              script.src = SGPFConfig.getVersionedScript("js/dashboards/coordinador.js");
+              script.src = `js/dashboards/coordinador.js?v=${Date.now()}`;
               await new Promise((resolve, reject) => {
                 script.onload = resolve;
                 script.onerror = reject;
