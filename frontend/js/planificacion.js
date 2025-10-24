@@ -153,6 +153,8 @@ async cargarAniosDisponibles() {
 // ===== MEJORAR: MOSTRAR MENSAJE APROPIADO SEGÚN EL AÑO =====
 async cargarAvanceTerritorio(territorioId) {
   try {
+    console.log('🔍 Cargando territorio:', territorioId, 'año:', this.state.anioActual);
+    
     // Mostrar loading
     document.getElementById("loading-comunidades").classList.remove("hidden");
     document.getElementById("tabla-comunidades-container").classList.add("hidden");
@@ -163,64 +165,24 @@ async cargarAvanceTerritorio(territorioId) {
       "GET"
     );
 
+    console.log('📦 Respuesta:', response);
+
+    // Ocultar loading SIEMPRE
     document.getElementById("loading-comunidades").classList.add("hidden");
 
-    if (!response.success || !response.comunidades || response.comunidades.length === 0) {
-  console.log(`⚠️ No hay datos para el año ${this.state.anioActual}`);
-  
-  // Obtener elementos del DOM
-  const sinDatos = document.getElementById("sin-datos-anio");
-  
-  if (!sinDatos) {
-    console.error('❌ Elemento sin-datos-anio no encontrado');
-    return;
-  }
-  
-  const titulo = sinDatos.querySelector("h3");
-  const descripcion = sinDatos.querySelector("p");
-  const boton = sinDatos.querySelector("button");
-  
-  // Personalizar mensajes según el año
-  const anioActual = new Date().getFullYear();
-  
-  if (titulo && descripcion) {
-    if (this.state.anioActual > anioActual) {
-      // Año futuro
-      titulo.textContent = `Planificación ${this.state.anioActual} no disponible`;
-      descripcion.textContent = `El año ${this.state.anioActual} aún no ha sido configurado. Puedes crear la planificación ahora.`;
-    } else if (this.state.anioActual < anioActual) {
-      // Año pasado sin datos
-      titulo.textContent = "No hay datos históricos";
-      descripcion.textContent = `No se encontró planificación para el año ${this.state.anioActual}`;
-    } else {
-      // Año actual sin datos
-      titulo.textContent = "No hay planificación configurada";
-      descripcion.textContent = `Aún no se ha creado la planificación para este año`;
+    // ✅ VERIFICACIÓN SIMPLE Y DIRECTA
+    if (!response.comunidades || response.comunidades.length === 0) {
+      console.log('⚠️ NO HAY DATOS - Mostrando botón');
+      document.getElementById("sin-datos-anio").classList.remove("hidden");
+      return;
     }
-  }
-  
-  // ✅ SOLUCIÓN CRÍTICA: Forzar visibilidad del botón
-  if (boton) {
-    boton.style.display = 'inline-block';
-    boton.style.visibility = 'visible';
-    boton.style.opacity = '1';
-    console.log('✅ Botón configurado como visible');
-  } else {
-    console.error('❌ Botón no encontrado en el DOM');
-  }
-  
-  // Remover clase hidden y forzar display del contenedor
-  sinDatos.classList.remove("hidden");
-  sinDatos.style.display = 'block';
-  
-  console.log('✅ Mostrando estado: sin-datos-anio');
-  return;
-}
 
+    console.log('✅ HAY DATOS - Mostrando tabla');
     this.state.comunidades = response.comunidades;
     this.renderizarTablaComunidades();
+    
   } catch (error) {
-    console.error("❌ Error cargando avance:", error);
+    console.error("❌ ERROR:", error);
     document.getElementById("loading-comunidades").classList.add("hidden");
     document.getElementById("sin-datos-anio").classList.remove("hidden");
   }
@@ -343,45 +305,49 @@ async verificarConfiguracionAnio(anio) {
 
   // ===== CARGAR AVANCE DEL TERRITORIO =====
   async cargarAvanceTerritorio(territorioId) {
-    try {
-      // Mostrar loading
-      document.getElementById("loading-comunidades").classList.remove("hidden");
-      document
-        .getElementById("tabla-comunidades-container")
-        .classList.add("hidden");
-      document.getElementById("sin-datos-anio").classList.add("hidden");
+  try {
+    document.getElementById("loading-comunidades").classList.remove("hidden");
+    document.getElementById("tabla-comunidades-container").classList.add("hidden");
+    document.getElementById("sin-datos-anio").classList.add("hidden");
 
-      const response = await SGPF.apiCall(
-        `/planificacion/avance/${territorioId}/${this.state.anioActual}`,
-        "GET"
-      );
+    const response = await SGPF.apiCall(
+      `/planificacion/avance/${territorioId}/${this.state.anioActual}`,
+      "GET"
+    );
 
-      document.getElementById("loading-comunidades").classList.add("hidden");
+    document.getElementById("loading-comunidades").classList.add("hidden");
 
-      if (
-        !response.success ||
-        !response.comunidades ||
-        response.comunidades.length === 0
-      ) {
-        // No hay datos para este año
-        document.getElementById("sin-datos-anio").classList.remove("hidden");
-        return;
+    // ✅ NUEVA LÓGICA: Verificar si hay datos válidos
+    const comunidades = response.comunidades || [];
+    const todasConMefCero = comunidades.every(c => !c.mef || c.mef === 0);
+    
+    // Si no hay comunidades O todas tienen MEF = 0, mostrar botón
+    if (comunidades.length === 0 || todasConMefCero) {
+      console.log('⚠️ Año sin configurar - Mostrando botón');
+      
+      const anioActual = new Date().getFullYear();
+      const sinDatos = document.getElementById("sin-datos-anio");
+      
+      if (this.state.anioActual > anioActual) {
+        sinDatos.querySelector("h3").textContent = `Planificación ${this.state.anioActual} no disponible`;
+        sinDatos.querySelector("p").textContent = `El año ${this.state.anioActual} aún no ha sido configurado. Puedes crear la planificación ahora.`;
       }
-
-      this.state.comunidades = response.comunidades;
-      this.renderizarTablaComunidades();
-    } catch (error) {
-      console.error("❌ Error cargando avance:", error);
-      document.getElementById("loading-comunidades").classList.add("hidden");
-
-      // Verificar si es un 404 (año sin configurar)
-      if (error.message && error.message.includes("No hay configuración")) {
-        document.getElementById("sin-datos-anio").classList.remove("hidden");
-      } else {
-        SGPF.showToast("Error al cargar datos del territorio", "error");
-      }
+      
+      sinDatos.classList.remove("hidden");
+      return;
     }
-  },
+
+    // Hay datos válidos, mostrar tabla
+    console.log('✅ Hay datos válidos - Mostrando tabla');
+    this.state.comunidades = comunidades;
+    this.renderizarTablaComunidades();
+    
+  } catch (error) {
+    console.error("❌ ERROR:", error);
+    document.getElementById("loading-comunidades").classList.add("hidden");
+    document.getElementById("sin-datos-anio").classList.remove("hidden");
+  }
+},
 
   // ===== RENDERIZAR TABLA DE COMUNIDADES =====
   renderizarTablaComunidades() {

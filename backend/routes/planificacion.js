@@ -461,6 +461,30 @@ router.get('/avance/:territorio_id/:anio', authenticateToken, (req, res) => {
     }
 });
 
+router.get('/avance/:territorioId/:anio', authenticateToken, (req, res) => {
+    const { territorioId, anio } = req.params;
+    const db = req.app.locals.db;
+    
+    const query = `
+        SELECT 
+            c.id,
+            c.nombre,
+            pc.poblacion_mef as mef
+        FROM comunidades c
+        JOIN proyecciones_comunidad pc ON c.id = pc.comunidad_id
+        WHERE c.territorio_id = ? 
+        AND pc.año = ? 
+        AND c.activa = 1
+        AND pc.poblacion_mef > 0  -- ✅ SOLO SI MEF > 0
+    `;
+    
+    db.all(query, [territorioId, anio], (err, rows) => {
+        res.json({
+            success: true,
+            comunidades: rows || []
+        });
+    });
+});
 // ===== 5. DETALLE DE COMUNIDAD =====
 router.get('/comunidad/:id/:anio', authenticateToken, (req, res) => {
     const { id, anio } = req.params;
