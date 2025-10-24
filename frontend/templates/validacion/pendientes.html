@@ -1,175 +1,752 @@
-<!-- ===== VISTA DE VALIDACIÓN MODERNIZADA CON TAILWIND ===== -->
+<!-- ===== VALIDACIÓN V2.0 - SWIPE MÓVIL + OFFICE 365 ===== -->
 
-<!-- Header Moderno con Gradiente -->
-<div class="bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-2xl shadow-xl p-8 mb-6">
-    <div class="mb-2">
-        <h2 class="text-3xl font-bold mb-2">Validación de Registros</h2>
-        <p id="validacion-territorio" class="text-indigo-100 text-lg">Revisa y valida los registros de tu territorio</p>
+<div class="validacion-container">
+  
+  <!-- Header Azul Institucional -->
+  <div class="validacion-header">
+    <div class="header-content">
+      <div class="header-icon">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"/>
+        </svg>
+      </div>
+      <div class="header-text">
+        <h1>Validación de Registros</h1>
+        <p id="validacion-territorio">Revisa y valida los registros de tu territorio</p>
+      </div>
     </div>
-</div>
+  </div>
 
-<!-- Resumen con Cards Modernas (3 CARDS) -->
-<div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-    <!-- Card Pendientes -->
-    <div class="bg-white rounded-xl shadow-lg p-6 border-l-4 border-yellow-500 hover:shadow-xl transition-shadow">
-        <div class="flex items-center justify-between">
-            <div>
-                <p class="text-sm text-gray-600 font-medium mb-1">Pendientes</p>
-                <p id="total-pendientes" class="text-3xl font-bold text-gray-900">0</p>
-            </div>
-            <div class="w-12 h-12 bg-yellow-100 rounded-full flex items-center justify-center">
-                <svg class="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                </svg>
-            </div>
-        </div>
-    </div>
-
-    <!-- Card Comunidades -->
-    <div class="bg-white rounded-xl shadow-lg p-6 border-l-4 border-blue-500 hover:shadow-xl transition-shadow">
-        <div class="flex items-center justify-between">
-            <div>
-                <p class="text-sm text-gray-600 font-medium mb-1">Comunidades</p>
-                <p id="total-comunidades" class="text-3xl font-bold text-gray-900">0</p>
-            </div>
-            <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-                <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
-                </svg>
-            </div>
-        </div>
+  <!-- Métricas (3 Cards) -->
+  <div class="metrics-grid">
+    <!-- Pendientes -->
+    <div class="metric-card metric-warning">
+      <div class="metric-icon">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+      </div>
+      <div class="metric-info">
+        <p class="metric-label">Pendientes</p>
+        <p class="metric-value" id="total-pendientes">0</p>
+      </div>
     </div>
 
-    <!-- Card Usuarias -->
-    <div class="bg-white rounded-xl shadow-lg p-6 border-l-4 border-green-500 hover:shadow-xl transition-shadow">
-        <div class="flex items-center justify-between">
-            <div>
-                <p class="text-sm text-gray-600 font-medium mb-1">Total Usuarias</p>
-                <p id="total-usuarias" class="text-3xl font-bold text-gray-900">0</p>
-            </div>
-            <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
-                <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/>
-                </svg>
-            </div>
-        </div>
+    <!-- Comunidades -->
+    <div class="metric-card metric-info">
+      <div class="metric-icon">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+        </svg>
+      </div>
+      <div class="metric-info">
+        <p class="metric-label">Comunidades</p>
+        <p class="metric-value" id="total-comunidades">0</p>
+      </div>
     </div>
-</div>
 
-<!-- Filtros Modernos -->
-<div class="bg-white rounded-xl shadow-lg p-6 mb-6">
-    <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-        <svg class="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/>
+    <!-- Usuarias -->
+    <div class="metric-card metric-success">
+      <div class="metric-icon">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/>
+        </svg>
+      </div>
+      <div class="metric-info">
+        <p class="metric-label">Total Usuarias</p>
+        <p class="metric-value" id="total-usuarias">0</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filtros -->
+  <div class="filters-card">
+    <div class="filters-header">
+      <h3>
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/>
         </svg>
         Filtros de Búsqueda
-    </h3>
+      </h3>
+    </div>
     
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-        <!-- Filtro Comunidad -->
-        <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">Comunidad</label>
-            <select id="filtro-comunidad" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all">
-                <option value="">Todas las comunidades</option>
-            </select>
-        </div>
+    <div class="filters-grid">
+      <div class="filter-group">
+        <label>Comunidad</label>
+        <select id="filtro-comunidad" class="filter-select">
+          <option value="">Todas las comunidades</option>
+        </select>
+      </div>
 
-        <!-- Filtro Auxiliar -->
-        <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">Auxiliar</label>
-            <select id="filtro-auxiliar" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all">
-                <option value="">Todos los auxiliares</option>
-            </select>
-        </div>
+      <div class="filter-group">
+        <label>Auxiliar</label>
+        <select id="filtro-auxiliar" class="filter-select">
+          <option value="">Todos los auxiliares</option>
+        </select>
+      </div>
     </div>
     
-    <!-- Búsqueda y Botones -->
-    <div class="flex flex-col sm:flex-row gap-3">
-        <input type="text" id="buscar-registro" 
-               placeholder="🔍 Buscar por método, comunidad, auxiliar..." 
-               class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all">
-        
-        <button id="btn-limpiar-filtros" class="px-6 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors font-medium">
-            Limpiar
-        </button>
-        
-        <button id="btn-actualizar" class="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-medium flex items-center gap-2">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
-            </svg>
-            Actualizar
-        </button>
-    </div>
-</div>
-
-<!-- Lista de Registros -->
-<div class="mb-6">
-    <!-- Loading State -->
-    <div id="validacion-loading" class="bg-white rounded-xl shadow-lg p-12 text-center">
-        <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto mb-4"></div>
-        <p class="text-gray-600">Cargando registros pendientes...</p>
-    </div>
-    
-    <!-- Container de Registros -->
-    <div id="registros-container" class="hidden space-y-4">
-        <!-- Los registros se insertan aquí dinámicamente -->
-    </div>
-    
-    <!-- Mensaje Sin Registros -->
-    <div id="sin-registros-mensaje" class="hidden bg-white rounded-xl shadow-lg p-12 text-center">
-        <div class="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <svg class="w-10 h-10 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-            </svg>
-        </div>
-        <h3 class="text-2xl font-bold text-gray-900 mb-2">¡Todo al día!</h3>
-        <p class="text-gray-600">No hay registros pendientes de validación.</p>
-    </div>
-</div>
-
-<!-- Botones de Acción -->
-<div class="flex justify-center mb-6">
-    <button id="btn-validar-todos" class="hidden px-8 py-3 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-all font-medium items-center gap-2 justify-center shadow-lg hover:shadow-xl">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+    <div class="filters-actions">
+      <input type="text" id="buscar-registro" 
+             placeholder="🔍 Buscar por método, comunidad, auxiliar..." 
+             class="search-input">
+      
+      <button id="btn-limpiar-filtros" class="btn-secondary">
+        Limpiar
+      </button>
+      
+      <button id="btn-actualizar" class="btn-primary">
+        <svg class="btn-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
         </svg>
-        Validar Todos
-    </button>
-</div>
-
-<!-- Modal Moderno con Backdrop Blur -->
-<div id="modal-confirmacion" class="hidden fixed inset-0 z-50 overflow-y-auto">
-    <!-- Backdrop -->
-    <div class="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm transition-opacity"></div>
-    
-    <!-- Modal Content -->
-    <div class="flex items-center justify-center min-h-screen p-4">
-        <div class="relative bg-white rounded-2xl shadow-2xl max-w-md w-full transform transition-all">
-            <!-- Header -->
-            <div class="p-6 border-b border-gray-200">
-                <h3 id="modal-titulo" class="text-2xl font-bold text-gray-900">Confirmar Acción</h3>
-            </div>
-            
-            <!-- Body -->
-            <div class="p-6">
-                <p id="modal-mensaje" class="text-gray-600 text-lg">¿Estás seguro de realizar esta acción?</p>
-            </div>
-            
-            <!-- Footer -->
-            <div class="p-6 border-t border-gray-200 flex gap-3">
-                <button id="modal-cancelar" class="flex-1 px-6 py-3 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 transition-colors font-medium">
-                    Cancelar
-                </button>
-                <button id="modal-confirmar" class="flex-1 px-6 py-3 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-colors font-medium">
-                    Confirmar
-                </button>
-            </div>
-        </div>
+        Actualizar
+      </button>
     </div>
+  </div>
+
+  <!-- Instrucciones Móvil (solo visible en móvil) -->
+  <div class="swipe-instructions mobile-only">
+    <div class="instruction-item">
+      <div class="swipe-demo swipe-left">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+        </svg>
+      </div>
+      <span>Desliza izquierda para rechazar</span>
+    </div>
+    <div class="instruction-item">
+      <div class="swipe-demo swipe-right">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+        </svg>
+      </div>
+      <span>Desliza derecha para validar</span>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div id="validacion-loading" class="loading-state">
+    <div class="loading-spinner"></div>
+    <p>Cargando registros pendientes...</p>
+  </div>
+  
+  <!-- Container de Registros -->
+  <div id="registros-container" class="hidden">
+    <!-- Los registros se insertan aquí dinámicamente -->
+  </div>
+  
+  <!-- Sin Registros -->
+  <div id="sin-registros-mensaje" class="hidden empty-state">
+    <div class="empty-icon">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+      </svg>
+    </div>
+    <h3>¡Todo al día!</h3>
+    <p>No hay registros pendientes de validación.</p>
+  </div>
+
+  <!-- Botón Validar Todos -->
+  <div class="actions-bar">
+    <button id="btn-validar-todos" class="hidden btn-validar-todos">
+      <svg class="btn-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+      </svg>
+      Validar Todos
+    </button>
+  </div>
+
 </div>
 
-<!-- Script del módulo -->
+<!-- Modal Confirmación -->
+<div id="modal-confirmacion" class="modal hidden">
+  <div class="modal-backdrop"></div>
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3 id="modal-titulo">Confirmar Acción</h3>
+    </div>
+    <div class="modal-body">
+      <p id="modal-mensaje">¿Estás seguro de realizar esta acción?</p>
+    </div>
+    <div class="modal-footer">
+      <button id="modal-cancelar" class="btn-secondary">Cancelar</button>
+      <button id="modal-confirmar" class="btn-primary">Confirmar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Estilos CSS -->
+<style>
+/* ===== VALIDACIÓN V2.0 - SWIPE + OFFICE 365 ===== */
+
+.validacion-container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0;
+}
+
+/* === HEADER === */
+.validacion-header {
+  background: linear-gradient(135deg, #0066CC 0%, #0088DD 100%);
+  border-radius: 0.75rem;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 2px 8px rgba(0, 102, 204, 0.15);
+}
+
+.header-content {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.header-icon {
+  width: 4rem;
+  height: 4rem;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(10px);
+  flex-shrink: 0;
+}
+
+.header-icon svg {
+  width: 2rem;
+  height: 2rem;
+  color: white;
+}
+
+.header-text h1 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #FFFFFF;
+  margin: 0 0 0.25rem 0;
+}
+
+.header-text p {
+  font-size: 0.9375rem;
+  color: rgba(255, 255, 255, 0.95);
+  margin: 0;
+}
+
+/* === MÉTRICAS === */
+.metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.metric-card {
+  background: white;
+  border-radius: 0.75rem;
+  padding: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.metric-card.metric-warning {
+  border-left: 4px solid #F59E0B;
+}
+
+.metric-card.metric-info {
+  border-left: 4px solid #0066CC;
+}
+
+.metric-card.metric-success {
+  border-left: 4px solid #00A651;
+}
+
+.metric-icon {
+  width: 3rem;
+  height: 3rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.metric-warning .metric-icon {
+  background: #FEF3C7;
+}
+
+.metric-warning .metric-icon svg {
+  width: 1.5rem;
+  height: 1.5rem;
+  color: #F59E0B;
+}
+
+.metric-info .metric-icon {
+  background: #DBEAFE;
+}
+
+.metric-info .metric-icon svg {
+  width: 1.5rem;
+  height: 1.5rem;
+  color: #0066CC;
+}
+
+.metric-success .metric-icon {
+  background: #D1FAE5;
+}
+
+.metric-success .metric-icon svg {
+  width: 1.5rem;
+  height: 1.5rem;
+  color: #00A651;
+}
+
+.metric-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #6B7280;
+  text-transform: uppercase;
+  margin-bottom: 0.25rem;
+}
+
+.metric-value {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #2C3E50;
+  line-height: 1;
+}
+
+/* === FILTROS === */
+.filters-card {
+  background: white;
+  border-radius: 0.75rem;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.filters-header h3 {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: #2C3E50;
+  margin: 0 0 1rem 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.filters-header svg {
+  width: 1.25rem;
+  height: 1.25rem;
+  color: #0066CC;
+}
+
+.filters-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.filter-group label {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #2C3E50;
+  margin-bottom: 0.5rem;
+}
+
+.filter-select,
+.search-input {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: 2px solid #CBD5E1;
+  border-radius: 0.5rem;
+  font-size: 0.9375rem;
+  transition: all 0.2s;
+}
+
+.filter-select:focus,
+.search-input:focus {
+  outline: none;
+  border-color: #0066CC;
+  box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.1);
+}
+
+.filters-actions {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.filters-actions .search-input {
+  flex: 1;
+  min-width: 200px;
+}
+
+/* === INSTRUCCIONES SWIPE (solo móvil) === */
+.swipe-instructions {
+  background: linear-gradient(135deg, #FEF3C7 0%, #FDE68A 100%);
+  border-radius: 0.75rem;
+  padding: 1rem;
+  margin-bottom: 1.5rem;
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  gap: 1rem;
+  border: 2px solid #F59E0B;
+}
+
+.instruction-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #92400E;
+}
+
+.swipe-demo {
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: pulse 2s infinite;
+}
+
+.swipe-demo.swipe-left {
+  background: #FEE2E2;
+}
+
+.swipe-demo.swipe-left svg {
+  width: 1.5rem;
+  height: 1.5rem;
+  color: #EF4444;
+}
+
+.swipe-demo.swipe-right {
+  background: #D1FAE5;
+}
+
+.swipe-demo.swipe-right svg {
+  width: 1.5rem;
+  height: 1.5rem;
+  color: #00A651;
+}
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+}
+
+/* === CARDS DE REGISTRO (SWIPEABLE EN MÓVIL) === */
+.registro-card {
+  background: white;
+  border-radius: 0.75rem;
+  padding: 1.5rem;
+  margin-bottom: 1rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  border-left: 4px solid #F59E0B;
+  position: relative;
+  transition: transform 0.3s, box-shadow 0.3s;
+  touch-action: pan-y;
+  cursor: grab;
+}
+
+.registro-card:active {
+  cursor: grabbing;
+}
+
+.registro-card.swiping-left {
+  background: linear-gradient(90deg, #FEE2E2 0%, white 20%);
+  border-left-color: #EF4444;
+}
+
+.registro-card.swiping-right {
+  background: linear-gradient(90deg, white 80%, #D1FAE5 100%);
+  border-left-color: #00A651;
+}
+
+/* Indicador de swipe */
+.swipe-indicator {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 3rem;
+  opacity: 0;
+  transition: opacity 0.2s;
+  pointer-events: none;
+}
+
+.swipe-indicator.left {
+  left: 2rem;
+  color: #EF4444;
+}
+
+.swipe-indicator.right {
+  right: 2rem;
+  color: #00A651;
+}
+
+.registro-card.swiping-left .swipe-indicator.left,
+.registro-card.swiping-right .swipe-indicator.right {
+  opacity: 1;
+}
+
+/* === BOTONES === */
+.btn-primary,
+.btn-secondary,
+.btn-validar-todos {
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 0.5rem;
+  font-weight: 600;
+  font-size: 0.9375rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.btn-primary {
+  background: #0066CC;
+  color: white;
+}
+
+.btn-primary:hover {
+  background: #0052A3;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 102, 204, 0.2);
+}
+
+.btn-secondary {
+  background: #F3F4F6;
+  color: #6B7280;
+}
+
+.btn-secondary:hover {
+  background: #E5E7EB;
+}
+
+.btn-validar-todos {
+  background: linear-gradient(135deg, #00A651 0%, #00853D 100%);
+  color: white;
+  padding: 1rem 2rem;
+  font-size: 1rem;
+  box-shadow: 0 4px 12px rgba(0, 166, 81, 0.3);
+}
+
+.btn-validar-todos:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0, 166, 81, 0.4);
+}
+
+.btn-icon {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+/* === LOADING === */
+.loading-state {
+  background: white;
+  border-radius: 0.75rem;
+  padding: 3rem;
+  text-align: center;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.loading-spinner {
+  width: 3rem;
+  height: 3rem;
+  border: 3px solid #F3F4F6;
+  border-top-color: #0066CC;
+  border-radius: 50%;
+  margin: 0 auto 1rem;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* === EMPTY STATE === */
+.empty-state {
+  background: white;
+  border-radius: 0.75rem;
+  padding: 4rem 2rem;
+  text-align: center;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.empty-icon {
+  width: 5rem;
+  height: 5rem;
+  background: #D1FAE5;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 1rem;
+}
+
+.empty-icon svg {
+  width: 2.5rem;
+  height: 2.5rem;
+  color: #00A651;
+}
+
+.empty-state h3 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #2C3E50;
+  margin-bottom: 0.5rem;
+}
+
+.empty-state p {
+  font-size: 1rem;
+  color: #6B7280;
+}
+
+/* === MODAL === */
+.modal {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  overflow-y: auto;
+}
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+}
+
+.modal-content {
+  position: relative;
+  background: white;
+  border-radius: 1rem;
+  max-width: 28rem;
+  margin: 4rem auto;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+}
+
+.modal-header {
+  padding: 1.5rem;
+  border-bottom: 1px solid #E5E7EB;
+}
+
+.modal-header h3 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #2C3E50;
+  margin: 0;
+}
+
+.modal-body {
+  padding: 1.5rem;
+}
+
+.modal-body p {
+  font-size: 1rem;
+  color: #6B7280;
+  margin: 0;
+}
+
+.modal-footer {
+  padding: 1.5rem;
+  border-top: 1px solid #E5E7EB;
+  display: flex;
+  gap: 0.75rem;
+}
+
+.modal-footer button {
+  flex: 1;
+}
+
+/* === UTILITIES === */
+.hidden {
+  display: none !important;
+}
+
+.mobile-only {
+  display: none;
+}
+
+.actions-bar {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 1.5rem;
+}
+
+/* === RESPONSIVE === */
+@media (max-width: 768px) {
+  .validacion-header {
+    padding: 1rem;
+  }
+
+  .header-icon {
+    width: 3rem;
+    height: 3rem;
+  }
+
+  .header-icon svg {
+    width: 1.5rem;
+    height: 1.5rem;
+  }
+
+  .header-text h1 {
+    font-size: 1.25rem;
+  }
+
+  .metrics-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .filters-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .filters-actions {
+    flex-direction: column;
+  }
+
+  .filters-actions .search-input {
+    width: 100%;
+  }
+
+  /* Mostrar instrucciones swipe en móvil */
+  .mobile-only {
+    display: flex;
+  }
+
+  /* Cards apiladas para swipe */
+  #registros-container {
+    position: relative;
+  }
+
+  .registro-card {
+    margin-bottom: 1.5rem;
+  }
+}
+
+@media (min-width: 769px) {
+  /* Desktop: Sin swipe, botones visibles */
+  .registro-card {
+    cursor: default;
+  }
+
+  .swipe-indicator {
+    display: none;
+  }
+}
+</style>
+
+<!-- Script de inicialización -->
 <script>
 // Event listeners para filtros
 document.getElementById('filtro-comunidad')?.addEventListener('change', () => {
@@ -184,7 +761,6 @@ document.getElementById('buscar-registro')?.addEventListener('input', () => {
     if (window.ValidacionSystem) ValidacionSystem.aplicarFiltros();
 });
 
-// Botones
 document.getElementById('btn-limpiar-filtros')?.addEventListener('click', () => {
     if (window.ValidacionSystem) ValidacionSystem.limpiarFiltros();
 });
@@ -197,7 +773,6 @@ document.getElementById('btn-validar-todos')?.addEventListener('click', () => {
     if (window.ValidacionSystem) ValidacionSystem.validarTodos();
 });
 
-// Modal - Cancelar
 document.getElementById('modal-cancelar')?.addEventListener('click', () => {
     document.getElementById('modal-confirmacion').classList.add('hidden');
 });

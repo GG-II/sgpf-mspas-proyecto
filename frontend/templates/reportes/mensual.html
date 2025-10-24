@@ -1,228 +1,207 @@
-<!-- ===== SISTEMA DE REPORTES V2.0 ===== -->
+<!-- ===== SISTEMA DE REPORTES V2.0 - OFFICE 365 (CORREGIDO) ===== -->
 
-<div class="max-w-7xl mx-auto p-4 space-y-6">
+<div class="reportes-office-container">
   
-  <!-- ===== HEADER PRINCIPAL ===== -->
-  <div class="bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-2xl shadow-xl p-8">
-    <div class="flex items-center justify-between flex-wrap gap-4">
-      
-      <!-- Título -->
-      <div class="flex items-center gap-4">
-        <div class="w-16 h-16 bg-white bg-opacity-20 rounded-full flex items-center justify-center backdrop-blur-sm">
-          <svg class="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-          </svg>
-        </div>
-        <div>
-          <h1 class="text-3xl font-bold">Sistema de Reportes</h1>
-          <p class="text-purple-100 text-lg mt-1">Análisis y exportación de datos</p>
-        </div>
+  <!-- ADVERTENCIA MÓVIL -->
+  <div class="mobile-warning">
+    <div class="mobile-warning-content">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+      </svg>
+      <div>
+        <h4>Visualización Óptima</h4>
+        <p>Para mejor experiencia, recomendamos abrir los reportes desde una computadora</p>
       </div>
-      
-      <!-- Selector de Año -->
-      <div class="flex items-center gap-3">
-        <label class="text-white font-semibold text-lg">Año:</label>
-        <select id="selector-anio-reportes" 
-                class="px-6 py-3 bg-white bg-opacity-20 text-white font-bold text-lg rounded-xl border-2 border-white border-opacity-30 backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-white cursor-pointer">
-          <option value="">Cargando años...</option>
-        </select>
-      </div>
-      
     </div>
   </div>
 
-  <!-- ===== SISTEMA DE PESTAÑAS ===== -->
-  <div class="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-200">
+  <!-- HEADER AZUL PROFESIONAL -->
+  <div class="reportes-header">
+    <div class="header-content">
+      <div class="header-icon">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+        </svg>
+      </div>
+      <div class="header-text">
+        <h1>Sistema de Reportes</h1>
+        <p>Análisis y exportación de datos</p>
+      </div>
+      <div class="header-year-selector">
+        <label>Año:</label>
+        <select id="selector-anio-reportes">
+          <option value="">Cargando años...</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <!-- SISTEMA DE PESTAÑAS OFFICE -->
+  <div class="tabs-container-office">
     
-    <!-- Navegación de Pestañas -->
-    <div class="border-b border-gray-200 bg-gray-50">
-      <nav class="flex overflow-x-auto" id="tabs-reportes">
-        
-        <button onclick="ReportesSystem.cambiarPestana('proyeccion-general')" 
-                data-tab="proyeccion-general"
-                class="tab-reporte px-6 py-4 text-sm font-medium border-b-2 transition-all whitespace-nowrap border-purple-600 text-purple-600">
-          📊 Proyección General
-        </button>
-        
-        <button onclick="ReportesSystem.cambiarPestana('proyeccion-metodo')" 
-                data-tab="proyeccion-metodo"
-                class="tab-reporte px-6 py-4 text-sm font-medium border-b-2 transition-all whitespace-nowrap border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300">
-          💉 Proyección por Método
-        </button>
-        
-        <button onclick="ReportesSystem.cambiarPestana('proyeccion-territorio')" 
-                data-tab="proyeccion-territorio"
-                class="tab-reporte px-6 py-4 text-sm font-medium border-b-2 transition-all whitespace-nowrap border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300">
-          🗺️ Proyección por Territorio
-        </button>
-        
-        <button onclick="ReportesSystem.cambiarPestana('fichas-usuarias')" 
-                data-tab="fichas-usuarias"
-                class="tab-reporte px-6 py-4 text-sm font-medium border-b-2 transition-all whitespace-nowrap border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300">
-          👤 Fichas de Usuarias
-        </button>
-        
-        <button onclick="ReportesSystem.cambiarPestana('consultas-rapidas')" 
-                data-tab="consultas-rapidas"
-                class="tab-reporte px-6 py-4 text-sm font-medium border-b-2 transition-all whitespace-nowrap border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300">
-          ⚡ Consultas Rápidas
-        </button>
-        
-      </nav>
+    <!-- Navegación Tabs (CLASES CORREGIDAS) -->
+    <div class="tabs-nav">
+      <button onclick="ReportesSystem.cambiarPestana('proyeccion-general')" 
+              data-tab="proyeccion-general"
+              class="tab-reporte tab-btn active">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+        </svg>
+        Proyección General
+      </button>
+      
+      <button onclick="ReportesSystem.cambiarPestana('proyeccion-metodo')" 
+              data-tab="proyeccion-metodo"
+              class="tab-reporte tab-btn">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
+        </svg>
+        Por Método
+      </button>
+      
+      <button onclick="ReportesSystem.cambiarPestana('proyeccion-territorio')" 
+              data-tab="proyeccion-territorio"
+              class="tab-reporte tab-btn">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/>
+        </svg>
+        Por Territorio
+      </button>
+      
+      <button onclick="ReportesSystem.cambiarPestana('fichas-usuarias')" 
+              data-tab="fichas-usuarias"
+              class="tab-reporte tab-btn">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+        </svg>
+        Fichas Usuarias
+      </button>
+      
+      <button onclick="ReportesSystem.cambiarPestana('consultas-rapidas')" 
+              data-tab="consultas-rapidas"
+              class="tab-reporte tab-btn">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+        </svg>
+        Consultas Rápidas
+      </button>
     </div>
 
-    <!-- ===== CONTENIDO DE LAS PESTAÑAS ===== -->
-    <div class="p-6">
+    <!-- CONTENIDO DE PESTAÑAS (CLASES CORREGIDAS) -->
+    <div class="tabs-content">
       
-      <!-- Loading General -->
-      <div id="loading-reportes" class="hidden py-16 text-center">
-        <div class="animate-spin rounded-full h-16 w-16 border-b-2 border-purple-600 mx-auto mb-4"></div>
-        <p class="text-gray-500 text-lg">Cargando datos...</p>
+      <!-- Loading -->
+      <div id="loading-reportes" class="hidden tab-loading">
+        <div class="loading-spinner"></div>
+        <p>Cargando datos...</p>
       </div>
 
-      <!-- ===== PESTAÑA 1: PROYECCIÓN GENERAL ===== -->
+      <!-- PESTAÑA 1: PROYECCIÓN GENERAL -->
       <div id="contenido-proyeccion-general" class="tab-content">
-        <div class="mb-4 flex items-center justify-between">
-          <h2 class="text-2xl font-bold text-gray-800">Proyección de Usuarias en Métodos</h2>
-          <div class="flex gap-2">
-            <button onclick="ReportesSystem.exportarExcel('proyeccion-general')" 
-                    class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center gap-2">
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div class="report-header">
+          <h2>Proyección de Usuarias en Métodos</h2>
+          <div class="export-buttons">
+            <button onclick="ReportesSystem.exportarExcel('proyeccion-general')" class="btn-export btn-excel">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
               </svg>
               Excel
             </button>
-            <button onclick="ReportesSystem.exportarPDF('proyeccion-general')" 
-                    class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors flex items-center gap-2">
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <button onclick="ReportesSystem.exportarPDF('proyeccion-general')" class="btn-export btn-pdf">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
               </svg>
               PDF
             </button>
           </div>
         </div>
-        <div id="tabla-proyeccion-general" class="overflow-x-auto">
-          <!-- Tabla se llenará dinámicamente -->
-        </div>
+        <div id="tabla-proyeccion-general" class="table-wrapper"></div>
       </div>
 
-      <!-- ===== PESTAÑA 2: PROYECCIÓN POR MÉTODO ===== -->
+      <!-- PESTAÑA 2: PROYECCIÓN POR MÉTODO -->
       <div id="contenido-proyeccion-metodo" class="tab-content hidden">
-        <div class="mb-4 space-y-4">
-          <div class="flex items-center justify-between flex-wrap gap-4">
-            <h2 class="text-2xl font-bold text-gray-800">Proyección por Método</h2>
-            <div class="flex gap-2">
-              <button onclick="ReportesSystem.exportarExcel('proyeccion-metodo')" 
-                      class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center gap-2">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                </svg>
-                Excel
-              </button>
-              <button onclick="ReportesSystem.exportarPDF('proyeccion-metodo')" 
-                      class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors flex items-center gap-2">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
-                </svg>
-                PDF
-              </button>
-            </div>
-          </div>
-          
-          <!-- Selector de Método -->
-          <div class="flex items-center gap-3">
-            <label class="text-gray-700 font-semibold">Seleccionar Método:</label>
-            <select id="selector-metodo" 
-                    onchange="ReportesSystem.cargarProyeccionMetodo()"
-                    class="flex-1 px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition-all">
-              <option value="">-- Seleccione un método --</option>
-            </select>
-          </div>
-        </div>
-        <div id="tabla-proyeccion-metodo" class="overflow-x-auto">
-          <!-- Tabla se llenará dinámicamente -->
-        </div>
-      </div>
-
-      <!-- ===== PESTAÑA 3: PROYECCIÓN POR TERRITORIO ===== -->
-      <div id="contenido-proyeccion-territorio" class="tab-content hidden">
-        <div class="mb-4 space-y-4">
-          <div class="flex items-center justify-between flex-wrap gap-4">
-            <h2 class="text-2xl font-bold text-gray-800">Proyección por Territorio</h2>
-            <div class="flex gap-2">
-              <button onclick="ReportesSystem.exportarExcel('proyeccion-territorio')" 
-                      class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center gap-2">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                </svg>
-                Excel
-              </button>
-              <button onclick="ReportesSystem.exportarPDF('proyeccion-territorio')" 
-                      class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors flex items-center gap-2">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
-                </svg>
-                PDF
-              </button>
-            </div>
-          </div>
-          
-          <!-- Selector de Territorio -->
-          <div class="flex items-center gap-3">
-            <label class="text-gray-700 font-semibold">Seleccionar Territorio:</label>
-            <select id="selector-territorio" 
-                    onchange="ReportesSystem.cargarProyeccionTerritorio()"
-                    class="flex-1 px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition-all">
-              <option value="">-- Seleccione un territorio --</option>
-            </select>
-          </div>
-        </div>
-        <div id="tabla-proyeccion-territorio" class="overflow-x-auto">
-          <!-- Tabla se llenará dinámicamente -->
-        </div>
-      </div>
-
-      <!-- ===== PESTAÑA 4: FICHAS DE USUARIAS ===== -->
-      <div id="contenido-fichas-usuarias" class="tab-content hidden">
-        <div class="mb-4">
-          <h2 class="text-2xl font-bold text-gray-800 mb-4">Fichas de Usuarias</h2>
-          
-          <!-- Buscador -->
-          <div class="mb-4">
-            <input type="text" 
-                   id="buscador-usuarias" 
-                   placeholder="🔍 Buscar por nombre, DPI o comunidad..."
-                   onkeyup="ReportesSystem.filtrarUsuarias()"
-                   class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition-all text-lg">
-          </div>
-          
-          <!-- Tabla de Usuarias -->
-          <div id="tabla-listado-usuarias" class="overflow-x-auto mb-6">
-            <!-- Lista se llenará dinámicamente -->
-          </div>
-        </div>
-        
-        <!-- Ficha Individual (oculta por defecto) -->
-        <div id="ficha-usuaria-detalle" class="hidden">
-          <!-- Contenido de ficha se llenará dinámicamente -->
-        </div>
-      </div>
-
-      <!-- ===== PESTAÑA 5: CONSULTAS RÁPIDAS ===== -->
-      <div id="contenido-consultas-rapidas" class="tab-content hidden">
-        <div class="mb-4 flex items-center justify-between">
-          <h2 class="text-2xl font-bold text-gray-800">Consultas Rápidas</h2>
-          <div class="flex gap-2">
-            <button onclick="ReportesSystem.exportarPDF('consultas-rapidas')" 
-                    class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors flex items-center gap-2">
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div class="report-header">
+          <h2>Proyección por Método</h2>
+          <div class="export-buttons">
+            <button onclick="ReportesSystem.exportarExcel('proyeccion-metodo')" class="btn-export btn-excel">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+              </svg>
+              Excel
+            </button>
+            <button onclick="ReportesSystem.exportarPDF('proyeccion-metodo')" class="btn-export btn-pdf">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
               </svg>
               PDF
             </button>
-            <button onclick="ReportesSystem.exportarImagen()" 
-                    class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2">
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          </div>
+        </div>
+        <div class="filter-section">
+          <label>Seleccionar Método:</label>
+          <select id="selector-metodo" onchange="ReportesSystem.cargarProyeccionMetodo()">
+            <option value="">-- Seleccione un método --</option>
+          </select>
+        </div>
+        <div id="tabla-proyeccion-metodo" class="table-wrapper"></div>
+      </div>
+
+      <!-- PESTAÑA 3: PROYECCIÓN POR TERRITORIO -->
+      <div id="contenido-proyeccion-territorio" class="tab-content hidden">
+        <div class="report-header">
+          <h2>Proyección por Territorio</h2>
+          <div class="export-buttons">
+            <button onclick="ReportesSystem.exportarExcel('proyeccion-territorio')" class="btn-export btn-excel">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+              </svg>
+              Excel
+            </button>
+            <button onclick="ReportesSystem.exportarPDF('proyeccion-territorio')" class="btn-export btn-pdf">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+              </svg>
+              PDF
+            </button>
+          </div>
+        </div>
+        <div class="filter-section">
+          <label>Seleccionar Territorio:</label>
+          <select id="selector-territorio" onchange="ReportesSystem.cargarProyeccionTerritorio()">
+            <option value="">-- Seleccione un territorio --</option>
+          </select>
+        </div>
+        <div id="tabla-proyeccion-territorio" class="table-wrapper"></div>
+      </div>
+
+      <!-- PESTAÑA 4: FICHAS DE USUARIAS -->
+      <div id="contenido-fichas-usuarias" class="tab-content hidden">
+        <div class="report-header">
+          <h2>Fichas de Usuarias</h2>
+        </div>
+        <div class="search-section">
+          <input type="text" 
+                 id="buscador-usuarias" 
+                 placeholder="🔍 Buscar por nombre, DPI o comunidad..."
+                 onkeyup="ReportesSystem.filtrarUsuarias()">
+        </div>
+        <div id="tabla-listado-usuarias" class="table-wrapper"></div>
+        <div id="ficha-usuaria-detalle" class="hidden"></div>
+      </div>
+
+      <!-- PESTAÑA 5: CONSULTAS RÁPIDAS -->
+      <div id="contenido-consultas-rapidas" class="tab-content hidden">
+        <div class="report-header">
+          <h2>Consultas Rápidas</h2>
+          <div class="export-buttons">
+            <button onclick="ReportesSystem.exportarPDF('consultas-rapidas')" class="btn-export btn-pdf">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+              </svg>
+              PDF
+            </button>
+            <button onclick="ReportesSystem.exportarImagen()" class="btn-export btn-image">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
               </svg>
               Imagen
@@ -230,31 +209,25 @@
           </div>
         </div>
         
-        <!-- Selector de tipo de consulta -->
-        <div class="mb-6">
-          <div class="flex gap-2 flex-wrap">
-            <button onclick="ReportesSystem.cambiarConsulta('general')" 
-                    data-consulta="general"
-                    class="consulta-btn px-6 py-3 bg-purple-600 text-white font-semibold rounded-lg hover:bg-purple-700 transition-colors">
-              📊 Cumplimiento General
-            </button>
-            <button onclick="ReportesSystem.cambiarConsulta('territorios')" 
-                    data-consulta="territorios"
-                    class="consulta-btn px-6 py-3 bg-gray-200 text-gray-700 font-semibold rounded-lg hover:bg-gray-300 transition-colors">
-              🗺️ Por Territorio
-            </button>
-            <button onclick="ReportesSystem.cambiarConsulta('metodos')" 
-                    data-consulta="metodos"
-                    class="consulta-btn px-6 py-3 bg-gray-200 text-gray-700 font-semibold rounded-lg hover:bg-gray-300 transition-colors">
-              💉 Por Método
-            </button>
-          </div>
+        <div class="consulta-types">
+          <button onclick="ReportesSystem.cambiarConsulta('general')" 
+                  data-consulta="general"
+                  class="consulta-btn active">
+            📊 Cumplimiento General
+          </button>
+          <button onclick="ReportesSystem.cambiarConsulta('territorios')" 
+                  data-consulta="territorios"
+                  class="consulta-btn">
+            🗺️ Por Territorio
+          </button>
+          <button onclick="ReportesSystem.cambiarConsulta('metodos')" 
+                  data-consulta="metodos"
+                  class="consulta-btn">
+            💉 Por Método
+          </button>
         </div>
         
-        <!-- Contenedor de gráficos -->
-        <div id="contenedor-graficos" class="bg-white rounded-xl p-6 border-2 border-gray-200">
-          <!-- Gráficos se llenarán dinámicamente -->
-        </div>
+        <div id="contenedor-graficos" class="graficos-container"></div>
       </div>
 
     </div>
@@ -262,27 +235,449 @@
 
 </div>
 
-<!-- ===== ESTILOS ADICIONALES ===== -->
+<!-- ESTILOS OFFICE 365 -->
 <style>
-  /* Tabs activos */
-  .tab-reporte.active {
-    border-color: #7c3aed !important;
-    color: #7c3aed !important;
+/* ===== CONTENEDOR PRINCIPAL ===== */
+.reportes-office-container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0;
+}
+
+/* ===== ADVERTENCIA MÓVIL ===== */
+.mobile-warning {
+  background: linear-gradient(135deg, #FEF3C7 0%, #FDE68A 100%);
+  border: 2px solid #F59E0B;
+  border-radius: 0.75rem;
+  padding: 1rem;
+  margin-bottom: 1.5rem;
+  display: none;
+}
+
+.mobile-warning-content {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.mobile-warning svg {
+  width: 3rem;
+  height: 3rem;
+  color: #F59E0B;
+  flex-shrink: 0;
+}
+
+.mobile-warning h4 {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #92400E;
+  margin: 0 0 0.25rem 0;
+}
+
+.mobile-warning p {
+  font-size: 0.875rem;
+  color: #78350F;
+  margin: 0;
+}
+
+@media (max-width: 768px) {
+  .mobile-warning {
+    display: block;
   }
-  
-  /* Botones de consulta activos */
-  .consulta-btn.active {
-    background-color: #7c3aed !important;
-    color: white !important;
+}
+
+/* ===== HEADER ===== */
+.reportes-header {
+  background: linear-gradient(135deg, #0066CC 0%, #0088DD 100%);
+  border-radius: 0.75rem;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 2px 8px rgba(0, 102, 204, 0.15);
+}
+
+.header-content {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+  justify-content: space-between;
+}
+
+.header-icon {
+  width: 4rem;
+  height: 4rem;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(10px);
+  flex-shrink: 0;
+}
+
+.header-icon svg {
+  width: 2rem;
+  height: 2rem;
+  color: white;
+}
+
+.header-text {
+  flex: 1;
+}
+
+.header-text h1 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #FFFFFF;
+  margin: 0 0 0.25rem 0;
+}
+
+.header-text p {
+  font-size: 0.9375rem;
+  color: rgba(255, 255, 255, 0.9);
+  margin: 0;
+}
+
+.header-year-selector {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.header-year-selector label {
+  font-size: 1rem;
+  font-weight: 600;
+  color: white;
+}
+
+.header-year-selector select {
+  padding: 0.75rem 1.5rem;
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  font-weight: 600;
+  font-size: 1rem;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 0.5rem;
+  backdrop-filter: blur(10px);
+  cursor: pointer;
+  min-width: 120px;
+}
+
+.header-year-selector select option {
+  background: #0066CC;
+  color: white;
+}
+
+/* ===== TABS CONTAINER ===== */
+.tabs-container-office {
+  background: white;
+  border-radius: 0.75rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+  border: 1px solid #E5E7EB;
+}
+
+.tabs-nav {
+  background: linear-gradient(to right, #F9FAFB 0%, #F3F4F6 100%);
+  border-bottom: 1px solid #E5E7EB;
+  display: flex;
+  overflow-x: auto;
+  padding: 0.5rem 0.5rem 0 0.5rem;
+}
+
+/* ✅ CLASES CORREGIDAS PARA TABS */
+.tab-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.25rem;
+  border: none;
+  background: transparent;
+  color: #6B7280;
+  font-weight: 500;
+  font-size: 0.9375rem;
+  cursor: pointer;
+  border-bottom: 3px solid transparent;
+  transition: all 0.2s;
+  white-space: nowrap;
+  margin-bottom: -1px;
+}
+
+.tab-btn svg {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+.tab-btn:hover {
+  color: #0066CC;
+  background: rgba(0, 102, 204, 0.05);
+}
+
+.tab-btn.active,
+.tab-reporte.active {
+  color: #0066CC !important;
+  border-bottom-color: #0066CC !important;
+  background: white !important;
+}
+
+/* ===== TABS CONTENT ===== */
+.tabs-content {
+  padding: 2rem;
+}
+
+.tab-content {
+  display: none;
+}
+
+.tab-content:not(.hidden) {
+  display: block;
+  animation: fadeIn 0.3s ease-in;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.tab-loading {
+  text-align: center;
+  padding: 4rem 0;
+}
+
+.loading-spinner {
+  width: 4rem;
+  height: 4rem;
+  border: 4px solid #E5E7EB;
+  border-top-color: #0066CC;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 0 auto 1rem;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.tab-loading p {
+  color: #6B7280;
+  font-size: 1rem;
+}
+
+/* ===== REPORT HEADER ===== */
+.report-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.report-header h2 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #2C3E50;
+  margin: 0;
+}
+
+.export-buttons {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.btn-export {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 0.5rem;
+  font-weight: 600;
+  font-size: 0.9375rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-export svg {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+.btn-excel {
+  background: #00A651;
+  color: white;
+}
+
+.btn-excel:hover {
+  background: #00853D;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 166, 81, 0.3);
+}
+
+.btn-pdf {
+  background: #DC3545;
+  color: white;
+}
+
+.btn-pdf:hover {
+  background: #BB2D3B;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3);
+}
+
+.btn-image {
+  background: #0066CC;
+  color: white;
+}
+
+.btn-image:hover {
+  background: #0052A3;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 102, 204, 0.3);
+}
+
+/* ===== FILTROS ===== */
+.filter-section,
+.search-section {
+  margin-bottom: 1.5rem;
+}
+
+.filter-section {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  background: #F9FAFB;
+  border-radius: 0.5rem;
+  border: 1px solid #E5E7EB;
+}
+
+.filter-section label {
+  font-weight: 600;
+  color: #2C3E50;
+  white-space: nowrap;
+}
+
+.filter-section select {
+  flex: 1;
+  padding: 0.75rem 1rem;
+  border: 2px solid #E5E7EB;
+  border-radius: 0.5rem;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.filter-section select:focus {
+  outline: none;
+  border-color: #0066CC;
+  box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.1);
+}
+
+.search-section input {
+  width: 100%;
+  padding: 1rem 1.5rem;
+  border: 2px solid #E5E7EB;
+  border-radius: 0.5rem;
+  font-size: 1rem;
+  transition: all 0.2s;
+}
+
+.search-section input:focus {
+  outline: none;
+  border-color: #0066CC;
+  box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.1);
+}
+
+/* ===== CONSULTAS BUTTONS ===== */
+.consulta-types {
+  display: flex;
+  gap: 0.75rem;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+}
+
+.consulta-btn {
+  padding: 0.75rem 1.5rem;
+  border: 2px solid #E5E7EB;
+  background: white;
+  color: #6B7280;
+  font-weight: 600;
+  font-size: 0.9375rem;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.consulta-btn:hover {
+  border-color: #0066CC;
+  background: rgba(0, 102, 204, 0.05);
+}
+
+.consulta-btn.active {
+  background: #0066CC;
+  color: white;
+  border-color: #0066CC;
+}
+
+/* ===== GRÁFICOS ===== */
+.graficos-container {
+  background: white;
+  border-radius: 0.75rem;
+  padding: 2rem;
+  border: 1px solid #E5E7EB;
+}
+
+/* ===== TABLE WRAPPER ===== */
+.table-wrapper {
+  overflow-x: auto;
+  border-radius: 0.5rem;
+  border: 1px solid #E5E7EB;
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 768px) {
+  .reportes-header {
+    padding: 1rem;
   }
-  
-  /* Animación suave */
-  .tab-content {
-    animation: fadeIn 0.3s ease-in;
+
+  .header-content {
+    flex-direction: column;
+    align-items: flex-start;
   }
-  
-  @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
+
+  .header-year-selector {
+    width: 100%;
   }
+
+  .header-year-selector select {
+    flex: 1;
+  }
+
+  .tabs-content {
+    padding: 1rem;
+  }
+
+  .report-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .export-buttons {
+    width: 100%;
+  }
+
+  .btn-export {
+    flex: 1;
+    justify-content: center;
+  }
+
+  .consulta-types {
+    flex-direction: column;
+  }
+
+  .consulta-btn {
+    width: 100%;
+  }
+}
 </style>

@@ -1,41 +1,41 @@
-<!-- ===== DASHBOARD ASISTENTE TÉCNICO V2.0 - CORREGIDO ===== -->
+<!-- ===== DASHBOARD ASISTENTE TÉCNICO V2.0 - ESTILO OFFICE 365 ===== -->
 
-<div class="max-w-6xl mx-auto p-4 space-y-6">
+<div class="asistente-dashboard-container">
   
-  <!-- Header Moderno -->
-  <div class="bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-2xl shadow-xl p-8">
-    <div class="flex items-center gap-4">
-      <div class="w-16 h-16 bg-white bg-opacity-20 rounded-full flex items-center justify-center backdrop-blur-sm">
-        <svg class="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+  <!-- Header Azul Institucional -->
+  <div class="dashboard-header">
+    <div class="header-content">
+      <div class="header-icon">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"/>
         </svg>
       </div>
-      <div>
-        <h1 class="text-3xl font-bold">Panel de Validación</h1>
-        <p class="text-indigo-100 text-lg mt-1" id="asistente-nombre">Cargando...</p>
+      <div class="header-text">
+        <h1>Panel de Validación</h1>
+        <p id="asistente-nombre">Cargando...</p>
       </div>
     </div>
   </div>
 
   <!-- Métrica Principal: Pendientes de Validar -->
-  <div class="bg-white rounded-xl shadow-lg p-8 border-l-4 border-orange-500">
-    <div class="flex items-center justify-between">
-      <div class="flex items-center gap-4">
-        <div class="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center">
-          <svg class="w-8 h-8 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+  <div class="metric-card metric-warning">
+    <div class="metric-content">
+      <div class="metric-info">
+        <div class="metric-icon">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
           </svg>
         </div>
-        <div>
-          <p class="text-sm font-medium text-gray-500 uppercase tracking-wide">Pendientes de Validación</p>
-          <p class="text-5xl font-bold text-orange-600 mt-1" id="registros-pendientes">0</p>
-          <p class="text-sm text-gray-600 mt-2">Registros que requieren tu atención</p>
+        <div class="metric-details">
+          <p class="metric-label">Pendientes de Validación</p>
+          <p class="metric-value" id="registros-pendientes">0</p>
+          <p class="metric-description">Registros que requieren tu atención</p>
         </div>
       </div>
       <button 
         onclick="ComponentLoader.navigateToView('validacion')" 
-        class="px-8 py-4 bg-gradient-to-r from-orange-600 to-red-600 text-white font-bold rounded-xl hover:from-orange-700 hover:to-red-700 transition-all shadow-lg hover:shadow-xl flex items-center gap-2">
-        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        class="btn-validar">
+        <svg class="btn-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
         </svg>
         Validar Ahora
@@ -44,40 +44,435 @@
   </div>
 
   <!-- Últimos Registros Pendientes -->
-  <div class="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-200">
-    <div class="px-6 py-5 border-b bg-gradient-to-r from-gray-50 to-gray-100 flex items-center justify-between">
-      <h2 class="font-bold text-gray-900 text-lg flex items-center gap-3">
-        <svg class="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+  <div class="pendientes-card">
+    <div class="card-header">
+      <h2>
+        <svg class="header-icon-small" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
         </svg>
         Últimos Registros Pendientes
       </h2>
-      <span class="text-sm font-semibold text-gray-600 bg-white px-4 py-2 rounded-full" id="total-pendientes-texto">
-        Cargando...
-      </span>
+      <span class="card-badge" id="total-pendientes-texto">Cargando...</span>
     </div>
     
-    <div id="lista-pendientes">
-      <!-- Loading state -->
-      <div class="px-6 py-12 text-center">
-        <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-600 mx-auto mb-4"></div>
-        <p class="text-gray-500">Cargando registros pendientes...</p>
-      </div>
+    <!-- Loading state -->
+    <div id="lista-pendientes" class="loading-state">
+      <div class="loading-spinner"></div>
+      <p>Cargando registros pendientes...</p>
     </div>
     
     <!-- Sin pendientes -->
-    <div id="sin-pendientes" class="hidden px-6 py-16 text-center">
-      <div class="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-        <svg class="w-10 h-10 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <div id="sin-pendientes" class="empty-state hidden">
+      <div class="empty-icon success">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
         </svg>
       </div>
-      <p class="text-xl font-bold text-gray-800 mb-2">¡Excelente trabajo!</p>
-      <p class="text-gray-600">No hay registros pendientes de validación</p>
+      <p class="empty-title">¡Excelente trabajo!</p>
+      <p class="empty-description">No hay registros pendientes de validación</p>
     </div>
   </div>
 
 </div>
+
+<!-- Estilos CSS -->
+<style>
+/* ===== DASHBOARD ASISTENTE V2.0 - OFFICE 365 STYLE ===== */
+
+.asistente-dashboard-container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0;
+}
+
+/* === HEADER === */
+.dashboard-header {
+  background: linear-gradient(135deg, #0066CC 0%, #0088DD 100%);
+  border-radius: 0.75rem;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 2px 8px rgba(0, 102, 204, 0.15);
+}
+
+.header-content {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.header-icon {
+  width: 4rem;
+  height: 4rem;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(10px);
+  flex-shrink: 0;
+}
+
+.header-icon svg {
+  width: 2rem;
+  height: 2rem;
+  color: white;
+}
+
+.header-text h1 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #FFFFFF;
+  margin: 0 0 0.25rem 0;
+}
+
+.header-text p {
+  font-size: 0.9375rem;
+  color: rgba(255, 255, 255, 0.95);
+  margin: 0;
+}
+
+/* === MÉTRICA PRINCIPAL === */
+.metric-card {
+  background: white;
+  border-radius: 0.75rem;
+  padding: 2rem;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  border-left: 4px solid #F59E0B;
+}
+
+.metric-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 2rem;
+}
+
+.metric-info {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex: 1;
+}
+
+.metric-icon {
+  width: 4rem;
+  height: 4rem;
+  background: #FEF3C7;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.metric-icon svg {
+  width: 2rem;
+  height: 2rem;
+  color: #F59E0B;
+}
+
+.metric-details {
+  flex: 1;
+}
+
+.metric-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #6B7280;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.5rem;
+}
+
+.metric-value {
+  font-size: 3rem;
+  font-weight: 700;
+  color: #F59E0B;
+  line-height: 1;
+  margin-bottom: 0.5rem;
+}
+
+.metric-description {
+  font-size: 0.875rem;
+  color: #6B7280;
+}
+
+/* === BOTÓN VALIDAR === */
+.btn-validar {
+  padding: 1rem 2rem;
+  background: linear-gradient(135deg, #F59E0B 0%, #EF4444 100%);
+  color: white;
+  border: none;
+  border-radius: 0.5rem;
+  font-weight: 600;
+  font-size: 1rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all 0.2s;
+  box-shadow: 0 4px 6px rgba(245, 158, 11, 0.2);
+  flex-shrink: 0;
+}
+
+.btn-validar:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(245, 158, 11, 0.3);
+}
+
+.btn-validar .btn-icon {
+  width: 1.5rem;
+  height: 1.5rem;
+}
+
+/* === CARD PENDIENTES === */
+.pendientes-card {
+  background: white;
+  border-radius: 0.75rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+  border: 1px solid #E5E7EB;
+}
+
+.card-header {
+  background: linear-gradient(to right, #F9FAFB 0%, #F3F4F6 100%);
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid #E5E7EB;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.card-header h2 {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: #2C3E50;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.header-icon-small {
+  width: 1.5rem;
+  height: 1.5rem;
+  color: #F59E0B;
+  flex-shrink: 0;
+}
+
+.card-badge {
+  background: white;
+  padding: 0.5rem 1rem;
+  border-radius: 9999px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #6B7280;
+  border: 1px solid #E5E7EB;
+}
+
+/* === TABLA === */
+.pendientes-card table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.pendientes-card thead {
+  background: #F9FAFB;
+  border-bottom: 2px solid #E5E7EB;
+}
+
+.pendientes-card th {
+  padding: 1rem 1.5rem;
+  text-align: left;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #6B7280;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.pendientes-card tbody tr {
+  border-bottom: 1px solid #E5E7EB;
+  transition: background-color 0.15s;
+}
+
+.pendientes-card tbody tr:hover {
+  background: #FEF3C7;
+}
+
+.pendientes-card td {
+  padding: 1rem 1.5rem;
+  font-size: 0.875rem;
+}
+
+/* === LOADING STATE === */
+.loading-state {
+  padding: 3rem;
+  text-align: center;
+  color: #6B7280;
+}
+
+.loading-spinner {
+  width: 3rem;
+  height: 3rem;
+  border: 3px solid #F3F4F6;
+  border-top-color: #F59E0B;
+  border-radius: 50%;
+  margin: 0 auto 1rem;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* === EMPTY STATE === */
+.empty-state {
+  padding: 4rem 2rem;
+  text-align: center;
+}
+
+.empty-icon {
+  width: 5rem;
+  height: 5rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 1rem;
+}
+
+.empty-icon.success {
+  background: #D1FAE5;
+}
+
+.empty-icon svg {
+  width: 2.5rem;
+  height: 2.5rem;
+  color: #00A651;
+}
+
+.empty-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #2C3E50;
+  margin-bottom: 0.5rem;
+}
+
+.empty-description {
+  font-size: 0.9375rem;
+  color: #6B7280;
+}
+
+/* === BADGES === */
+.badge {
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.badge-nueva {
+  background: #DBEAFE;
+  color: #1E40AF;
+}
+
+.badge-reconsulta {
+  background: #FEF3C7;
+  color: #92400E;
+}
+
+.badge-activa {
+  background: #D1FAE5;
+  color: #065F46;
+}
+
+/* === UTILITIES === */
+.hidden {
+  display: none !important;
+}
+
+/* === RESPONSIVE === */
+@media (max-width: 768px) {
+  .header-icon {
+    width: 3rem;
+    height: 3rem;
+  }
+
+  .header-icon svg {
+    width: 1.5rem;
+    height: 1.5rem;
+  }
+
+  .header-text h1 {
+    font-size: 1.25rem;
+  }
+
+  .metric-content {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .metric-value {
+    font-size: 2.5rem;
+  }
+
+  .btn-validar {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .card-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+
+  /* Tabla responsive */
+  .pendientes-card table {
+    font-size: 0.8125rem;
+  }
+
+  .pendientes-card th,
+  .pendientes-card td {
+    padding: 0.75rem 0.5rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .dashboard-header {
+    padding: 1rem;
+  }
+
+  .metric-card {
+    padding: 1.5rem;
+  }
+
+  .metric-icon {
+    width: 3rem;
+    height: 3rem;
+  }
+
+  .metric-icon svg {
+    width: 1.5rem;
+    height: 1.5rem;
+  }
+
+  .metric-value {
+    font-size: 2rem;
+  }
+
+  /* Ocultar algunas columnas en móvil si es necesario */
+  .pendientes-card th:nth-child(3),
+  .pendientes-card td:nth-child(3),
+  .pendientes-card th:nth-child(5),
+  .pendientes-card td:nth-child(5) {
+    display: none;
+  }
+}
+</style>
 
 <!-- Script de inicialización -->
 <script>

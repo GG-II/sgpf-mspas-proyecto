@@ -1161,4 +1161,281 @@ router.post('/distribuir-proyeccion-manual/:comunidad_id/:anio', authenticateTok
     }
 });
 
+// ===== INICIALIZAR AÑO NUEVO (CON COPIA DE MEF) =====
+router.post('/inicializar/:anio', authenticateToken, requireConfigPermission, (req, res) => {
+    const { anio } = req.params;
+    const { copiar_desde, copiar_mef = false } = req.body;
+    const db = req.app.locals.db;
+    
+    try {
+        const anioNum = parseInt(anio);
+        const anioAnterior = copiar_desde ? parseInt(copiar_desde) : null;
+        
+        console.log(`🎯 Inicializando año ${anioNum}...`);
+        if (copiar_mef && anioAnterior) {
+            console.log(`📋 Copiando MEF desde año ${anioAnterior}`);
+        }
+        
+        db.serialize(() => {
+            db.run('BEGIN TRANSACTION');
+            
+            let mefCopiado = false;
+            let mefWarning = null;
+            
+            // PASO 0: SI copiar_mef=true, copiar MEF del año anterior
+            if (copiar_mef && anioAnterior) {
+                console.log(`📊 PASO 0: Copiando población MEF de ${anioAnterior}...`);
+                
+                // Verificar si existe proyecciones del año anterior
+                db.get(
+                    `SELECT COUNT(*) as total FROM proyecciones_comunidad WHERE año = ?`,
+                    [anioAnterior],
+                    (err, row) => {
+                        if (err) {
+                            console.error('❌ Error verificando año anterior:', err);
+                            db.run('ROLLBACK');
+                            return res.status(500).json({
+                                success: false,
+                                message: 'Error verificando año anterior'
+                            });
+                        }
+                        
+                        if (row.total === 0) {
+                            // No hay datos del año anterior
+                            mefWarning = `No se encontraron datos de ${anioAnterior} para copiar MEF. Se usarán los valores actuales de la tabla comunidades.`;
+                            console.warn(`⚠️ ${mefWarning}`);
+                            continuarInicializacion();
+                        } else {
+                            // Copiar MEF del año anterior a la tabla comunidades
+                            const copiarMEFQuery = `
+                                UPDATE comunidades
+                                SET poblacion_mef = (
+                                    SELECT poblacion_mef 
+                                    FROM proyecciones_comunidad 
+                                    WHERE comunidad_id = comunidades.id 
+                                    AND año = ?
+                                )
+                                WHERE id IN (
+                                    SELECT comunidad_id 
+                                    FROM proyecciones_comunidad 
+                                    WHERE año = ?
+                                )
+                            `;
+                            
+                            db.run(copiarMEFQuery, [anioAnterior, anioAnterior], function(err) {
+                                if (err) {
+                                    console.error('❌ Error copiando MEF:', err);
+                                    db.run('ROLLBACK');
+                                    return res.status(500).json({
+                                        success: false,
+                                        message: 'Error copiando población MEF'
+                                    });
+                                }
+                                
+                                console.log(`✅ MEF actualizado en ${this.changes} comunidades`);
+                                mefCopiado = true;
+                                continuarInicializacion();
+                            });
+                        }
+                    }
+                );
+            } else {
+                // No copiar MEF, usar valores actuales
+                continuarInicializacion();
+            }
+            
+            function continuarInicializacion() {
+                // PASO 1: Crear proyecciones por comunidad
+                console.log(`📊 PASO 1: Creando proyecciones para comunidades...`);
+                
+                const crearProyeccionesQuery = `
+                    INSERT OR IGNORE INTO proyecciones_comunidad (
+                        comunidad_id,
+                        año,
+                        poblacion_mef,
+                        porcentaje_proyeccion,
+                        ajuste_fijo,
+                        activo,
+                        es_manual,
+                        configurado_por,
+                        unidades_sin_distribuir
+                    )
+                    SELECT 
+                        id as comunidad_id,
+                        ? as año,
+                        poblacion_mef,
+                        0.35 as porcentaje_proyeccion,
+                        70 as ajuste_fijo,
+                        1 as activo,
+                        0 as es_manual,
+                        ? as configurado_por,
+                        0 as unidades_sin_distribuir
+                    FROM comunidades
+                    WHERE activa = 1
+                `;
+                
+                db.run(crearProyeccionesQuery, [anioNum, req.user.id], function(err) {
+                    if (err) {
+                        console.error('❌ Error creando proyecciones:', err);
+                        db.run('ROLLBACK');
+                        return res.status(500).json({
+                            success: false,
+                            message: 'Error creando proyecciones'
+                        });
+                    }
+                    
+                    const comunidadesCreadas = this.changes;
+                    console.log(`✅ Proyecciones creadas: ${comunidadesCreadas} comunidades`);
+                    
+                    // PASO 2: Copiar o crear configuración de porcentajes
+                    if (anioAnterior) {
+                        console.log(`📋 PASO 2: Copiando porcentajes desde ${anioAnterior}...`);
+                        
+                        const copiarPorcentajesQuery = `
+                            INSERT OR IGNORE INTO configuracion_metas_anuales (
+                                año, metodo_id, porcentaje_meta, activo, aprobado_por
+                            )
+                            SELECT 
+                                ? as año,
+                                metodo_id,
+                                porcentaje_meta,
+                                1 as activo,
+                                ? as aprobado_por
+                            FROM configuracion_metas_anuales
+                            WHERE año = ? AND activo = 1
+                        `;
+                        
+                        db.run(copiarPorcentajesQuery, [anioNum, req.user.id, anioAnterior], function(err) {
+                            if (err) {
+                                console.error('❌ Error copiando porcentajes:', err);
+                                db.run('ROLLBACK');
+                                return res.status(500).json({
+                                    success: false,
+                                    message: 'Error copiando configuración de porcentajes'
+                                });
+                            }
+                            
+                            const porcentajesCopiados = this.changes;
+                            console.log(`✅ Porcentajes copiados: ${porcentajesCopiados} métodos`);
+                            
+                            // Continuar con creación de metas
+                            crearMetasPorMetodo();
+                        });
+                    } else {
+                        // Sin porcentajes, se deben configurar manualmente
+                        console.log('⚠️ No se copiaron porcentajes, configuración manual requerida');
+                        finalizarTransaccion();
+                    }
+                });
+                
+                function crearMetasPorMetodo() {
+                    console.log(`🎯 PASO 3: Creando metas por método...`);
+                    
+                    const crearMetasQuery = `
+                        INSERT OR IGNORE INTO metas_metodo_comunidad (
+                            proyeccion_id,
+                            metodo_id,
+                            año,
+                            porcentaje_metodo,
+                            proyeccion_anual_metodo
+                        )
+                        SELECT 
+                            pc.id as proyeccion_id,
+                            cma.metodo_id,
+                            ? as año,
+                            cma.porcentaje_meta as porcentaje_metodo,
+                            CAST(FLOOR(
+                                (CAST((pc.poblacion_mef * pc.porcentaje_proyeccion) - pc.ajuste_fijo AS INTEGER)) * 
+                                (cma.porcentaje_meta / 100.0)
+                            ) AS INTEGER) as proyeccion_anual_metodo
+                        FROM proyecciones_comunidad pc
+                        CROSS JOIN configuracion_metas_anuales cma
+                        WHERE pc.año = ? 
+                          AND cma.año = ?
+                          AND pc.activo = 1
+                          AND cma.activo = 1
+                    `;
+                    
+                    db.run(crearMetasQuery, [anioNum, anioNum, anioNum], function(err) {
+                        if (err) {
+                            console.error('❌ Error creando metas:', err);
+                            db.run('ROLLBACK');
+                            return res.status(500).json({
+                                success: false,
+                                message: 'Error creando metas por método'
+                            });
+                        }
+                        
+                        const metasCreadas = this.changes;
+                        console.log(`✅ Metas creadas: ${metasCreadas} registros`);
+                        
+                        // Calcular sobrantes
+                        calcularSobrantes();
+                    });
+                }
+                
+                function calcularSobrantes() {
+                    console.log(`🧮 PASO 4: Calculando sobrantes...`);
+                    
+                    const calcularSobrantesQuery = `
+                        UPDATE proyecciones_comunidad
+                        SET unidades_sin_distribuir = (
+                            CAST((poblacion_mef * porcentaje_proyeccion) - ajuste_fijo AS INTEGER)
+                        ) - (
+                            SELECT COALESCE(SUM(proyeccion_anual_metodo), 0)
+                            FROM metas_metodo_comunidad
+                            WHERE proyeccion_id = proyecciones_comunidad.id
+                        )
+                        WHERE año = ? AND activo = 1
+                    `;
+                    
+                    db.run(calcularSobrantesQuery, [anioNum], function(err) {
+                        if (err) {
+                            console.error('❌ Error calculando sobrantes:', err);
+                            db.run('ROLLBACK');
+                            return res.status(500).json({
+                                success: false,
+                                message: 'Error calculando sobrantes'
+                            });
+                        }
+                        
+                        console.log(`✅ Sobrantes calculados: ${this.changes} comunidades`);
+                        finalizarTransaccion();
+                    });
+                }
+                
+                function finalizarTransaccion() {
+                    db.run('COMMIT', (err) => {
+                        if (err) {
+                            console.error('❌ Error confirmando transacción:', err);
+                            return res.status(500).json({
+                                success: false,
+                                message: 'Error confirmando inicialización'
+                            });
+                        }
+                        
+                        console.log(`✅ Año ${anioNum} inicializado exitosamente`);
+                        
+                        res.json({
+                            success: true,
+                            message: `Año ${anioNum} inicializado correctamente`,
+                            anio: anioNum,
+                            mef_copiado: mefCopiado,
+                            mef_warning: mefWarning,
+                            copiar_desde: anioAnterior || null
+                        });
+                    });
+                }
+            }
+        });
+        
+    } catch (error) {
+        console.error('❌ Error en inicializar:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error interno del servidor'
+        });
+    }
+});
+
 module.exports = router;

@@ -469,7 +469,7 @@ class DatabaseSetup {
   }
 
   insertTerritorios(callback) {
-    console.log("🗺️ Insertando 9 territorios y 50 comunidades...");
+    console.log("🗺️ Insertando 9 territorios y 45 comunidades...");
 
     const territorios = [
       {
@@ -572,7 +572,7 @@ class DatabaseSetup {
       },
       {
         id: 9,
-        nombre: "Territorio 9",
+        nombre: "Territorio 9 - Quiché",
         codigo: "T9",
         comunidades: [
           { nombre: "Llano Grande La Estancia", codigo: "T9-001", mef: 334 },
@@ -594,73 +594,45 @@ class DatabaseSetup {
       0
     );
 
-    // ===== CAMBIO CRÍTICO: Insertar territorios primero y obtener el ID real =====
     territorios.forEach((territorio) => {
       this.db.run(
         "INSERT OR IGNORE INTO territorios (distrito_id, nombre, codigo, descripcion) VALUES (?, ?, ?, ?)",
         [1, territorio.nombre, territorio.codigo, `${territorio.nombre}`],
-        function(err) {  // ⚠️ Usar function() para acceder a this.lastID
-          if (err) {
+        (err) => {
+          if (err)
             console.error(`Error insertando territorio ${territorio.nombre}:`, err);
-            return;
-          }
 
           insertedTerr++;
-          
-          // ===== USAR EL ID REAL DE LA BASE DE DATOS =====
-          // Si ya existía (INSERT OR IGNORE), buscar el ID por código
-          const territorioIdReal = this.lastID || null;
-          
-          if (!territorioIdReal) {
-            // Si lastID es 0, significa que ya existía, buscarlo
-            this.get(
-              "SELECT id FROM territorios WHERE codigo = ?",
-              [territorio.codigo],
-              (err, row) => {
-                if (err || !row) {
-                  console.error(`❌ No se pudo obtener ID para territorio ${territorio.codigo}`);
-                  return;
+
+          territorio.comunidades.forEach((com) => {
+            this.db.run(
+              `INSERT OR IGNORE INTO comunidades 
+               (territorio_id, nombre, codigo_comunidad, poblacion_mef, poblacion_total) 
+               VALUES (?, ?, ?, ?, ?)`,
+              [
+                territorio.id,
+                com.nombre,
+                com.codigo,
+                com.mef,
+                Math.floor(com.mef * 4.2),
+              ],
+              (err) => {
+                if (err)
+                  console.error(`Error insertando comunidad ${com.nombre}:`, err);
+
+                insertedCom++;
+                if (insertedCom === totalComunidades) {
+                  console.log(
+                    `✅ ${insertedTerr} territorios y ${insertedCom} comunidades insertadas`
+                  );
+                  callback();
                 }
-                insertarComunidades(row.id, territorio);
               }
             );
-          } else {
-            insertarComunidades(territorioIdReal, territorio);
-          }
+          });
         }
       );
     });
-
-    // Función auxiliar para insertar comunidades con el ID correcto
-    const insertarComunidades = (territorioIdReal, territorio) => {
-      territorio.comunidades.forEach((com) => {
-        this.db.run(
-          `INSERT OR IGNORE INTO comunidades 
-           (territorio_id, nombre, codigo_comunidad, poblacion_mef, poblacion_total) 
-           VALUES (?, ?, ?, ?, ?)`,
-          [
-            territorioIdReal,  // ✅ AHORA USA EL ID REAL DE LA BD
-            com.nombre,
-            com.codigo,
-            com.mef,
-            Math.floor(com.mef * 4.2),
-          ],
-          (err) => {
-            if (err) {
-              console.error(`Error insertando comunidad ${com.nombre}:`, err);
-            }
-
-            insertedCom++;
-            if (insertedCom === totalComunidades) {
-              console.log(
-                `✅ ${insertedTerr} territorios y ${insertedCom} comunidades insertadas`
-              );
-              callback();
-            }
-          }
-        );
-      });
-    };
   }
 
   insertRoles() {
@@ -1295,34 +1267,5 @@ module.exports = DatabaseSetup;
 
 if (require.main === module) {
   const setup = new DatabaseSetup();
-
-  setTimeout(() => {
-    console.log("\n🚀 Configuración V2.0 completada!");
-    console.log("\n📋 CAMBIOS PRINCIPALES:");
-    console.log("====================");
-    console.log("✅ 45 comunidades correctas en 9 territorios");
-    console.log("✅ Sistema de usuarias individuales (tabla usuarias)");
-    console.log("✅ Sistema de visitas 1 a 1 (reemplaza registros agregados)");
-    console.log("✅ Tipos de usuaria: nueva/reconsulta/activa");
-    console.log("✅ Proyecciones calculadas automáticamente");
-    console.log("✅ Planificación 2025 inicializada con metas por método");
-    console.log("✅ Sobrantes calculados automáticamente");
-
-    console.log("\n🔑 USUARIOS DE PRUEBA:");
-    console.log("====================");
-    console.log("Coordinador: admin@mspas.gob.gt / 123456");
-    console.log("Encargado SR: encargado@mspas.gob.gt / 123456");
-    console.log("Asistente: asist01@mspas.gob.gt / 123456");
-    console.log("Auxiliar: aux01@mspas.gob.gt / 123456");
-
-    console.log("\n📊 PRÓXIMOS PASOS:");
-    console.log("====================");
-    console.log("1. Crear endpoints para usuarias");
-    console.log("2. Crear endpoints para visitas");
-    console.log("3. Modificar dashboard para mostrar usuarias");
-    console.log("4. Crear nuevo formulario de registro");
-    console.log("5. Recargar el frontend para ver las metas calculadas");
-
-    setup.close();
-  }, 8000);
+  // No cerrar automáticamente - dejar que el proceso termine naturalmente
 }

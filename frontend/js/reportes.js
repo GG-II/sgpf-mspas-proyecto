@@ -651,7 +651,8 @@ window.ReportesSystem = {
 
     renderizarFichaUsuaria(data) {
         const container = document.getElementById('ficha-usuaria-detalle');
-        const usuaria = data.usuaria;
+    const usuaria = data.usuaria;           
+    this.state.usuariaActual = usuaria;
         
         if (!container) return;
         
@@ -673,15 +674,6 @@ window.ReportesSystem = {
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
                     </svg>
                     Volver al Listado
-                </button>
-                
-                <!-- Botón exportar PDF -->
-                <button onclick="ReportesSystem.exportarFichaPDF()" 
-                        class="float-right px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors flex items-center gap-2">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
-                    </svg>
-                    Descargar PDF
                 </button>
                 
                 <div class="clear-both"></div>
@@ -1043,55 +1035,145 @@ window.ReportesSystem = {
     // ========================================
     // FUNCIONES DE EXPORTACIÓN
     // ========================================
-    exportarExcel(tipo) {
-        console.log(`📥 Exportando a Excel: ${tipo}`);
+    async exportarExcel(tipo) {
+    console.log(`📗 Exportando a Excel con formato: ${tipo}`);
+    
+    try {
+        // Verificar SheetJS
+        if (!window.XLSX) {
+            SGPF.showToast('Error: SheetJS no está cargado', 'error');
+            console.error('XLSX no disponible');
+            return;
+        }
+
+        let datos = [];
+        let nombreArchivo = '';
         
-        try {
-            let datos, nombreArchivo;
-            
-            switch(tipo) {
-                case 'proyeccion-general':
-                    datos = this.prepararDatosProyeccionGeneral();
-                    nombreArchivo = `Proyeccion_General_${this.state.anioActual}.xlsx`;
-                    break;
-                case 'proyeccion-metodo':
-                    if (!this.state.metodoSeleccionado) {
-                        SGPF.showToast('Selecciona un método primero', 'warning');
-                        return;
-                    }
-                    datos = this.prepararDatosProyeccionMetodo();
-                    const metodo = this.state.metodos.find(m => m.id == this.state.metodoSeleccionado);
-                    nombreArchivo = `Proyeccion_${metodo.nombre.replace(/\s/g, '_')}_${this.state.anioActual}.xlsx`;
-                    break;
-                case 'proyeccion-territorio':
-                    if (!this.state.territorioSeleccionado) {
-                        SGPF.showToast('Selecciona un territorio primero', 'warning');
-                        return;
-                    }
-                    datos = this.prepararDatosProyeccionTerritorio();
-                    const territorio = this.state.territorios.find(t => t.id == this.state.territorioSeleccionado);
-                    nombreArchivo = `Proyeccion_${territorio.nombre.replace(/\s/g, '_')}_${this.state.anioActual}.xlsx`;
-                    break;
-                default:
-                    SGPF.showToast('Tipo de exportación no soportado', 'error');
+        // Preparar datos según tipo
+        switch(tipo) {
+            case 'proyeccion-general':
+                datos = this.prepararDatosProyeccionGeneral();
+                nombreArchivo = `Proyeccion_General_${this.state.anioActual}.xlsx`;
+                break;
+                
+            case 'proyeccion-metodo':
+                if (!this.state.metodoSeleccionado) {
+                    SGPF.showToast('Selecciona un método primero', 'warning');
                     return;
+                }
+                datos = this.prepararDatosProyeccionMetodo();
+                const metodo = this.state.metodos.find(m => m.id == this.state.metodoSeleccionado);
+                nombreArchivo = `Proyeccion_${metodo.nombre.replace(/\s/g, '_')}_${this.state.anioActual}.xlsx`;
+                break;
+                
+            case 'proyeccion-territorio':
+                if (!this.state.territorioSeleccionado) {
+                    SGPF.showToast('Selecciona un territorio primero', 'warning');
+                    return;
+                }
+                datos = this.prepararDatosProyeccionTerritorio();
+                const territorio = this.state.territorios.find(t => t.id == this.state.territorioSeleccionado);
+                nombreArchivo = `Proyeccion_${territorio.nombre.replace(/\s/g, '_')}_${this.state.anioActual}.xlsx`;
+                break;
+                
+            default:
+                SGPF.showToast('Tipo de exportación no soportado', 'error');
+                return;
+        }
+
+        if (!datos || datos.length === 0) {
+            SGPF.showToast('No hay datos para exportar', 'warning');
+            return;
+        }
+
+        // ✅ CREAR WORKBOOK
+        const wb = XLSX.utils.book_new();
+        const ws = XLSX.utils.aoa_to_sheet(datos);
+        
+        // ✅ OBTENER RANGO DE CELDAS
+        const range = XLSX.utils.decode_range(ws['!ref']);
+        
+        // ✅ APLICAR FORMATO A ENCABEZADOS (primera fila)
+        for (let C = range.s.c; C <= range.e.c; ++C) {
+            const address = XLSX.utils.encode_col(C) + "1";
+            if (!ws[address]) continue;
+            
+            // Formato de encabezado: fondo azul, texto blanco, negrita, centrado
+            ws[address].s = {
+                font: { 
+                    bold: true, 
+                    color: { rgb: "FFFFFF" },
+                    sz: 12
+                },
+                fill: { 
+                    fgColor: { rgb: "0066CC" } 
+                },
+                border: {
+                    top: { style: "thin", color: { rgb: "000000" } },
+                    bottom: { style: "thin", color: { rgb: "000000" } },
+                    left: { style: "thin", color: { rgb: "000000" } },
+                    right: { style: "thin", color: { rgb: "000000" } }
+                },
+                alignment: { 
+                    horizontal: "center", 
+                    vertical: "center" 
+                }
+            };
+        }
+        
+        // ✅ APLICAR BORDES A TODAS LAS CELDAS DE DATOS
+        for (let R = range.s.r; R <= range.e.r; ++R) {
+            for (let C = range.s.c; C <= range.e.c; ++C) {
+                const address = XLSX.utils.encode_cell({ r: R, c: C });
+                if (!ws[address]) continue;
+                
+                // Solo aplicar a celdas que no sean encabezado
+                if (R > 0) {
+                    ws[address].s = {
+                        border: {
+                            top: { style: "thin", color: { rgb: "000000" } },
+                            bottom: { style: "thin", color: { rgb: "000000" } },
+                            left: { style: "thin", color: { rgb: "000000" } },
+                            right: { style: "thin", color: { rgb: "000000" } }
+                        },
+                        alignment: {
+                            vertical: "center"
+                        }
+                    };
+                }
+            }
+        }
+        
+        // ✅ AJUSTAR ANCHO DE COLUMNAS AUTOMÁTICAMENTE
+        const colWidths = [];
+        for (let C = range.s.c; C <= range.e.c; ++C) {
+            let maxWidth = 10; // Ancho mínimo
+            
+            for (let R = range.s.r; R <= range.e.r; ++R) {
+                const address = XLSX.utils.encode_cell({ r: R, c: C });
+                if (ws[address] && ws[address].v) {
+                    const cellLength = String(ws[address].v).length;
+                    maxWidth = Math.max(maxWidth, cellLength + 2); // +2 para padding
+                }
             }
             
-            // Crear libro de Excel
-            const wb = XLSX.utils.book_new();
-            const ws = XLSX.utils.aoa_to_sheet(datos);
-            XLSX.utils.book_append_sheet(wb, ws, 'Datos');
-            
-            // Descargar
-            XLSX.writeFile(wb, nombreArchivo);
-            
-            SGPF.showToast('Archivo Excel descargado', 'success');
-            
-        } catch (error) {
-            console.error('❌ Error exportando Excel:', error);
-            SGPF.showToast('Error al exportar Excel', 'error');
+            colWidths.push({ wch: Math.min(maxWidth, 50) }); // Máximo 50 caracteres
         }
-    },
+        ws['!cols'] = colWidths;
+        
+        // ✅ AGREGAR HOJA AL WORKBOOK
+        XLSX.utils.book_append_sheet(wb, ws, "Reporte");
+        
+        // ✅ DESCARGAR ARCHIVO
+        XLSX.writeFile(wb, nombreArchivo);
+        
+        SGPF.showToast('✅ Excel descargado con formato profesional', 'success');
+        
+    } catch (error) {
+        console.error('❌ Error exportando Excel:', error);
+        SGPF.showToast('Error al exportar Excel', 'error');
+    }
+},
 
     prepararDatosProyeccionGeneral() {
         // Preparar array 2D para Excel
@@ -1567,7 +1649,592 @@ window.ReportesSystem = {
             console.error('❌ Error exportando imagen:', error);
             SGPF.showToast('Error al exportar imagen', 'error');
         }
+    },
+    async generarPDFFichaUsuaria(idUsuaria) {
+    try {
+        console.log('📄 Generando PDF mejorado de ficha de usuaria:', idUsuaria);
+        
+        // Verificar jsPDF
+        if (!window.jsPDF) {
+            SGPF.showToast('Error: jsPDF no está cargado', 'error');
+            return;
+        }
+
+        // Obtener datos de la usuaria
+        const response = await SGPF.apiCall(`/usuarias/${idUsuaria}/ficha`, 'GET');
+        
+        if (!response.success || !response.data) {
+            SGPF.showToast('Error cargando ficha de usuaria', 'error');
+            return;
+        }
+
+        const data = response.data;
+        const doc = new window.jsPDF.jsPDF();
+        
+        // ========================================
+        // ✅ HEADER AZUL PROFESIONAL MSPAS
+        // ========================================
+        doc.setFillColor(0, 102, 204); // Azul MSPAS
+        doc.rect(0, 0, 210, 35, 'F'); // Rectángulo azul full width
+        
+        // Título principal
+        doc.setTextColor(255, 255, 255);
+        doc.setFontSize(22);
+        doc.setFont(undefined, 'bold');
+        doc.text('MINISTERIO DE SALUD PÚBLICA', 105, 13, { align: 'center' });
+        
+        // Subtítulo
+        doc.setFontSize(16);
+        doc.setFont(undefined, 'bold');
+        doc.text('Ficha de Usuaria - Planificación Familiar', 105, 22, { align: 'center' });
+        
+        // Fecha de generación
+        doc.setFontSize(10);
+        doc.setFont(undefined, 'normal');
+        const fechaActual = new Date().toLocaleDateString('es-GT', {
+            day: '2-digit',
+            month: 'long',
+            year: 'numeric'
+        });
+        doc.text(`Fecha de generación: ${fechaActual}`, 105, 30, { align: 'center' });
+        
+        // ========================================
+        // ✅ SECCIÓN 1: DATOS PERSONALES
+        // ========================================
+        let yPos = 45;
+        
+        doc.setFillColor(240, 240, 240); // Fondo gris claro
+        doc.rect(15, yPos - 5, 180, 10, 'F');
+        
+        doc.setTextColor(0, 102, 204);
+        doc.setFontSize(14);
+        doc.setFont(undefined, 'bold');
+        doc.text('DATOS PERSONALES', 20, yPos);
+        yPos += 10;
+        
+        // Datos en dos columnas
+        doc.setTextColor(0, 0, 0);
+        doc.setFontSize(11);
+        doc.setFont(undefined, 'bold');
+        
+        doc.text('Nombre Completo:', 20, yPos);
+        doc.setFont(undefined, 'normal');
+        doc.text(`${data.nombres} ${data.apellidos}`, 65, yPos);
+        yPos += 7;
+        
+        doc.setFont(undefined, 'bold');
+        doc.text('DPI:', 20, yPos);
+        doc.setFont(undefined, 'normal');
+        doc.text(data.dpi || 'No registrado', 65, yPos);
+        
+        doc.setFont(undefined, 'bold');
+        doc.text('Fecha Nacimiento:', 110, yPos);
+        doc.setFont(undefined, 'normal');
+        doc.text(data.fecha_nacimiento || 'No registrada', 155, yPos);
+        yPos += 7;
+        
+        doc.setFont(undefined, 'bold');
+        doc.text('Comunidad:', 20, yPos);
+        doc.setFont(undefined, 'normal');
+        doc.text(data.comunidad || 'N/A', 65, yPos);
+        
+        doc.setFont(undefined, 'bold');
+        doc.text('Territorio:', 110, yPos);
+        doc.setFont(undefined, 'normal');
+        doc.text(data.territorio || 'N/A', 155, yPos);
+        yPos += 7;
+        
+        doc.setFont(undefined, 'bold');
+        doc.text('Teléfono:', 20, yPos);
+        doc.setFont(undefined, 'normal');
+        doc.text(data.telefono || 'No registrado', 65, yPos);
+        
+        doc.setFont(undefined, 'bold');
+        doc.text('Dirección:', 110, yPos);
+        doc.setFont(undefined, 'normal');
+        doc.text((data.direccion || 'No registrada').substring(0, 35), 155, yPos);
+        yPos += 15;
+        
+        // ========================================
+        // ✅ SECCIÓN 2: HISTORIAL DE VISITAS
+        // ========================================
+        if (data.historial_visitas && data.historial_visitas.length > 0) {
+            doc.setFillColor(240, 240, 240);
+            doc.rect(15, yPos - 5, 180, 10, 'F');
+            
+            doc.setTextColor(0, 102, 204);
+            doc.setFontSize(14);
+            doc.setFont(undefined, 'bold');
+            doc.text('HISTORIAL DE VISITAS', 20, yPos);
+            yPos += 10;
+            
+            // Tabla compacta con autoTable
+            const headers = [['Fecha', 'Método', 'Registrado Por', 'Estado']];
+            const rows = data.historial_visitas.slice(0, 18).map(v => [
+                new Date(v.fecha_visita).toLocaleDateString('es-GT'),
+                (v.metodo || 'N/A').substring(0, 30),
+                `${v.registrado_por_nombre || ''} ${v.registrado_por_apellido || ''}`.substring(0, 30),
+                v.estado || 'N/A'
+            ]);
+            
+            doc.autoTable({
+                head: headers,
+                body: rows,
+                startY: yPos,
+                theme: 'grid',
+                headStyles: {
+                    fillColor: [0, 102, 204],
+                    textColor: [255, 255, 255],
+                    fontStyle: 'bold',
+                    halign: 'center',
+                    fontSize: 10
+                },
+                bodyStyles: {
+                    fontSize: 9,
+                    cellPadding: 3
+                },
+                columnStyles: {
+                    0: { cellWidth: 28, halign: 'center' },
+                    1: { cellWidth: 60 },
+                    2: { cellWidth: 65 },
+                    3: { cellWidth: 27, halign: 'center' }
+                },
+                alternateRowStyles: {
+                    fillColor: [245, 245, 245]
+                },
+                margin: { left: 15, right: 15 }
+            });
+        }
+        
+        // ========================================
+        // ✅ FOOTER PROFESIONAL
+        // ========================================
+        const pageCount = doc.internal.getNumberOfPages();
+        
+        for (let i = 1; i <= pageCount; i++) {
+            doc.setPage(i);
+            
+            // Línea separadora
+            doc.setDrawColor(200, 200, 200);
+            doc.setLineWidth(0.5);
+            doc.line(15, 280, 195, 280);
+            
+            // Información del footer
+            doc.setFontSize(8);
+            doc.setTextColor(100, 100, 100);
+            doc.setFont(undefined, 'normal');
+            
+            doc.text(`Página ${i} de ${pageCount}`, 105, 285, { align: 'center' });
+            doc.text('Sistema de Gestión de Planificación Familiar - MSPAS Huehuetenango', 105, 290, { align: 'center' });
+        }
+        
+        // ========================================
+        // ✅ GUARDAR ARCHIVO
+        // ========================================
+        const nombreArchivo = `Ficha_${data.nombres}_${data.apellidos}_${new Date().getTime()}.pdf`;
+        doc.save(nombreArchivo);
+        
+        SGPF.showToast('✅ PDF generado exitosamente', 'success');
+        
+    } catch (error) {
+        console.error('❌ Error generando PDF de ficha:', error);
+        SGPF.showToast('Error al generar PDF', 'error');
     }
+},
+
+// ===== PDF PROFESIONAL FICHA DE USUARIA - MSPAS =====
+// AGREGAR esta función en reportes.js después de línea ~1400
+
+async generarPDFFichaUsuaria(idUsuaria) {
+    try {
+        console.log('📄 Generando PDF profesional de ficha:', idUsuaria);
+        
+        if (!window.jsPDF) {
+            SGPF.showToast('Error: jsPDF no está cargado', 'error');
+            return;
+        }
+
+        // Obtener datos
+        const response = await SGPF.apiCall(`/usuarias/${idUsuaria}/ficha`, 'GET');
+        
+        if (!response.success || !response.data) {
+            SGPF.showToast('Error cargando ficha de usuaria', 'error');
+            return;
+        }
+
+        const data = response.data;
+        const doc = new window.jsPDF.jsPDF();
+        
+        // ========================================
+        // HEADER AZUL INSTITUCIONAL MSPAS
+        // ========================================
+        doc.setFillColor(0, 102, 204);
+        doc.rect(0, 0, 210, 40, 'F');
+        
+        // Logo/Ícono (círculo blanco)
+        doc.setFillColor(255, 255, 255);
+        doc.circle(20, 20, 8, 'F');
+        
+        // Iniciales en el círculo
+        doc.setTextColor(0, 102, 204);
+        doc.setFontSize(10);
+        doc.setFont(undefined, 'bold');
+        const iniciales = `${data.nombres.charAt(0)}${data.apellidos.charAt(0)}`;
+        doc.text(iniciales, 20, 21, { align: 'center' });
+        
+        // Título
+        doc.setTextColor(255, 255, 255);
+        doc.setFontSize(22);
+        doc.text('MINISTERIO DE SALUD PÚBLICA', 105, 15, { align: 'center' });
+        
+        doc.setFontSize(14);
+        doc.setFont(undefined, 'normal');
+        doc.text('Sistema de Gestión de Planificación Familiar', 105, 23, { align: 'center' });
+        
+        doc.setFontSize(10);
+        doc.text('Área de Salud Huehuetenango', 105, 30, { align: 'center' });
+        
+        // Fecha de generación
+        doc.setFontSize(9);
+        const fechaGeneracion = new Date().toLocaleDateString('es-GT', {
+            day: '2-digit',
+            month: 'long',
+            year: 'numeric'
+        });
+        doc.text(`Generado: ${fechaGeneracion}`, 105, 36, { align: 'center' });
+        
+        // ========================================
+        // INFORMACIÓN PRINCIPAL
+        // ========================================
+        let yPos = 50;
+        
+        // Nombre completo destacado
+        doc.setFillColor(245, 247, 250);
+        doc.rect(15, yPos - 3, 180, 12, 'F');
+        
+        doc.setTextColor(0, 102, 204);
+        doc.setFontSize(18);
+        doc.setFont(undefined, 'bold');
+        doc.text(`${data.nombres} ${data.apellidos}`, 20, yPos + 4);
+        
+        // DPI y estado en la misma línea
+        doc.setFontSize(10);
+        doc.setTextColor(100, 100, 100);
+        doc.setFont(undefined, 'normal');
+        doc.text(`DPI: ${data.dpi || 'No registrado'}`, 20, yPos + 10);
+        
+        // Estado (badge)
+        const estadoX = 180;
+        if (data.estado === 'activa') {
+            doc.setFillColor(209, 250, 229);
+            doc.setTextColor(6, 95, 70);
+        } else {
+            doc.setFillColor(254, 226, 226);
+            doc.setTextColor(153, 27, 27);
+        }
+        doc.roundedRect(estadoX - 20, yPos + 6, 18, 6, 2, 2, 'F');
+        doc.setFontSize(8);
+        doc.setFont(undefined, 'bold');
+        doc.text(data.estado || 'N/A', estadoX - 11, yPos + 10, { align: 'center' });
+        
+        yPos += 22;
+        
+        // ========================================
+        // SECCIÓN: DATOS PERSONALES
+        // ========================================
+        doc.setFillColor(0, 102, 204);
+        doc.rect(15, yPos, 5, 8, 'F');
+        
+        doc.setTextColor(0, 102, 204);
+        doc.setFontSize(13);
+        doc.setFont(undefined, 'bold');
+        doc.text('DATOS PERSONALES', 22, yPos + 5);
+        yPos += 12;
+        
+        // Contenedor con borde
+        doc.setDrawColor(229, 231, 235);
+        doc.setLineWidth(0.5);
+        doc.rect(15, yPos, 180, 35);
+        
+        // Datos en dos columnas
+        doc.setTextColor(0, 0, 0);
+        doc.setFontSize(10);
+        
+        // Columna 1
+        let col1X = 20;
+        let col2X = 110;
+        let dataY = yPos + 7;
+        
+        doc.setFont(undefined, 'bold');
+        doc.text('Comunidad:', col1X, dataY);
+        doc.setFont(undefined, 'normal');
+        doc.text(data.comunidad || 'N/A', col1X + 25, dataY);
+        
+        doc.setFont(undefined, 'bold');
+        doc.text('Territorio:', col2X, dataY);
+        doc.setFont(undefined, 'normal');
+        doc.text(data.territorio || 'N/A', col2X + 22, dataY);
+        dataY += 7;
+        
+        doc.setFont(undefined, 'bold');
+        doc.text('Teléfono:', col1X, dataY);
+        doc.setFont(undefined, 'normal');
+        doc.text(data.telefono || 'No registrado', col1X + 25, dataY);
+        
+        doc.setFont(undefined, 'bold');
+        doc.text('Edad:', col2X, dataY);
+        doc.setFont(undefined, 'normal');
+        const edad = data.fecha_nacimiento ? 
+            Math.floor((new Date() - new Date(data.fecha_nacimiento)) / 31557600000) : 'N/A';
+        doc.text(`${edad} años`, col2X + 22, dataY);
+        dataY += 7;
+        
+        doc.setFont(undefined, 'bold');
+        doc.text('Dirección:', col1X, dataY);
+        doc.setFont(undefined, 'normal');
+        const direccion = (data.direccion || 'No registrada').substring(0, 60);
+        doc.text(direccion, col1X + 25, dataY);
+        
+        doc.setFont(undefined, 'bold');
+        doc.text('F. Nacimiento:', col2X, dataY);
+        doc.setFont(undefined, 'normal');
+        const fechaNac = data.fecha_nacimiento ? 
+            new Date(data.fecha_nacimiento).toLocaleDateString('es-GT') : 'N/A';
+        doc.text(fechaNac, col2X + 28, dataY);
+        
+        yPos += 40;
+        
+        // ========================================
+        // SECCIÓN: RESUMEN DE ATENCIÓN
+        // ========================================
+        doc.setFillColor(0, 102, 204);
+        doc.rect(15, yPos, 5, 8, 'F');
+        
+        doc.setTextColor(0, 102, 204);
+        doc.setFontSize(13);
+        doc.setFont(undefined, 'bold');
+        doc.text('RESUMEN DE ATENCIÓN', 22, yPos + 5);
+        yPos += 12;
+        
+        // Tarjetas de estadísticas
+        const cardWidth = 42;
+        const cardHeight = 20;
+        const cardGap = 4;
+        let cardX = 15;
+        
+        // Total Visitas
+        doc.setFillColor(239, 246, 255);
+        doc.roundedRect(cardX, yPos, cardWidth, cardHeight, 2, 2, 'F');
+        doc.setFillColor(0, 102, 204);
+        doc.circle(cardX + 8, yPos + 7, 3, 'F');
+        doc.setTextColor(100, 100, 100);
+        doc.setFontSize(8);
+        doc.setFont(undefined, 'normal');
+        doc.text('Total Visitas', cardX + 12, yPos + 8);
+        doc.setTextColor(0, 102, 204);
+        doc.setFontSize(16);
+        doc.setFont(undefined, 'bold');
+        doc.text(String(data.historial_visitas?.length || 0), cardX + 21, yPos + 16, { align: 'center' });
+        
+        cardX += cardWidth + cardGap;
+        
+        // Métodos Usados
+        const metodosUnicos = new Set(data.historial_visitas?.map(v => v.metodo) || []);
+        doc.setFillColor(236, 253, 245);
+        doc.roundedRect(cardX, yPos, cardWidth, cardHeight, 2, 2, 'F');
+        doc.setFillColor(5, 150, 105);
+        doc.circle(cardX + 8, yPos + 7, 3, 'F');
+        doc.setTextColor(100, 100, 100);
+        doc.setFontSize(8);
+        doc.setFont(undefined, 'normal');
+        doc.text('Métodos Usados', cardX + 12, yPos + 8);
+        doc.setTextColor(5, 150, 105);
+        doc.setFontSize(16);
+        doc.setFont(undefined, 'bold');
+        doc.text(String(metodosUnicos.size), cardX + 21, yPos + 16, { align: 'center' });
+        
+        cardX += cardWidth + cardGap;
+        
+        // Primera Visita
+        doc.setFillColor(254, 243, 199);
+        doc.roundedRect(cardX, yPos, cardWidth, cardHeight, 2, 2, 'F');
+        doc.setFillColor(217, 119, 6);
+        doc.circle(cardX + 8, yPos + 7, 3, 'F');
+        doc.setTextColor(100, 100, 100);
+        doc.setFontSize(8);
+        doc.setFont(undefined, 'normal');
+        doc.text('Primera Visita', cardX + 12, yPos + 8);
+        doc.setTextColor(146, 64, 14);
+        doc.setFontSize(8);
+        doc.setFont(undefined, 'bold');
+        const primeraVisita = data.historial_visitas?.[data.historial_visitas.length - 1]?.fecha_visita;
+        const fechaPrimera = primeraVisita ? 
+            new Date(primeraVisita).toLocaleDateString('es-GT', { day: '2-digit', month: 'short', year: 'numeric' }) : 'N/A';
+        doc.text(fechaPrimera, cardX + 21, yPos + 16, { align: 'center' });
+        
+        cardX += cardWidth + cardGap;
+        
+        // Última Visita
+        doc.setFillColor(254, 226, 226);
+        doc.roundedRect(cardX, yPos, cardWidth, cardHeight, 2, 2, 'F');
+        doc.setFillColor(220, 38, 38);
+        doc.circle(cardX + 8, yPos + 7, 3, 'F');
+        doc.setTextColor(100, 100, 100);
+        doc.setFontSize(8);
+        doc.setFont(undefined, 'normal');
+        doc.text('Última Visita', cardX + 12, yPos + 8);
+        doc.setTextColor(153, 27, 27);
+        doc.setFontSize(8);
+        doc.setFont(undefined, 'bold');
+        const ultimaVisita = data.historial_visitas?.[0]?.fecha_visita;
+        const fechaUltima = ultimaVisita ? 
+            new Date(ultimaVisita).toLocaleDateString('es-GT', { day: '2-digit', month: 'short', year: 'numeric' }) : 'N/A';
+        doc.text(fechaUltima, cardX + 21, yPos + 16, { align: 'center' });
+        
+        yPos += 26;
+        
+        // ========================================
+        // SECCIÓN: MÉTODOS UTILIZADOS
+        // ========================================
+        if (metodosUnicos.size > 0) {
+            doc.setFillColor(0, 102, 204);
+            doc.rect(15, yPos, 5, 8, 'F');
+            
+            doc.setTextColor(0, 102, 204);
+            doc.setFontSize(13);
+            doc.setFont(undefined, 'bold');
+            doc.text('MÉTODOS UTILIZADOS', 22, yPos + 5);
+            yPos += 12;
+            
+            // Contar ocurrencias de cada método
+            const metodosCuenta = {};
+            data.historial_visitas?.forEach(v => {
+                metodosCuenta[v.metodo] = (metodosCuenta[v.metodo] || 0) + 1;
+            });
+            
+            // Listar métodos
+            let metodoY = yPos;
+            Object.entries(metodosCuenta).slice(0, 5).forEach(([metodo, count], index) => {
+                // Badge del método
+                doc.setFillColor(245, 247, 250);
+                doc.roundedRect(20, metodoY - 2, 150, 7, 2, 2, 'F');
+                
+                doc.setTextColor(0, 0, 0);
+                doc.setFontSize(10);
+                doc.setFont(undefined, 'normal');
+                doc.text(metodo.substring(0, 55), 23, metodoY + 3);
+                
+                // Contador
+                doc.setFillColor(0, 102, 204);
+                doc.circle(176, metodoY + 1.5, 4, 'F');
+                doc.setTextColor(255, 255, 255);
+                doc.setFontSize(9);
+                doc.setFont(undefined, 'bold');
+                doc.text(String(count), 176, metodoY + 3, { align: 'center' });
+                
+                metodoY += 9;
+            });
+            
+            yPos = metodoY + 4;
+        }
+        
+        // ========================================
+        // SECCIÓN: HISTORIAL DE VISITAS
+        // ========================================
+        if (data.historial_visitas && data.historial_visitas.length > 0) {
+            doc.setFillColor(0, 102, 204);
+            doc.rect(15, yPos, 5, 8, 'F');
+            
+            doc.setTextColor(0, 102, 204);
+            doc.setFontSize(13);
+            doc.setFont(undefined, 'bold');
+            doc.text('HISTORIAL DE VISITAS', 22, yPos + 5);
+            yPos += 12;
+            
+            // Tabla profesional
+            const headers = [['Fecha', 'Método Anticonceptivo', 'Registrado Por', 'Estado']];
+            const rows = data.historial_visitas.slice(0, 12).map(v => [
+                new Date(v.fecha_visita).toLocaleDateString('es-GT'),
+                (v.metodo || 'N/A').substring(0, 35),
+                `${v.registrado_por_nombre || ''} ${v.registrado_por_apellido || ''}`.substring(0, 28).trim(),
+                v.estado || 'N/A'
+            ]);
+            
+            doc.autoTable({
+                head: headers,
+                body: rows,
+                startY: yPos,
+                theme: 'grid',
+                headStyles: {
+                    fillColor: [0, 102, 204],
+                    textColor: [255, 255, 255],
+                    fontStyle: 'bold',
+                    halign: 'center',
+                    fontSize: 9,
+                    cellPadding: 3
+                },
+                bodyStyles: {
+                    fontSize: 8,
+                    cellPadding: 2.5
+                },
+                columnStyles: {
+                    0: { cellWidth: 23, halign: 'center' },
+                    1: { cellWidth: 68 },
+                    2: { cellWidth: 60 },
+                    3: { cellWidth: 20, halign: 'center' }
+                },
+                alternateRowStyles: {
+                    fillColor: [249, 250, 251]
+                },
+                margin: { left: 15, right: 15 }
+            });
+            
+            // Nota si hay más visitas
+            if (data.historial_visitas.length > 12) {
+                const finalY = doc.lastAutoTable.finalY + 5;
+                doc.setFontSize(8);
+                doc.setTextColor(100, 100, 100);
+                doc.setFont(undefined, 'italic');
+                doc.text(`* Se muestran las 12 visitas más recientes de ${data.historial_visitas.length} totales`, 105, finalY, { align: 'center' });
+            }
+        }
+        
+        // ========================================
+        // FOOTER PROFESIONAL
+        // ========================================
+        const pageCount = doc.internal.getNumberOfPages();
+        
+        for (let i = 1; i <= pageCount; i++) {
+            doc.setPage(i);
+            
+            // Línea separadora
+            doc.setDrawColor(200, 200, 200);
+            doc.setLineWidth(0.3);
+            doc.line(15, 282, 195, 282);
+            
+            // Footer info
+            doc.setFontSize(7);
+            doc.setTextColor(100, 100, 100);
+            doc.setFont(undefined, 'normal');
+            
+            doc.text(`Página ${i} de ${pageCount}`, 15, 287);
+            doc.text('SGPF - MSPAS Huehuetenango', 105, 287, { align: 'center' });
+            doc.text(`Impreso: ${new Date().toLocaleDateString('es-GT')}`, 195, 287, { align: 'right' });
+        }
+        
+        // ========================================
+        // GUARDAR ARCHIVO
+        // ========================================
+        const nombreArchivo = `Ficha_${data.nombres}_${data.apellidos}_${Date.now()}.pdf`.replace(/\s/g, '_');
+        doc.save(nombreArchivo);
+        
+        SGPF.showToast('✅ PDF generado exitosamente', 'success');
+        
+    } catch (error) {
+        console.error('❌ Error generando PDF:', error);
+        SGPF.showToast('Error al generar PDF', 'error');
+    }
+}
 };
 
 // ===== AUTO-INICIALIZAR SI SE CARGA DIRECTAMENTE =====

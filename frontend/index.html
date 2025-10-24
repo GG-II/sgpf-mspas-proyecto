@@ -4,64 +4,65 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-        <!-- JavaScript Modular -->
     <!-- JavaScript Modular con Cache Busting -->
-<script>
-    // Generar timestamp único para cada recarga (Cache Busting)
-    const cacheBuster = new Date().getTime();
-    
-    // Función para cargar scripts sin caché
-    function loadScript(src) {
+    <script>
+      // Generar timestamp único para cada recarga (Cache Busting)
+      const cacheBuster = new Date().getTime();
+      
+      // Función para cargar scripts sin caché
+      function loadScript(src) {
         const script = document.createElement('script');
         script.src = `${src}?v=${cacheBuster}`;
         script.async = false; // Cargar en orden
         document.head.appendChild(script);
         return new Promise((resolve, reject) => {
-            script.onload = resolve;
-            script.onerror = reject;
+          script.onload = resolve;
+          script.onerror = reject;
         });
-    }
-    
-    // Lista de scripts en orden
-    const scripts = [
+      }
+      
+      // Lista de scripts en orden
+      const scripts = [
         'js/config.js',
         'js/shared.js',
         'js/security.js',
         'js/component-loader.js',
         'js/auth.js',
         'js/app.js'
-    ];
-    
-    // Cargar scripts secuencialmente
-    console.log('🔄 Cargando scripts con cache busting:', cacheBuster);
-    
-    (async () => {
+      ];
+      
+      // Cargar scripts secuencialmente
+      console.log('🔄 Cargando scripts con cache busting:', cacheBuster);
+      
+      (async () => {
         for (const script of scripts) {
-            try {
-                await loadScript(script);
-                console.log(`✅ Cargado: ${script}?v=${cacheBuster}`);
-            } catch (error) {
-                console.error(`❌ Error cargando ${script}:`, error);
-            }
+          try {
+            await loadScript(script);
+            console.log(`✅ Cargado: ${script}?v=${cacheBuster}`);
+          } catch (error) {
+            console.error(`❌ Error cargando ${script}:`, error);
+          }
         }
         
         // Verificar que SGPFConfig esté disponible
         if (typeof SGPFConfig !== 'undefined') {
-            console.log('✅ SGPFConfig cargado correctamente');
-            SGPFConfig.logConfig();
+          console.log('✅ SGPFConfig cargado correctamente');
+          SGPFConfig.logConfig();
         } else {
-            console.error('❌ SGPFConfig NO se cargó');
+          console.error('❌ SGPFConfig NO se cargó');
         }
-    })();
-</script>
+      })();
+    </script>
 
-<!-- Meta tags anti-caché -->
-<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-<meta http-equiv="Pragma" content="no-cache">
-<meta http-equiv="Expires" content="0">
+    <!-- Meta tags anti-caché -->
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
 
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Librerías PDF/Excel -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script>
       // Asegurar que jsPDF esté disponible globalmente
@@ -69,38 +70,40 @@
         window.jsPDF = window.jspdf;
       }
     </script>
-    <!-- jsPDF AutoTable -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
-    <!-- Configuración Tailwind -->
+    <!-- Configuración Tailwind MSPAS Institucional -->
     <script>
       tailwind.config = {
         theme: {
           extend: {
             colors: {
               primary: {
-                50: "#f5f7ff",
-                100: "#ebf0ff",
-                200: "#d6e0ff",
-                300: "#a3b9ff",
-                400: "#6b8eff",
-                500: "#4169e1",
-                600: "#3451b8",
-                700: "#2a3f8f",
-                800: "#1f2d66",
-                900: "#141d3d",
+                50: '#E6F2FF',
+                100: '#CCE5FF',
+                200: '#99CCFF',
+                300: '#66B2FF',
+                400: '#3399FF',
+                500: '#0066CC',
+                600: '#0055AA',
+                700: '#004488',
+                800: '#003366',
+                900: '#002244',
               },
+              mspas: {
+                blue: '#0066CC',
+                green: '#00A651',
+                orange: '#FF8C42',
+                dark: '#2C3E50',
+              }
             },
           },
         },
       };
     </script>
-
-    <!-- Librerías -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
     <title>SGPF - MSPAS Huehuetenango</title>
 
@@ -112,19 +115,26 @@
     <style>
       /* === VARIABLES === */
       :root {
-        --header-height: 64px;
-        --nav-desktop-height: 56px;
-        --nav-mobile-height: 64px;
+        --header-height: 56px;
+        --nav-desktop-height: 52px;
+        --nav-mobile-height: 60px;
+        --mspas-blue: #0066CC;
+        --mspas-blue-dark: #0055AA;
       }
 
       /* === ESTRUCTURA PRINCIPAL === */
       body {
         margin: 0;
         padding: 0;
-        background: linear-gradient(135deg, #4c51bf 0%, #5a3d7a 100%);
+        background: linear-gradient(135deg, #003d82 0%, #0066CC 100%);
         min-height: 100vh;
-        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
-          sans-serif;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        animation: fadeIn 0.3s ease-out;
+      }
+
+      @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
       }
 
       .app-container {
@@ -133,9 +143,9 @@
         flex-direction: column;
       }
 
-      /* === HEADER - SIEMPRE SOLIDO === */
+      /* === HEADER - AZUL INSTITUCIONAL OSCURO === */
       .app-header {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        background: #003d82;
         color: white;
         height: var(--header-height);
         position: fixed;
@@ -143,20 +153,20 @@
         left: 0;
         right: 0;
         z-index: 1000;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.25);
       }
 
       .header-content {
         max-width: 100%;
         height: 100%;
-        padding: 0 1rem;
+        padding: 0 0.75rem;
         display: flex;
         justify-content: space-between;
         align-items: center;
       }
 
       .header-logo {
-        height: 40px;
+        height: 32px;
         width: auto;
         filter: brightness(0) invert(1);
       }
@@ -164,26 +174,27 @@
       .user-info {
         display: flex;
         align-items: center;
-        gap: 1rem;
+        gap: 0.5rem;
         color: white;
       }
 
       #user-name {
         display: none;
         font-weight: 600;
-        font-size: 0.875rem;
+        font-size: 0.8125rem;
       }
 
       .btn-logout {
         background: rgba(255, 255, 255, 0.2);
         color: white;
-        padding: 0.5rem 1rem;
+        padding: 0.375rem 0.75rem;
         border-radius: 0.5rem;
         border: 1px solid rgba(255, 255, 255, 0.3);
         font-weight: 600;
         cursor: pointer;
         transition: all 0.2s;
-        font-size: 0.875rem;
+        font-size: 0.8125rem;
+        white-space: nowrap;
       }
 
       .btn-logout:hover {
@@ -191,7 +202,7 @@
         transform: translateY(-1px);
       }
 
-      /* === NAVEGACION DESKTOP (arriba) === */
+      /* === NAVEGACIÓN DESKTOP ESTILO MICROSOFT 365 === */
       .desktop-nav {
         display: none;
         background: white;
@@ -201,8 +212,8 @@
         left: 0;
         right: 0;
         z-index: 900;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-        border-bottom: 1px solid #e5e7eb;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+        border-bottom: 1px solid #E5E7EB;
       }
 
       .desktop-nav-content {
@@ -210,44 +221,81 @@
         margin: 0 auto;
         height: 100%;
         display: flex;
-        align-items: center;
-        padding: 0 1rem;
-        gap: 0.25rem;
+        align-items: stretch;
+        padding: 0 1.5rem;
+        gap: 0;
+        overflow-x: auto;
+        scrollbar-width: thin;
+      }
+
+      .desktop-nav-content::-webkit-scrollbar {
+        height: 4px;
+      }
+
+      .desktop-nav-content::-webkit-scrollbar-thumb {
+        background: #D1D5DB;
+        border-radius: 2px;
       }
 
       .desktop-nav .nav-item {
         display: flex;
         align-items: center;
+        justify-content: center;
         gap: 0.5rem;
-        padding: 0.5rem 1rem;
-        border-radius: 0.5rem;
+        padding: 0 1.25rem;
         cursor: pointer;
-        transition: all 0.2s;
-        color: #6b7280;
+        transition: all 0.15s ease;
+        color: #4B5563;
         font-weight: 500;
         font-size: 0.875rem;
         white-space: nowrap;
+        flex-shrink: 0;
+        position: relative;
+        border-bottom: 3px solid transparent;
+        background: transparent;
       }
 
       .desktop-nav .nav-item:hover {
-        background: #f3f4f6;
-        color: #667eea;
+        color: var(--mspas-blue);
+        background: #F9FAFB;
       }
 
       .desktop-nav .nav-item.active {
-        background: #667eea;
-        color: white;
+        color: var(--mspas-blue);
+        font-weight: 600;
+        border-bottom-color: var(--mspas-blue);
+        background: transparent;
+      }
+
+      .desktop-nav .nav-item.active::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+        background: var(--mspas-blue);
+        animation: slideIn 0.2s ease-out;
+      }
+
+      @keyframes slideIn {
+        from {
+          transform: scaleX(0);
+        }
+        to {
+          transform: scaleX(1);
+        }
       }
 
       .desktop-nav .nav-icon {
-        font-size: 1.25rem;
+        font-size: 1.125rem;
       }
 
       .desktop-nav .nav-label {
         font-size: 0.875rem;
       }
 
-      /* === NAVEGACION MOVIL (abajo) === */
+      /* === NAVEGACIÓN MÓVIL (abajo) === */
       .mobile-nav {
         display: flex;
         background: white;
@@ -257,8 +305,8 @@
         left: 0;
         right: 0;
         z-index: 900;
-        box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.1);
-        border-top: 1px solid #e5e7eb;
+        box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.08);
+        border-top: 2px solid #E5E7EB;
       }
 
       .mobile-nav .nav-item {
@@ -267,12 +315,13 @@
         flex-direction: column;
         align-items: center;
         justify-content: center;
-        gap: 0.25rem;
-        padding: 0.5rem;
+        gap: 0.125rem;
+        padding: 0.375rem 0.25rem;
         cursor: pointer;
         transition: all 0.2s;
-        color: #6b7280;
+        color: #6B7280;
         position: relative;
+        min-width: 0;
       }
 
       .mobile-nav .nav-item:active {
@@ -280,7 +329,7 @@
       }
 
       .mobile-nav .nav-item.active {
-        color: #667eea;
+        color: var(--mspas-blue);
       }
 
       .mobile-nav .nav-item.active::before {
@@ -290,36 +339,75 @@
         left: 0;
         right: 0;
         height: 3px;
-        background: #667eea;
+        background: var(--mspas-blue);
         border-radius: 0 0 3px 3px;
       }
 
       .mobile-nav .nav-icon {
-        font-size: 1.5rem;
+        font-size: 1.375rem;
       }
 
       .mobile-nav .nav-label {
-        font-size: 0.75rem;
+        font-size: 0.6875rem;
         font-weight: 600;
+        text-align: center;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        max-width: 100%;
       }
 
       /* === CONTENIDO PRINCIPAL === */
       .main-content {
         flex: 1;
         margin-top: var(--header-height);
-        padding: 1.5rem 1rem;
-        padding-bottom: calc(var(--nav-mobile-height) + 1.5rem);
+        padding: 1rem 0.75rem;
+        padding-bottom: calc(var(--nav-mobile-height) + 1rem);
         max-width: 1400px;
         margin-left: auto;
         margin-right: auto;
         width: 100%;
+        animation: slideUp 0.4s ease-out;
+      }
+
+      @keyframes slideUp {
+        from {
+          opacity: 0;
+          transform: translateY(20px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      /* Animaciones para tarjetas */
+      .main-content > * {
+        animation: fadeInUp 0.5s ease-out backwards;
+      }
+
+      .main-content > *:nth-child(1) { animation-delay: 0.1s; }
+      .main-content > *:nth-child(2) { animation-delay: 0.15s; }
+      .main-content > *:nth-child(3) { animation-delay: 0.2s; }
+      .main-content > *:nth-child(4) { animation-delay: 0.25s; }
+      .main-content > *:nth-child(5) { animation-delay: 0.3s; }
+
+      @keyframes fadeInUp {
+        from {
+          opacity: 0;
+          transform: translateY(15px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
       }
 
       /* === LOADING === */
       .loading-overlay {
         position: fixed;
         inset: 0;
-        background: rgba(102, 126, 234, 0.95);
+        background: rgba(0, 61, 130, 0.95);
         backdrop-filter: blur(8px);
         display: none;
         align-items: center;
@@ -331,6 +419,7 @@
 
       .loading-overlay:not(.hidden) {
         display: flex;
+        animation: fadeIn 0.2s ease-out;
       }
 
       .loading-spinner {
@@ -350,22 +439,23 @@
 
       .loading-overlay p {
         color: white;
-        font-size: 1.125rem;
+        font-size: 1rem;
         font-weight: 600;
       }
 
       /* === TOAST === */
       .toast-container {
         position: fixed;
-        top: calc(var(--header-height) + 1rem);
-        right: 1rem;
+        top: calc(var(--header-height) + 0.75rem);
+        right: 0.75rem;
         z-index: 10000;
         display: flex;
         flex-direction: column;
         gap: 0.5rem;
+        max-width: calc(100vw - 1.5rem);
       }
 
-      /* === MODALES - Z-INDEX ALTO === */
+      /* === MODALES === */
       .modal-backdrop {
         position: fixed;
         inset: 0;
@@ -391,14 +481,87 @@
         z-index: 9001;
       }
 
+      /* === INITIAL LOADING === */
+      #initial-loading {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(12px);
+        padding: 2rem 1.5rem;
+        border-radius: 1rem;
+        text-align: center;
+        margin: 2rem auto;
+        max-width: 360px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+      }
+
+      #initial-loading h2 {
+        font-size: 1.5rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+        color: var(--mspas-blue);
+      }
+
+      #initial-loading p {
+        color: #6B7280;
+        font-size: 0.875rem;
+      }
+
+      .pulse-dot {
+        width: 16px;
+        height: 16px;
+        background: var(--mspas-blue);
+        border-radius: 50%;
+        margin: 1rem auto;
+        animation: pulse 1.5s ease-in-out infinite;
+      }
+
+      @keyframes pulse {
+        0%, 100% {
+          opacity: 1;
+          transform: scale(1);
+        }
+        50% {
+          opacity: 0.5;
+          transform: scale(1.2);
+        }
+      }
+
+      .hidden {
+        display: none !important;
+      }
+
+      /* === RESPONSIVE TABLET === */
+      @media (min-width: 640px) {
+        .header-logo {
+          height: 36px;
+        }
+        
+        .main-content {
+          padding: 1.25rem 1rem;
+        }
+        
+        .toast-container {
+          max-width: 360px;
+        }
+      }
+
       /* === RESPONSIVE DESKTOP === */
       @media (min-width: 768px) {
+        :root {
+          --header-height: 64px;
+          --nav-desktop-height: 56px;
+        }
+
+        .header-logo {
+          height: 40px;
+        }
+
         #user-name {
           display: inline;
         }
 
         .btn-logout {
-          padding: 0.5rem 1.5rem;
+          padding: 0.5rem 1.25rem;
+          font-size: 0.875rem;
         }
 
         .desktop-nav {
@@ -411,69 +574,40 @@
 
         .main-content {
           margin-top: calc(var(--header-height) + var(--nav-desktop-height));
-          padding: 2rem;
-          padding-bottom: 2rem;
+          padding: 1.5rem 1.25rem;
+          padding-bottom: 1.5rem;
         }
 
         .toast-container {
           top: calc(var(--header-height) + var(--nav-desktop-height) + 1rem);
+          right: 1rem;
+        }
+
+        #initial-loading {
+          padding: 3rem 2rem;
+          max-width: 400px;
+        }
+
+        #initial-loading h2 {
+          font-size: 1.875rem;
+        }
+
+        #initial-loading p {
+          font-size: 1rem;
         }
       }
 
+      /* === RESPONSIVE DESKTOP LARGE === */
       @media (min-width: 1024px) {
+        .main-content {
+          padding: 2rem 2rem;
+        }
+      }
+
+      @media (min-width: 1280px) {
         .main-content {
           padding: 2.5rem 3rem;
         }
-      }
-
-      /* === INITIAL LOADING === */
-      #initial-loading {
-        background: rgba(255, 255, 255, 0.95);
-        backdrop-filter: blur(12px);
-        padding: 3rem 2rem;
-        border-radius: 1rem;
-        text-align: center;
-        margin: 2rem auto;
-        max-width: 400px;
-        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
-      }
-
-      #initial-loading h2 {
-        font-size: 1.875rem;
-        font-weight: 700;
-        margin-bottom: 0.5rem;
-        background: linear-gradient(135deg, #667eea, #764ba2);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-      }
-
-      #initial-loading p {
-        color: #6b7280;
-      }
-
-      .pulse-dot {
-        width: 16px;
-        height: 16px;
-        background: linear-gradient(135deg, #667eea, #764ba2);
-        border-radius: 50%;
-        margin: 1rem auto;
-        animation: pulse 1.5s ease-in-out infinite;
-      }
-
-      @keyframes pulse {
-        0%,
-        100% {
-          opacity: 1;
-          transform: scale(1);
-        }
-        50% {
-          opacity: 0.5;
-          transform: scale(1.2);
-        }
-      }
-
-      .hidden {
-        display: none !important;
       }
     </style>
   </head>
@@ -494,10 +628,10 @@
         </div>
       </header>
 
-      <!-- NAVEGACION DESKTOP (arriba, estilo Office) -->
+      <!-- NAVEGACIÓN DESKTOP (arriba) -->
       <nav id="desktop-nav" class="desktop-nav hidden">
         <div class="desktop-nav-content">
-          <!-- Se genera dinamicamente -->
+          <!-- Se genera dinámicamente -->
         </div>
       </nav>
 
@@ -510,9 +644,9 @@
         </div>
       </main>
 
-      <!-- NAVEGACION MOVIL (abajo, estilo YouTube/X) -->
+      <!-- NAVEGACIÓN MÓVIL (abajo) -->
       <nav id="mobile-nav" class="mobile-nav hidden">
-        <!-- Se genera dinamicamente -->
+        <!-- Se genera dinámicamente -->
       </nav>
 
       <!-- LOADING OVERLAY -->

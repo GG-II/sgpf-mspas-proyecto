@@ -1,91 +1,396 @@
-<!-- ===== DASHBOARD AUXILIAR V2.1 - OPTIMIZADO CON 4 MÉTRICAS ===== -->
+<!-- ===== DASHBOARD AUXILIAR V3.0 - OFFICE 365 + MOBILE OPTIMIZED ===== -->
 
-<div class="max-w-4xl mx-auto p-4 space-y-6">
+<div class="auxiliar-dashboard">
   
-  <!-- Header Simple -->
-  <div class="bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl p-6 text-white shadow-lg">
-    <h1 class="text-2xl font-bold">👋 Hola, <span id="auxiliar-nombre">Cargando...</span></h1>
-    <p class="text-blue-100 mt-1" id="auxiliar-comunidad">Comunidad: Cargando...</p>
-  </div>
-
-  <!-- 4 Métricas Principales: Total + 3 Tipos -->
-  <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-    <!-- NUEVA: Total Usuarias -->
-    <div class="bg-white rounded-lg p-4 text-center shadow-md hover:shadow-lg transition">
-      <div class="text-4xl font-bold text-indigo-600" id="total-usuarias">0</div>
-      <div class="text-sm text-gray-600 mt-2">Total Usuarias</div>
-      <div class="text-xs text-gray-400 mt-1">Este mes</div>
-    </div>
-    
-    <div class="bg-white rounded-lg p-4 text-center shadow-md hover:shadow-lg transition">
-      <div class="text-4xl font-bold text-green-600" id="usuarias-nuevas">0</div>
-      <div class="text-sm text-gray-600 mt-2">Nuevas</div>
-      <div class="text-xs text-gray-400 mt-1">Este mes</div>
-    </div>
-    
-    <div class="bg-white rounded-lg p-4 text-center shadow-md hover:shadow-lg transition">
-      <div class="text-4xl font-bold text-blue-600" id="usuarias-reconsulta">0</div>
-      <div class="text-sm text-gray-600 mt-2">Reconsulta</div>
-      <div class="text-xs text-gray-400 mt-1">Este mes</div>
-    </div>
-    
-    <div class="bg-white rounded-lg p-4 text-center shadow-md hover:shadow-lg transition">
-      <div class="text-4xl font-bold text-purple-600" id="usuarias-activas">0</div>
-      <div class="text-sm text-gray-600 mt-2">Activas</div>
-      <div class="text-xs text-gray-400 mt-1">Este mes</div>
+  <!-- Hero Header - Responsive -->
+  <div class="hero-header">
+    <div class="hero-content">
+      <div class="hero-greeting">
+        <div class="hero-text">
+          <h1>Hola, <span id="auxiliar-nombre">Cargando...</span></h1>
+          <p id="auxiliar-comunidad">Comunidades: <span id="auxiliar-comunidades-lista">Cargando...</span></p>
+        </div>
+      </div>
     </div>
   </div>
 
-  <!-- Últimas 5 Visitas -->
-  <div class="bg-white rounded-lg shadow-md overflow-hidden">
-    <div class="px-6 py-4 border-b bg-gray-50">
-      <h2 class="font-semibold text-gray-800 flex items-center gap-2">
-        <span class="text-xl">📋</span>
+  <!-- Métricas Grid - Responsive -->
+  <div class="metrics-grid">
+    <!-- Total Usuarias -->
+    <div class="metric-card metric-primary">
+      <div class="metric-icon">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
+        </svg>
+      </div>
+      <div class="metric-info">
+        <div class="metric-value" id="total-usuarias">0</div>
+        <div class="metric-label">Total Usuarias</div>
+        <div class="metric-sublabel">Este mes</div>
+      </div>
+    </div>
+
+    <!-- Nuevas -->
+    <div class="metric-card metric-success">
+      <div class="metric-icon">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/>
+        </svg>
+      </div>
+      <div class="metric-info">
+        <div class="metric-value" id="usuarias-nuevas">0</div>
+        <div class="metric-label">Nuevas</div>
+        <div class="metric-sublabel">Este mes</div>
+      </div>
+    </div>
+
+    <!-- Reconsulta -->
+    <div class="metric-card metric-info">
+      <div class="metric-icon">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+        </svg>
+      </div>
+      <div class="metric-info">
+        <div class="metric-value" id="usuarias-reconsulta">0</div>
+        <div class="metric-label">Reconsulta</div>
+        <div class="metric-sublabel">Este mes</div>
+      </div>
+    </div>
+
+    <!-- Activas -->
+    <div class="metric-card metric-warning">
+      <div class="metric-icon">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+      </div>
+      <div class="metric-info">
+        <div class="metric-value" id="usuarias-activas">0</div>
+        <div class="metric-label">Activas</div>
+        <div class="metric-sublabel">Este mes</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Últimas Visitas - SIN tabla, solo lista -->
+  <div class="visits-container">
+    <div class="section-header">
+      <h2>
+        <svg class="section-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+        </svg>
         Mis Últimas Visitas
       </h2>
+      <span id="visitas-count" class="section-badge">0 visitas</span>
     </div>
-    
+
+    <!-- Container único para visitas (Desktop y Mobile) -->
     <div id="ultimas-visitas" class="divide-y">
-      <!-- Loading state -->
       <div class="px-6 py-8 text-center text-gray-400">
         <div class="animate-pulse">Cargando visitas...</div>
       </div>
     </div>
-    
-    <!-- Sin visitas -->
-    <div id="sin-visitas" class="hidden px-6 py-8 text-center text-gray-400">
-      <div class="text-4xl mb-2">🔭</div>
-      <p>Aún no has registrado visitas este mes</p>
+
+    <!-- Estado Vacío -->
+    <div id="sin-visitas" class="empty-state hidden">
+      <svg class="empty-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+      </svg>
+      <p>No hay visitas registradas este mes</p>
     </div>
   </div>
 
-  <!-- Info Comunidad (Colapsable) -->
-  <details class="bg-white rounded-lg shadow-md overflow-hidden">
-    <summary class="px-6 py-4 cursor-pointer hover:bg-gray-50 transition font-semibold text-gray-700 flex items-center justify-between">
-      <span class="flex items-center gap-2">
-        <span class="text-xl">🏘️</span>
-        Mi Comunidad
-      </span>
-      <span class="text-gray-400">▼</span>
-    </summary>
-    
-    <div class="px-6 py-4 border-t bg-gray-50" id="info-comunidad">
-      <div class="animate-pulse text-gray-400">Cargando información...</div>
-    </div>
-  </details>
-
 </div>
 
-<!-- Script de inicialización -->
-<script>
-document.addEventListener('DOMContentLoaded', () => {
-    // Delay para asegurar que el DOM esté listo
-    setTimeout(() => {
-        if (typeof window.AuxiliarDashboard !== 'undefined') {
-            window.AuxiliarDashboard.init();
-        } else {
-            console.error('❌ AuxiliarDashboard no está definido');
-        }
-    }, 300);
-});
-</script>
+<style>
+/* ===== DASHBOARD AUXILIAR V3.0 - OFFICE 365 STYLE ===== */
+
+.auxiliar-dashboard {
+  width: 100%;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0;
+}
+
+/* === HERO HEADER === */
+.hero-header {
+  background: linear-gradient(135deg, #0066CC 0%, #0088DD 100%);
+  border-radius: 0.75rem;
+  padding: 1.25rem;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 2px 8px rgba(0, 102, 204, 0.15);
+}
+
+.hero-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.hero-greeting {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex: 1;
+  min-width: 200px;
+}
+
+.hero-text h1 {
+  color: white;
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin: 0;
+  line-height: 1.2;
+}
+
+.hero-text p {
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 0.875rem;
+  margin: 0.25rem 0 0 0;
+}
+
+/* === METRICS GRID === */
+.metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.metric-card {
+  background: white;
+  border-radius: 0.75rem;
+  padding: 1.25rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  transition: all 0.2s;
+  border-left: 4px solid;
+}
+
+.metric-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+}
+
+.metric-primary { border-left-color: #0066CC; }
+.metric-success { border-left-color: #00A651; }
+.metric-info { border-left-color: #0088DD; }
+.metric-warning { border-left-color: #FF8C42; }
+
+.metric-icon {
+  width: 3rem;
+  height: 3rem;
+  border-radius: 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.metric-primary .metric-icon { background: rgba(0, 102, 204, 0.1); color: #0066CC; }
+.metric-success .metric-icon { background: rgba(0, 166, 81, 0.1); color: #00A651; }
+.metric-info .metric-icon { background: rgba(0, 136, 221, 0.1); color: #0088DD; }
+.metric-warning .metric-icon { background: rgba(255, 140, 66, 0.1); color: #FF8C42; }
+
+.metric-icon svg {
+  width: 1.75rem;
+  height: 1.75rem;
+}
+
+.metric-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.metric-value {
+  font-size: 2rem;
+  font-weight: 700;
+  line-height: 1;
+  margin-bottom: 0.25rem;
+}
+
+.metric-primary .metric-value { color: #0066CC; }
+.metric-success .metric-value { color: #00A651; }
+.metric-info .metric-value { color: #0088DD; }
+.metric-warning .metric-value { color: #FF8C42; }
+
+.metric-label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #2C3E50;
+  margin-bottom: 0.125rem;
+}
+
+.metric-sublabel {
+  font-size: 0.75rem;
+  color: #6B7280;
+}
+
+/* === VISITS CONTAINER === */
+.visits-container {
+  background: white;
+  border-radius: 0.75rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+}
+
+.section-header {
+  background: #F9FAFB;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid #E5E7EB;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.section-header h2 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #2C3E50;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.section-icon {
+  width: 1.25rem;
+  height: 1.25rem;
+  color: #6B7280;
+}
+
+.section-badge {
+  background: #0066CC;
+  color: white;
+  padding: 0.25rem 0.75rem;
+  border-radius: 1rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+/* === VISITAS LIST (usado por JS) === */
+#ultimas-visitas {
+  min-height: 200px;
+}
+
+#ultimas-visitas .px-6 {
+  padding-left: 1.5rem;
+  padding-right: 1.5rem;
+}
+
+#ultimas-visitas .py-4 {
+  padding-top: 1rem;
+  padding-bottom: 1rem;
+}
+
+.loading-spinner {
+  width: 2rem;
+  height: 2rem;
+  border: 3px solid #E5E7EB;
+  border-top-color: #0066CC;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin: 0 auto 0.5rem;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* === EMPTY STATE === */
+.empty-state {
+  text-align: center;
+  padding: 3rem 1.5rem;
+  color: #6B7280;
+}
+
+.empty-icon {
+  width: 4rem;
+  height: 4rem;
+  color: #D1D5DB;
+  margin: 0 auto 1rem;
+}
+
+.empty-state p {
+  font-size: 0.9375rem;
+  margin-bottom: 1.5rem;
+}
+
+.loading-state {
+  text-align: center;
+  padding: 3rem 1.5rem;
+  color: #6B7280;
+}
+
+.hidden {
+  display: none !important;
+}
+
+/* === RESPONSIVE TABLET === */
+@media (min-width: 640px) {
+  .hero-header {
+    padding: 1.5rem;
+  }
+
+  .hero-text h1 {
+    font-size: 1.75rem;
+  }
+
+  .metrics-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+
+  .metric-card {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .metric-icon {
+    width: 4rem;
+    height: 4rem;
+  }
+
+  .metric-icon svg {
+    width: 2rem;
+    height: 2rem;
+  }
+
+  .metric-value {
+    font-size: 2.5rem;
+  }
+}
+
+/* === RESPONSIVE DESKTOP === */
+@media (min-width: 768px) {
+  .hero-header {
+    padding: 2rem;
+    margin-bottom: 2rem;
+  }
+
+  .hero-text h1 {
+    font-size: 2rem;
+  }
+
+  .hero-text p {
+    font-size: 1rem;
+  }
+
+  .metrics-grid {
+    gap: 1.25rem;
+    margin-bottom: 2rem;
+  }
+
+  .section-header {
+    padding: 1.25rem 1.5rem;
+  }
+
+  .section-header h2 {
+    font-size: 1.125rem;
+  }
+}
+</style>

@@ -19,8 +19,7 @@ window.AuxiliarDashboard = window.AuxiliarDashboard || {
             await Promise.all([
                 this.cargarDatosUsuario(),
                 this.cargarEstadisticasMesOptimizado(),
-                this.cargarUltimasVisitasOptimizado(),
-                this.cargarInfoComunidadOptimizado()
+                this.cargarUltimasVisitasOptimizado()
             ]);
 
             console.log('✅ Dashboard auxiliar V2.1 cargado exitosamente');
@@ -31,18 +30,24 @@ window.AuxiliarDashboard = window.AuxiliarDashboard || {
         }
     },
 
-    // ===== CARGAR DATOS DEL USUARIO =====
+    // ===== CARGAR DATOS DEL USUARIO (CORREGIDO) =====
     async cargarDatosUsuario() {
         const user = SGPF.getCurrentUser();
         
+        // Nombre completo
         const nombreElement = document.getElementById('auxiliar-nombre');
         if (nombreElement) {
             nombreElement.textContent = `${user.nombres} ${user.apellidos}`;
         }
 
-        const comunidadElement = document.getElementById('auxiliar-comunidad');
-        if (comunidadElement && user.comunidades && user.comunidades.length > 0) {
-            comunidadElement.textContent = `Comunidad: ${user.comunidades[0].nombre}`;
+        // ✅ CORREGIDO: Mostrar TODAS las comunidades en el span correcto
+        const comunidadesElement = document.getElementById('auxiliar-comunidades-lista');
+        if (comunidadesElement && user.comunidades && user.comunidades.length > 0) {
+            const nombresComunidades = user.comunidades.map(c => c.nombre).join(', ');
+            comunidadesElement.textContent = nombresComunidades;
+            console.log(`✅ Comunidades mostradas: ${nombresComunidades}`);
+        } else if (comunidadesElement) {
+            comunidadesElement.textContent = 'Sin comunidades asignadas';
         }
     },
 
@@ -122,16 +127,26 @@ window.AuxiliarDashboard = window.AuxiliarDashboard || {
 
             const container = document.getElementById('ultimas-visitas');
             const sinVisitas = document.getElementById('sin-visitas');
+            const contadorBadge = document.getElementById('visitas-count');
 
             if (!response.success || !response.data.visitas || response.data.visitas.length === 0) {
                 console.log('ℹ️ Sin visitas registradas');
-                if (container) container.classList.add('hidden');
+                if (container) {
+                    container.innerHTML = '';
+                    container.classList.add('hidden');
+                }
                 if (sinVisitas) sinVisitas.classList.remove('hidden');
+                if (contadorBadge) contadorBadge.textContent = '0 visitas';
                 return;
             }
 
             const visitas = response.data.visitas;
             console.log(`✅ ${visitas.length} visitas obtenidas`);
+
+            // ✅ ACTUALIZAR BADGE DE CONTADOR
+            if (contadorBadge) {
+                contadorBadge.textContent = `${visitas.length} visita${visitas.length !== 1 ? 's' : ''}`;
+            }
 
             if (container) {
                 container.classList.remove('hidden');
@@ -180,52 +195,6 @@ window.AuxiliarDashboard = window.AuxiliarDashboard || {
         }
     },
 
-    // ===== CARGAR TODAS LAS COMUNIDADES ASIGNADAS =====
-async cargarInfoComunidadOptimizado() {
-    try {
-        console.log('🏘️ Cargando comunidades asignadas (endpoint optimizado)...');
-        
-        // ✅ Llamada al nuevo endpoint
-        const response = await SGPF.apiCall('/dashboard-auxiliar/mis-comunidades');
-        
-        const infoElement = document.getElementById('info-comunidad');
-        if (!infoElement) return;
-
-        if (!response.success || !response.data || response.data.total === 0) {
-            console.log('ℹ️ Sin comunidades asignadas');
-            this.mostrarSinComunidades();
-            return;
-        }
-
-        const comunidades = response.data.comunidades;
-        console.log(`✅ ${comunidades.length} comunidades obtenidas`);
-
-        // Mostrar TODAS las comunidades
-        infoElement.innerHTML = `
-            <div class="space-y-3">
-                ${comunidades.map(com => `
-                    <div class="bg-gray-50 rounded-lg p-3 hover:bg-gray-100 transition">
-                        <h4 class="font-semibold text-gray-800 mb-2">${com.nombre}</h4>
-                        <div class="grid grid-cols-2 gap-x-4 gap-y-1 text-xs text-gray-600">
-                            <div><span class="font-medium">Código:</span> ${com.codigo_comunidad}</div>
-                            <div><span class="font-medium">Territorio:</span> ${com.territorio_nombre}</div>
-                            <div><span class="font-medium">Población MEF:</span> ${com.poblacion_mef}</div>
-                            <div><span class="font-medium">Distancia:</span> ${com.distancia_km || 'N/D'} km</div>
-                        </div>
-                    </div>
-                `).join('')}
-            </div>
-            <div class="mt-3 text-xs text-gray-500 text-center">
-                Total: ${comunidades.length} comunidad${comunidades.length !== 1 ? 'es' : ''} asignada${comunidades.length !== 1 ? 's' : ''}
-            </div>
-        `;
-        
-    } catch (error) {
-        console.error('❌ Error cargando comunidades:', error);
-        this.mostrarErrorComunidad();
-    }
-},
-
     // ===== FUNCIONES DE UTILIDAD =====
     formatearFecha(fecha) {
         if (!fecha) return '--';
@@ -267,31 +236,5 @@ async cargarInfoComunidadOptimizado() {
             'rechazado': '<span class="px-2 py-0.5 bg-red-100 text-red-800 rounded text-xs">Rechazado</span>'
         };
         return badges[estado] || '';
-    },
-
-    // ===== MENSAJES DE ERROR =====
-    mostrarSinComunidades() {
-        const infoElement = document.getElementById('info-comunidad');
-        if (infoElement) {
-            infoElement.innerHTML = `
-                <div class="text-center py-4 text-gray-500">
-                    <p class="text-2xl mb-2">📍</p>
-                    <p>Sin comunidades asignadas</p>
-                    <p class="text-sm mt-1">Contacta a tu supervisor</p>
-                </div>
-            `;
-        }
-    },
-
-    mostrarErrorComunidad() {
-        const infoElement = document.getElementById('info-comunidad');
-        if (infoElement) {
-            infoElement.innerHTML = `
-                <div class="text-center py-4 text-red-600">
-                    <p class="text-2xl mb-2">⚠️</p>
-                    <p>Error cargando información</p>
-                </div>
-            `;
-        }
     }
 };

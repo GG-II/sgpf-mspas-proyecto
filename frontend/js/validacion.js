@@ -1,4 +1,4 @@
-// ===== js/validacion.js - SISTEMA DE VALIDACIÓN DE REGISTROS =====
+// ===== js/validacion.js - SISTEMA DE VALIDACIÓN CON SWIPE MÓVIL =====
 window.ValidacionSystem = window.ValidacionSystem || {
   // Variables internas
   registrosPendientes: [],
@@ -144,12 +144,10 @@ window.ValidacionSystem = window.ValidacionSystem || {
     if (usuariasElement) usuariasElement.textContent = totalUsuarias;
   },
 
-  // ===== MOSTRAR REGISTROS =====
+  // ===== MOSTRAR REGISTROS CON SWIPE =====
   mostrarRegistros() {
     const containerElement = document.getElementById("registros-container");
-    const sinRegistrosElement = document.getElementById(
-      "sin-registros-mensaje"
-    );
+    const sinRegistrosElement = document.getElementById("sin-registros-mensaje");
     const loadingElement = document.getElementById("validacion-loading");
 
     if (!containerElement) {
@@ -170,166 +168,257 @@ window.ValidacionSystem = window.ValidacionSystem || {
       return;
     }
 
-    // CREAR HTML PRIMERO
-    const registrosHtml = this.registrosFiltrados
-      .map((registro) => {
-        const badgeColor =
-          registro.tipo_usuaria === "nueva"
-            ? "bg-blue-100 text-blue-800"
-            : registro.tipo_usuaria === "reconsulta"
-            ? "bg-yellow-100 text-yellow-800"
-            : "bg-green-100 text-green-800";
-
-        return `
-            <div class="bg-white rounded-xl shadow-lg hover:shadow-xl transition-all border border-gray-200 overflow-hidden" data-registro-id="${
-              registro.id
-            }">
-                <!-- Header del Card -->
-                <div class="bg-gradient-to-r from-indigo-50 to-purple-50 p-6 border-b border-gray-200">
-                    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                        <div>
-    <h3 class="text-xl font-bold text-gray-900">${
-      registro.metodo || "Método Desconocido"
-    }</h3>
-    <p class="text-sm text-gray-600">${
-      registro.usuaria_nombre || "Usuaria sin nombre"
-    }</p>
-</div>
-                        <div class="flex gap-2">
-                            <span class="px-3 py-1 bg-yellow-100 text-yellow-800 rounded-full text-sm font-medium">
-                                Pendiente
-                            </span>
-                            <span class="px-3 py-1 ${badgeColor} rounded-full text-sm font-medium capitalize">
-                                ${registro.tipo_usuaria || "N/A"}
-                            </span>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Detalles del Registro -->
-                <div class="p-6">
-                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-                        <!-- Auxiliar -->
-                        <div class="space-y-1">
-                            <p class="text-xs text-gray-500 font-medium uppercase tracking-wide">Auxiliar</p>
-                            <p class="text-base font-semibold text-gray-900">${
-                              registro.registrado_por || "N/A"
-                            }</p>
-                            <p class="text-sm text-gray-600">${
-                              registro.cargo_registrador || ""
-                            }</p>
-                        </div>
-                        
-                        <!-- Comunidad -->
-                        <div class="space-y-1">
-                            <p class="text-xs text-gray-500 font-medium uppercase tracking-wide">Comunidad</p>
-                            <p class="text-base font-semibold text-gray-900">${
-                              registro.comunidad || "N/A"
-                            }</p>
-                            <p class="text-sm text-gray-600">${
-                              registro.codigo_comunidad || ""
-                            }</p>
-                        </div>
-                        
-                        <!-- Cantidad -->
-                        <div class="space-y-1">
-                            <p class="text-xs text-gray-500 font-medium uppercase tracking-wide">Cantidad</p>
-                            <p class="text-3xl font-bold text-indigo-600">${
-                              registro.cantidad_administrada || 0
-                            }</p>
-                            <p class="text-sm text-gray-600">usuaria${
-                              registro.cantidad_administrada !== 1 ? "s" : ""
-                            }</p>
-                        </div>
-                        
-                        <!-- Fecha -->
-                        <div class="space-y-1">
-                            <p class="text-xs text-gray-500 font-medium uppercase tracking-wide">Fecha Registro</p>
-                            <p class="text-base font-semibold text-gray-900">${this.formatearFecha(
-                              registro.fecha_hora_registro
-                            )}</p>
-                        </div>
-                    </div>
-                    
-                    <!-- Botones de Acción -->
-                    <div class="flex flex-col sm:flex-row gap-3">
-                        <button onclick="ValidacionSystem.validarRegistro(${
-                          registro.id
-                        })" 
-                                class="flex-1 px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium flex items-center justify-center gap-2 shadow-md hover:shadow-lg">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                            </svg>
-                            Validar
-                        </button>
-                        <button onclick="ValidacionSystem.rechazarRegistro(${
-                          registro.id
-                        })" 
-                                class="flex-1 px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium flex items-center justify-center gap-2 shadow-md hover:shadow-lg">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                            </svg>
-                            Rechazar
-                        </button>
-                    </div>
-                </div>
-            </div>
-        `;
-      })
-      .join("");
-
-    // INSERTAR HTML
-    containerElement.innerHTML = registrosHtml;
-
-    // MOSTRAR CONTAINER DESPUÉS DE INSERTAR
+    // Limpiar container
+    containerElement.innerHTML = "";
     containerElement.classList.remove("hidden");
+    if (sinRegistrosElement) sinRegistrosElement.classList.add("hidden");
 
-    // OCULTAR MENSAJE VACÍO
-    if (sinRegistrosElement) {
-      sinRegistrosElement.classList.add("hidden");
+    // Crear cards y habilitar swipe
+    this.registrosFiltrados.forEach((registro) => {
+      const card = this.crearCardRegistro(registro);
+      containerElement.appendChild(card);
+      
+      // ✅ HABILITAR SWIPE EN LA CARD
+      this.habilitarSwipe(card, registro.id);
+    });
+
+    console.log("✅ Registros renderizados con swipe habilitado");
+  },
+
+  // ===== CREAR CARD DE REGISTRO =====
+  crearCardRegistro(registro) {
+    const card = document.createElement("div");
+    card.className = "registro-card";
+    card.setAttribute("data-registro-id", registro.id);
+
+    const badgeColor =
+      registro.tipo_usuaria === "nueva"
+        ? "badge-nueva"
+        : registro.tipo_usuaria === "reconsulta"
+        ? "badge-reconsulta"
+        : "badge-activa";
+
+    card.innerHTML = `
+      <!-- Indicadores de Swipe -->
+      <div class="swipe-indicator left">✗</div>
+      <div class="swipe-indicator right">✓</div>
+
+      <!-- Header del Card -->
+      <div style="background: linear-gradient(135deg, #EEF2FF 0%, #F3E8FF 100%); padding: 1.5rem; border-bottom: 1px solid #E5E7EB;">
+        <div style="display: flex; flex-direction: column; gap: 1rem;">
+          <div>
+            <h3 style="font-size: 1.25rem; font-weight: 700; color: #2C3E50; margin-bottom: 0.5rem;">
+              ${registro.metodo || "Método Desconocido"}
+            </h3>
+            <p style="font-size: 0.875rem; color: #6B7280;">
+              ${registro.usuaria_nombre || "Usuaria sin nombre"}
+            </p>
+          </div>
+          <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+            <span style="padding: 0.25rem 0.75rem; background: #FEF3C7; color: #92400E; border-radius: 9999px; font-size: 0.875rem; font-weight: 600;">
+              Pendiente
+            </span>
+            <span class="${badgeColor}" style="padding: 0.25rem 0.75rem; border-radius: 9999px; font-size: 0.875rem; font-weight: 600; text-transform: capitalize;">
+              ${registro.tipo_usuaria || "N/A"}
+            </span>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Detalles del Registro -->
+      <div style="padding: 1.5rem;">
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;">
+          <!-- Auxiliar -->
+          <div>
+            <p style="font-size: 0.75rem; color: #6B7280; font-weight: 600; text-transform: uppercase; margin-bottom: 0.25rem;">Auxiliar</p>
+            <p style="font-size: 0.9375rem; font-weight: 600; color: #2C3E50;">${registro.registrado_por || "N/A"}</p>
+            <p style="font-size: 0.875rem; color: #6B7280;">${registro.cargo_registrador || ""}</p>
+          </div>
+          
+          <!-- Comunidad -->
+          <div>
+            <p style="font-size: 0.75rem; color: #6B7280; font-weight: 600; text-transform: uppercase; margin-bottom: 0.25rem;">Comunidad</p>
+            <p style="font-size: 0.9375rem; font-weight: 600; color: #2C3E50;">${registro.comunidad || "N/A"}</p>
+            <p style="font-size: 0.875rem; color: #6B7280;">${registro.codigo_comunidad || ""}</p>
+          </div>
+          
+          <!-- Fecha -->
+          <div>
+            <p style="font-size: 0.75rem; color: #6B7280; font-weight: 600; text-transform: uppercase; margin-bottom: 0.25rem;">Fecha</p>
+            <p style="font-size: 0.9375rem; font-weight: 600; color: #2C3E50;">${this.formatearFecha(registro.fecha_hora_registro)}</p>
+          </div>
+          
+          <!-- Cantidad -->
+          <div>
+            <p style="font-size: 0.75rem; color: #6B7280; font-weight: 600; text-transform: uppercase; margin-bottom: 0.25rem;">Cantidad</p>
+            <p style="font-size: 0.9375rem; font-weight: 600; color: #2C3E50;">${registro.cantidad_administrada || 1}</p>
+          </div>
+        </div>
+        
+        <!-- Botones (Desktop) -->
+        <div class="desktop-buttons" style="display: flex; gap: 0.75rem; justify-content: flex-end;">
+          <button onclick="ValidacionSystem.rechazarRegistro(${registro.id})" 
+                  style="padding: 0.75rem 1.5rem; background: linear-gradient(135deg, #EF4444 0%, #DC2626 100%); color: white; border: none; border-radius: 0.5rem; font-weight: 600; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 0.5rem;">
+            <svg style="width: 1.25rem; height: 1.25rem;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+            Rechazar
+          </button>
+          <button onclick="ValidacionSystem.validarRegistro(${registro.id})" 
+                  style="padding: 0.75rem 1.5rem; background: linear-gradient(135deg, #00A651 0%, #00853D 100%); color: white; border: none; border-radius: 0.5rem; font-weight: 600; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 0.5rem;">
+            <svg style="width: 1.25rem; height: 1.25rem;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+            </svg>
+            Validar
+          </button>
+        </div>
+      </div>
+    `;
+
+    return card;
+  },
+
+  // ===== 📱 HABILITAR SWIPE EN MÓVIL =====
+  habilitarSwipe(card, registroId) {
+    let startX = 0;
+    let currentX = 0;
+    let isDragging = false;
+    
+    // Solo en dispositivos móviles
+    const isMobile = window.innerWidth <= 768;
+    if (!isMobile) {
+      console.log("💻 Desktop detectado - Swipe deshabilitado");
+      return;
     }
 
-    console.log("✅ Container mostrado");
-    console.log("Container classes:", containerElement.className);
-
-    // Mostrar botón de validar todos
-    const btnValidarTodos = document.getElementById("btn-validar-todos");
-    if (btnValidarTodos) {
-      if (this.registrosFiltrados.length > 1) {
-        btnValidarTodos.classList.remove("hidden");
-        btnValidarTodos.classList.add("flex");
+    console.log(`📱 Swipe habilitado para registro ${registroId}`);
+    
+    // Touch Start
+    card.addEventListener('touchstart', (e) => {
+      startX = e.touches[0].clientX;
+      isDragging = true;
+      card.style.transition = 'none';
+    });
+    
+    // Touch Move
+    card.addEventListener('touchmove', (e) => {
+      if (!isDragging) return;
+      
+      currentX = e.touches[0].clientX;
+      const diff = currentX - startX;
+      
+      // Aplicar transform
+      card.style.transform = `translateX(${diff}px) rotate(${diff * 0.05}deg)`;
+      
+      // Cambiar apariencia según dirección
+      if (diff < -50) {
+        card.classList.add('swiping-left');
+        card.classList.remove('swiping-right');
+      } else if (diff > 50) {
+        card.classList.add('swiping-right');
+        card.classList.remove('swiping-left');
       } else {
-        btnValidarTodos.classList.add("hidden");
-        btnValidarTodos.classList.remove("flex");
+        card.classList.remove('swiping-left', 'swiping-right');
       }
+    });
+    
+    // Touch End
+    card.addEventListener('touchend', (e) => {
+      if (!isDragging) return;
+      
+      isDragging = false;
+      const diff = currentX - startX;
+      
+      card.style.transition = 'all 0.3s ease-out';
+      
+      // Umbral de swipe: 120px
+      if (diff < -120) {
+        // SWIPE LEFT - RECHAZAR
+        console.log(`👈 Swipe LEFT detectado - Rechazando ${registroId}`);
+        this.animarRechazo(card, registroId);
+      } else if (diff > 120) {
+        // SWIPE RIGHT - VALIDAR
+        console.log(`👉 Swipe RIGHT detectado - Validando ${registroId}`);
+        this.animarValidacion(card, registroId);
+      } else {
+        // Volver a posición original
+        card.style.transform = '';
+        card.classList.remove('swiping-left', 'swiping-right');
+      }
+      
+      startX = 0;
+      currentX = 0;
+    });
+  },
+
+  // ===== 📱 ANIMACIÓN VALIDAR (SWIPE RIGHT) =====
+  async animarValidacion(card, registroId) {
+    // Animar salida a la derecha
+    card.style.transform = 'translateX(150%) rotate(20deg)';
+    card.style.opacity = '0';
+    
+    // Esperar animación
+    await new Promise(resolve => setTimeout(resolve, 300));
+    
+    // Ejecutar validación SIN modal
+    await this.ejecutarValidacion(registroId);
+  },
+
+  // ===== 📱 ANIMACIÓN RECHAZAR (SWIPE LEFT) =====
+  async animarRechazo(card, registroId) {
+    // Animar salida a la izquierda
+    card.style.transform = 'translateX(-150%) rotate(-20deg)';
+    card.style.opacity = '0';
+    
+    // Esperar animación
+    await new Promise(resolve => setTimeout(resolve, 300));
+    
+    // Ejecutar rechazo SIN modal
+    await this.ejecutarRechazo(registroId);
+  },
+
+  // ===== VALIDAR REGISTRO (CON MODAL EN DESKTOP) =====
+  validarRegistro(registroId) {
+    // En desktop: Mostrar modal
+    // En móvil: El swipe ya maneja la animación
+    const isMobile = window.innerWidth <= 768;
+    
+    if (isMobile) {
+      // Móvil: Ejecutar directo (viene del botón)
+      this.ejecutarValidacion(registroId);
+    } else {
+      // Desktop: Mostrar modal
+      this.mostrarModal(
+        "Validar Registro",
+        "¿Confirmar validación de este registro?",
+        () => this.ejecutarValidacion(registroId)
+      );
     }
-
-    // Cargar filtros
-    setTimeout(() => this.cargarFiltros(), 100);
   },
 
-  // ===== VALIDAR REGISTRO =====
-  async validarRegistro(registroId) {
-    this.mostrarModal(
-      "Validar Registro",
-      "¿Confirmar que este registro es correcto y debe ser validado?",
-      () => this.ejecutarValidacion(registroId)
-    );
+  // ===== RECHAZAR REGISTRO (CON MODAL EN DESKTOP) =====
+  rechazarRegistro(registroId) {
+    // En desktop: Mostrar modal
+    // En móvil: El swipe ya maneja la animación
+    const isMobile = window.innerWidth <= 768;
+    
+    if (isMobile) {
+      // Móvil: Ejecutar directo (viene del botón)
+      this.ejecutarRechazo(registroId);
+    } else {
+      // Desktop: Mostrar modal
+      this.mostrarModal(
+        "Eliminar Registro",
+        "⚠️ ATENCIÓN: Este registro será eliminado permanentemente. ¿Está seguro?",
+        () => this.ejecutarRechazo(registroId)
+      );
+    }
   },
 
-  // ===== RECHAZAR REGISTRO =====
-  async rechazarRegistro(registroId) {
-    this.mostrarModal(
-      "Eliminar Registro",
-      "⚠️ ATENCIÓN: Este registro será eliminado permanentemente del sistema. ¿Está seguro?",
-      () => this.ejecutarRechazo(registroId)
-    );
-  },
-
-  // ===== EJECUTAR VALIDACIÓN CON ANIMACIÓN =====
+  // ===== EJECUTAR VALIDACIÓN =====
   async ejecutarValidacion(registroId) {
     try {
-      // Cerrar modal primero
+      // Cerrar modal si existe
       const modal = document.getElementById("modal-confirmacion");
       if (modal) modal.classList.add("hidden");
 
@@ -345,26 +434,7 @@ window.ValidacionSystem = window.ValidacionSystem || {
       );
 
       if (response && response.success) {
-        SGPF.showLoading(false);
-
-        // 🎭 ANIMACIÓN DE ÉXITO
-        const card = document.querySelector(
-          `[data-registro-id="${registroId}"]`
-        );
-        if (card) {
-          // Cambiar a verde y animar hacia la derecha
-          card.style.transition = "all 0.6s ease-out";
-          card.style.backgroundColor = "#10b981";
-          card.style.transform = "translateX(100%)";
-          card.style.opacity = "0";
-
-          // Esperar a que termine la animación
-          await new Promise((resolve) => setTimeout(resolve, 600));
-        }
-
         SGPF.showToast("✅ Registro validado exitosamente", "success");
-
-        // Recargar registros
         await this.cargarRegistrosPendientes();
       } else {
         throw new Error(response?.message || "Error desconocido");
@@ -377,10 +447,10 @@ window.ValidacionSystem = window.ValidacionSystem || {
     }
   },
 
-  // ===== EJECUTAR RECHAZO CON ANIMACIÓN =====
+  // ===== EJECUTAR RECHAZO =====
   async ejecutarRechazo(registroId) {
     try {
-      // Cerrar modal primero
+      // Cerrar modal si existe
       const modal = document.getElementById("modal-confirmacion");
       if (modal) modal.classList.add("hidden");
 
@@ -392,26 +462,7 @@ window.ValidacionSystem = window.ValidacionSystem || {
       );
 
       if (response && response.success) {
-        SGPF.showLoading(false);
-
-        // 🎭 ANIMACIÓN DE RECHAZO
-        const card = document.querySelector(
-          `[data-registro-id="${registroId}"]`
-        );
-        if (card) {
-          // Cambiar a rojo y animar hacia la izquierda
-          card.style.transition = "all 0.6s ease-out";
-          card.style.backgroundColor = "#ef4444";
-          card.style.transform = "translateX(-100%)";
-          card.style.opacity = "0";
-
-          // Esperar a que termine la animación
-          await new Promise((resolve) => setTimeout(resolve, 600));
-        }
-
         SGPF.showToast("🗑️ Registro eliminado permanentemente", "success");
-
-        // Recargar registros
         await this.cargarRegistrosPendientes();
       } else {
         throw new Error(response?.message || "Error desconocido");
@@ -539,6 +590,9 @@ window.ValidacionSystem = window.ValidacionSystem || {
   // ===== EJECUTAR VALIDACIÓN MASIVA =====
   async ejecutarValidacionMasiva() {
     try {
+      const modal = document.getElementById("modal-confirmacion");
+      if (modal) modal.classList.add("hidden");
+
       SGPF.showLoading(true);
 
       let exitosos = 0;
@@ -548,12 +602,10 @@ window.ValidacionSystem = window.ValidacionSystem || {
         try {
           const response = await SGPF.apiCall(
             `/validacion/registro/${registro.id}`,
+            "PUT",
             {
-              method: "PUT",
-              body: JSON.stringify({
-                accion: "aprobar",
-                observaciones_validacion: "Validación masiva",
-              }),
+              accion: "aprobar",
+              observaciones_validacion: "Validación masiva",
             }
           );
 
@@ -598,7 +650,6 @@ window.ValidacionSystem = window.ValidacionSystem || {
 
   // ===== EJECUTAR ACCIÓN CONFIRMADA =====
   ejecutarAccionConfirmada() {
-    // NO cerrar el modal aquí, cada función lo cierra
     if (this.accionPendiente) {
       this.accionPendiente();
       this.accionPendiente = null;
@@ -612,8 +663,8 @@ window.ValidacionSystem = window.ValidacionSystem || {
       "sin-registros-mensaje"
     );
 
-    if (containerElement) containerElement.style.display = "none";
-    if (sinRegistrosElement) sinRegistrosElement.style.display = "block";
+    if (containerElement) containerElement.classList.add("hidden");
+    if (sinRegistrosElement) sinRegistrosElement.classList.remove("hidden");
 
     this.actualizarResumen();
   },
@@ -623,14 +674,18 @@ window.ValidacionSystem = window.ValidacionSystem || {
     const containerElement = document.getElementById("registros-container");
     if (containerElement) {
       containerElement.innerHTML = `
-                <div class="error" style="text-align: center; padding: 2rem;">
-                    <h3>⚠️ ${mensaje}</h3>
-                    <button class="btn btn-primary" onclick="ValidacionSystem.cargarRegistrosPendientes()">
-                        Intentar de nuevo
-                    </button>
-                </div>
-            `;
-      containerElement.style.display = "block";
+        <div style="text-align: center; padding: 3rem; background: white; border-radius: 0.75rem; box-shadow: 0 1px 3px rgba(0,0,0,0.08);">
+          <svg style="width: 3rem; height: 3rem; color: #EF4444; margin: 0 auto 1rem;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          </svg>
+          <h3 style="font-size: 1.25rem; font-weight: 700; color: #2C3E50; margin-bottom: 0.5rem;">⚠️ ${mensaje}</h3>
+          <button onclick="ValidacionSystem.cargarRegistrosPendientes()" 
+                  style="margin-top: 1rem; padding: 0.75rem 1.5rem; background: #0066CC; color: white; border: none; border-radius: 0.5rem; font-weight: 600; cursor: pointer;">
+            Intentar de nuevo
+          </button>
+        </div>
+      `;
+      containerElement.classList.remove("hidden");
     }
   },
 
