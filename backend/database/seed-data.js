@@ -1,27 +1,53 @@
-// ===== GENERADOR DE DATOS DE PRUEBA MASIVOS =====
-// Sistema SGPF-MSPAS Huehuetenango
-// Genera: Usuarias + Visitas + Usuarios del Sistema
-// Datos realistas y distribuidos correctamente
+// ===== GENERADOR MASIVO DE DATOS DE PRUEBA =====
+// Sistema SGPF-MSPAS Huehuetenango V2.0
+// Genera: Usuarios (156) + Usuarias (3000+) + Visitas (10000+)
+// Optimizado para grandes volúmenes de datos
 
 const sqlite3 = require("sqlite3").verbose();
 const bcrypt = require("bcryptjs");
 const path = require("path");
 
-class DataSeeder {
+class MassiveDataSeeder {
   constructor() {
     this.dbPath = path.join(__dirname, "sgpf_complete.db");
     this.db = null;
     
-    // Arrays de datos guatemaltecos realistas
+    // ===== CONFIGURACIÓN DE VOLUMEN =====
+    this.config = {
+      usuarios: {
+        coordinadores: 1,
+        encargados: 10,
+        asistentes: 45,
+        auxiliares: 100
+      },
+      usuarias: {
+        total: 3000,  // Ajustable según necesites
+        minPorComunidad: 40,
+        maxPorComunidad: 100
+      },
+      visitas: {
+        minPorUsuaria: 2,
+        maxPorUsuaria: 5
+      }
+    };
+    
+    // ===== DATOS GUATEMALTECOS REALISTAS =====
     this.nombresF = [
-      "María", "Ana", "Rosa", "Carmen", "Juana", "Lucia", "Elena", "Isabel",
+      "María", "Ana", "Rosa", "Carmen", "Juana", "Lucía", "Elena", "Isabel",
       "Francisca", "Petrona", "Candelaria", "Dominga", "Josefa", "Teresa",
-      "Magdalena", "Catarina", "Margarita", "Angela", "Claudia", "Sandra",
-      "Patricia", "Monica", "Silvia", "Gloria", "Victoria", "Beatriz",
-      "Elvira", "Manuela", "Concepcion", "Dolores", "Esperanza", "Fe",
-      "Guadalupe", "Hortensia", "Ines", "Julia", "Lidia", "Mercedes",
-      "Norma", "Ofelia", "Paula", "Raquel", "Sofia", "Tomasa", "Ursula",
-      "Veronica", "Yolanda", "Zenaida", "Adela", "Blanca", "Celina"
+      "Magdalena", "Catarina", "Margarita", "Ángela", "Claudia", "Sandra",
+      "Patricia", "Mónica", "Silvia", "Gloria", "Victoria", "Beatriz",
+      "Elvira", "Manuela", "Concepción", "Dolores", "Esperanza", "Fe",
+      "Guadalupe", "Hortensia", "Inés", "Julia", "Lidia", "Mercedes",
+      "Norma", "Ofelia", "Paula", "Raquel", "Sofía", "Tomasa", "Úrsula",
+      "Verónica", "Yolanda", "Zenaida", "Adela", "Blanca", "Celina",
+      "Delia", "Emilia", "Fabiola", "Gabriela", "Hilda", "Irma", "Jacqueline"
+    ];
+    
+    this.nombresM = [
+      "Juan", "Pedro", "Luis", "Jorge", "Miguel", "Roberto", "Francisco",
+      "Antonio", "José", "Manuel", "Carlos", "Jesús", "Raúl", "Fernando",
+      "Alberto", "Ricardo", "Héctor", "Ernesto", "Ramón", "Sergio"
     ];
     
     this.apellidos = [
@@ -33,77 +59,69 @@ class DataSeeder {
       "Castillo", "Vargas", "Contreras", "Aguilar", "Méndez", "Maldonado",
       "Moreno", "Salazar", "Figueroa", "Sandoval", "Cabrera", "Guerrero",
       "Navarro", "Medina", "Santiago", "Luna", "Ochoa", "Paredes",
-      "Soto", "Velásquez", "Carrillo", "Montoya", "Fuentes", "León"
+      "Soto", "Velásquez", "Carrillo", "Montoya", "Fuentes", "León",
+      "Estrada", "Herrera", "Arias", "Cardona", "Barrios", "Miranda"
     ];
     
-    this.comunidadesIds = []; // Se llenará desde la BD
-    this.territoriosIds = []; // Se llenará desde la BD
-    this.metodosIds = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]; // IDs de métodos
+    this.comunidadesData = [];
+    this.territoriosData = [];
+    this.metodosIds = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11];
+    
+    this.usuariosCreados = 0;
+    this.usuariasCreadas = 0;
+    this.visitasCreadas = 0;
   }
 
-  // ===== GENERADORES DE DATOS ALEATORIOS =====
+  // ===== UTILIDADES =====
   
-  getRandomElement(array) {
+  random(array) {
     return array[Math.floor(Math.random() * array.length)];
   }
   
-  getRandomInt(min, max) {
+  randomInt(min, max) {
     return Math.floor(Math.random() * (max - min + 1)) + min;
   }
   
   generateDPI() {
-    // DPI guatemalteco: 13 dígitos
-    let dpi = "";
-    for (let i = 0; i < 13; i++) {
-      dpi += Math.floor(Math.random() * 10);
-    }
-    return dpi;
+    return Array.from({ length: 13 }, () => Math.floor(Math.random() * 10)).join("");
   }
   
   generatePhone() {
-    // Celular guatemalteco: 8 dígitos empezando con 3, 4, 5
-    const prefijos = ["3", "4", "5"];
-    let phone = this.getRandomElement(prefijos);
-    for (let i = 0; i < 7; i++) {
-      phone += Math.floor(Math.random() * 10);
-    }
-    return phone;
-  }
-  
-  generateEmail(nombres, apellidos, numero) {
-    const nombre = nombres.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-    const apellido = apellidos.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-    return `${nombre}.${apellido}${numero}@mspas.gob.gt`;
+    const prefijo = this.random(["3", "4", "5"]);
+    return prefijo + Array.from({ length: 7 }, () => Math.floor(Math.random() * 10)).join("");
   }
   
   generateFechaNacimiento() {
-    // Mujeres en edad fértil: 15-49 años
     const añoActual = 2025;
-    const edad = this.getRandomInt(15, 49);
-    const añoNacimiento = añoActual - edad;
-    const mes = String(this.getRandomInt(1, 12)).padStart(2, "0");
-    const dia = String(this.getRandomInt(1, 28)).padStart(2, "0");
-    return `${añoNacimiento}-${mes}-${dia}`;
-  }
-  
-  generateFechaVisita(año = 2025) {
-    // Distribuir visitas a lo largo del año
-    const mes = String(this.getRandomInt(1, 10)).padStart(2, "0"); // Hasta octubre 2025
-    const dia = String(this.getRandomInt(1, 28)).padStart(2, "0");
+    const edad = this.randomInt(15, 49);
+    const año = añoActual - edad;
+    const mes = String(this.randomInt(1, 12)).padStart(2, "0");
+    const dia = String(this.randomInt(1, 28)).padStart(2, "0");
     return `${año}-${mes}-${dia}`;
   }
+  
+  generateFechaVisita() {
+    const mes = String(this.randomInt(1, 10)).padStart(2, "0");
+    const dia = String(this.randomInt(1, 28)).padStart(2, "0");
+    return `2025-${mes}-${dia}`;
+  }
 
-  // ===== INICIALIZACIÓN =====
+  // ===== CONEXIÓN Y CARGA INICIAL =====
   
   async init() {
-    console.log("\n🌱 ===== GENERADOR DE DATOS DE PRUEBA MASIVOS =====\n");
-    console.log("📋 Sistema: SGPF-MSPAS Huehuetenango V2.0");
-    console.log("🎯 Objetivo: Generar datos realistas para testing\n");
+    console.log("\n" + "=".repeat(60));
+    console.log("🌱 GENERADOR MASIVO DE DATOS DE PRUEBA - SGPF V2.0");
+    console.log("=".repeat(60) + "\n");
+    
+    console.log("📊 CONFIGURACIÓN:");
+    console.log(`   • Usuarios: ${this.config.usuarios.coordinadores + this.config.usuarios.encargados + this.config.usuarios.asistentes + this.config.usuarios.auxiliares}`);
+    console.log(`   • Usuarias: ~${this.config.usuarias.total}`);
+    console.log(`   • Visitas estimadas: ~${this.config.usuarias.total * 3}\n`);
     
     return new Promise((resolve, reject) => {
       this.db = new sqlite3.Database(this.dbPath, async (err) => {
         if (err) {
-          console.error("❌ Error conectando a la BD:", err.message);
+          console.error("❌ Error conectando a BD:", err.message);
           reject(err);
           return;
         }
@@ -111,17 +129,21 @@ class DataSeeder {
         console.log("✅ Conectado a la base de datos\n");
         
         try {
-          await this.loadExistingData();
-          await this.seedUsuarios();
-          await this.seedUsuarias();
-          await this.seedVisitas();
-          await this.assignUsuariosToTerritorios();
-          await this.generateStatistics();
+          await this.cargarDatosExistentes();
+          await this.limpiarDatosPrevios();
+          await this.generarUsuarios();
+          await this.generarUsuarias();
+          await this.generarVisitas();
+          await this.asignarUsuariosAComunidades();
+          await this.mostrarEstadisticas();
           
-          console.log("\n✅ ¡GENERACIÓN DE DATOS COMPLETADA EXITOSAMENTE!\n");
+          console.log("\n" + "=".repeat(60));
+          console.log("✅ ¡GENERACIÓN COMPLETADA EXITOSAMENTE!");
+          console.log("=".repeat(60) + "\n");
+          
           resolve();
         } catch (error) {
-          console.error("❌ Error en el proceso:", error);
+          console.error("❌ Error:", error);
           reject(error);
         }
       });
@@ -130,26 +152,54 @@ class DataSeeder {
 
   // ===== CARGAR DATOS EXISTENTES =====
   
-  loadExistingData() {
+  cargarDatosExistentes() {
     return new Promise((resolve) => {
-      console.log("📂 Cargando datos existentes de la BD...\n");
+      console.log("📂 Cargando estructura de la BD...\n");
       
-      // Cargar comunidades
-      this.db.all("SELECT id, nombre, territorio_id FROM comunidades WHERE activa = 1", (err, rows) => {
+      this.db.all("SELECT id, nombre, territorio_id, poblacion_mef FROM comunidades WHERE activa = 1", (err, rows) => {
         if (!err && rows) {
-          this.comunidadesIds = rows;
-          console.log(`   ✓ ${rows.length} comunidades cargadas`);
+          this.comunidadesData = rows;
+          console.log(`   ✓ ${rows.length} comunidades activas`);
         }
         
-        // Cargar territorios
         this.db.all("SELECT id, nombre FROM territorios WHERE activo = 1", (err2, rows2) => {
           if (!err2 && rows2) {
-            this.territoriosIds = rows2;
-            console.log(`   ✓ ${rows2.length} territorios cargados`);
+            this.territoriosData = rows2;
+            console.log(`   ✓ ${rows2.length} territorios activos\n`);
+          }
+          resolve();
+        });
+      });
+    });
+  }
+
+  // ===== LIMPIAR DATOS PREVIOS =====
+  
+  limpiarDatosPrevios() {
+    return new Promise((resolve) => {
+      console.log("🗑️  Limpiando datos de prueba previos...\n");
+      
+      const queries = [
+        "DELETE FROM visitas",
+        "DELETE FROM usuarias",
+        "DELETE FROM permisos_comunidad",
+        "DELETE FROM user_territorios",
+        "DELETE FROM usuarios"
+      ];
+      
+      let completed = 0;
+      
+      queries.forEach(query => {
+        this.db.run(query, (err) => {
+          if (!err) {
+            completed++;
+            console.log(`   ✓ Tabla limpiada (${completed}/${queries.length})`);
           }
           
-          console.log("");
-          resolve();
+          if (completed === queries.length) {
+            console.log("");
+            resolve();
+          }
         });
       });
     });
@@ -157,9 +207,10 @@ class DataSeeder {
 
   // ===== GENERAR USUARIOS DEL SISTEMA =====
   
-  async seedUsuarios() {
+  async generarUsuarios() {
     console.log("👥 GENERANDO USUARIOS DEL SISTEMA...\n");
     
+    const passwordHash = bcrypt.hashSync("123456", 10);
     const usuarios = [];
     
     // 1 COORDINADOR MUNICIPAL
@@ -168,112 +219,100 @@ class DataSeeder {
       dpi: this.generateDPI(),
       nombres: "Carlos Eduardo",
       apellidos: "Pérez González",
-      email: "coordinador@mspas.gob.gt",
+      email: "coordinador.municipal@mspas.gob.gt",
       telefono: this.generatePhone(),
-      password: "123456",
-      rol_id: 1, // Coordinador
+      password_hash: passwordHash,
+      rol_id: 1,
       territorio_id: null,
       distrito_id: 1,
-      cargo: "Coordinador Municipal de Planificación Familiar"
+      cargo: "Coordinador Municipal de Planificación Familiar",
+      fecha_ingreso: "2023-01-15"
     });
     
-    // 10 ENCARGADOS SR (1 por cada ~4-5 comunidades)
-    for (let i = 1; i <= 10; i++) {
+    // 10 ENCARGADOS SR
+    for (let i = 1; i <= this.config.usuarios.encargados; i++) {
+      const territorio = this.territoriosData[(i - 1) % this.territoriosData.length];
       usuarios.push({
         codigo_empleado: `ENC-${String(i).padStart(3, "0")}`,
         dpi: this.generateDPI(),
-        nombres: this.getRandomElement(["Juan", "Pedro", "Luis", "Jorge", "Miguel", "Roberto", "Francisco", "Antonio", "José", "Manuel"]),
-        apellidos: `${this.getRandomElement(this.apellidos)} ${this.getRandomElement(this.apellidos)}`,
-        email: `encargado${String(i).padStart(2, "0")}@mspas.gob.gt`,
+        nombres: this.random(this.nombresM),
+        apellidos: `${this.random(this.apellidos)} ${this.random(this.apellidos)}`,
+        email: `encargado.sr${String(i).padStart(2, "0")}@mspas.gob.gt`,
         telefono: this.generatePhone(),
-        password: "123456",
-        rol_id: 2, // Encargado SR
-        territorio_id: this.territoriosIds[i % this.territoriosIds.length]?.id,
+        password_hash: passwordHash,
+        rol_id: 2,
+        territorio_id: territorio?.id || null,
         distrito_id: 1,
-        cargo: "Encargado de Servicio Rural"
+        cargo: "Encargado de Servicio Rural",
+        fecha_ingreso: "2023-02-01"
       });
     }
     
-    // 45 ASISTENTES TÉCNICOS (1 por comunidad)
-    for (let i = 1; i <= 45; i++) {
-      const comunidad = this.comunidadesIds[i - 1];
+    // 45 ASISTENTES TÉCNICOS
+    for (let i = 1; i <= this.config.usuarios.asistentes; i++) {
+      const comunidad = this.comunidadesData[(i - 1) % this.comunidadesData.length];
       usuarios.push({
         codigo_empleado: `ASIST-${String(i).padStart(3, "0")}`,
         dpi: this.generateDPI(),
-        nombres: this.getRandomElement(["Ana", "María", "Rosa", "Carmen", "Elena", "Isabel", "Patricia", "Sandra", "Gloria", "Lucia"]),
-        apellidos: `${this.getRandomElement(this.apellidos)} ${this.getRandomElement(this.apellidos)}`,
-        email: `asist${String(i).padStart(2, "0")}@mspas.gob.gt`,
+        nombres: this.random(this.nombresF),
+        apellidos: `${this.random(this.apellidos)} ${this.random(this.apellidos)}`,
+        email: `asistente.tec${String(i).padStart(2, "0")}@mspas.gob.gt`,
         telefono: this.generatePhone(),
-        password: "123456",
-        rol_id: 3, // Asistente
-        territorio_id: comunidad?.territorio_id,
+        password_hash: passwordHash,
+        rol_id: 3,
+        territorio_id: comunidad?.territorio_id || null,
         distrito_id: 1,
-        cargo: "Asistente Técnico de Salud"
+        cargo: "Asistente Técnico de Salud",
+        fecha_ingreso: "2023-03-01"
       });
     }
     
-    // 100 AUXILIARES DE ENFERMERÍA (distribuidos en comunidades)
-    for (let i = 1; i <= 100; i++) {
-      const comunidad = this.comunidadesIds[i % this.comunidadesIds.length];
+    // 100 AUXILIARES DE ENFERMERÍA
+    for (let i = 1; i <= this.config.usuarios.auxiliares; i++) {
+      const comunidad = this.comunidadesData[i % this.comunidadesData.length];
       usuarios.push({
         codigo_empleado: `AUX-${String(i).padStart(3, "0")}`,
         dpi: this.generateDPI(),
-        nombres: this.getRandomElement(this.nombresF),
-        apellidos: `${this.getRandomElement(this.apellidos)} ${this.getRandomElement(this.apellidos)}`,
-        email: `aux${String(i).padStart(3, "0")}@mspas.gob.gt`,
+        nombres: this.random(this.nombresF),
+        apellidos: `${this.random(this.apellidos)} ${this.random(this.apellidos)}`,
+        email: `auxiliar.enf${String(i).padStart(3, "0")}@mspas.gob.gt`,
         telefono: this.generatePhone(),
-        password: "123456",
-        rol_id: 4, // Auxiliar
-        territorio_id: comunidad?.territorio_id,
+        password_hash: passwordHash,
+        rol_id: 4,
+        territorio_id: comunidad?.territorio_id || null,
         distrito_id: 1,
-        cargo: "Auxiliar de Enfermería"
+        cargo: "Auxiliar de Enfermería",
+        fecha_ingreso: "2023-04-01"
       });
     }
     
-    // Insertar todos los usuarios
-    console.log("   📝 Insertando usuarios en la base de datos...");
-    const passwordHash = await bcrypt.hash("123456", 10);
+    console.log(`   🎯 Creando ${usuarios.length} usuarios...\n`);
     
     return new Promise((resolve) => {
-      let inserted = 0;
+      let insertados = 0;
       
       usuarios.forEach((usuario) => {
         this.db.run(
-          `INSERT OR IGNORE INTO usuarios (
+          `INSERT INTO usuarios (
             codigo_empleado, dpi, nombres, apellidos, email, telefono,
             password_hash, rol_id, territorio_id, distrito_id, cargo,
             fecha_ingreso, activo, debe_cambiar_password
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, 0)`,
           [
-            usuario.codigo_empleado,
-            usuario.dpi,
-            usuario.nombres,
-            usuario.apellidos,
-            usuario.email,
-            usuario.telefono,
-            passwordHash,
-            usuario.rol_id,
-            usuario.territorio_id,
-            usuario.distrito_id,
-            usuario.cargo,
-            "2025-01-01",
-            1,
-            0
+            usuario.codigo_empleado, usuario.dpi, usuario.nombres, usuario.apellidos,
+            usuario.email, usuario.telefono, usuario.password_hash, usuario.rol_id,
+            usuario.territorio_id, usuario.distrito_id, usuario.cargo, usuario.fecha_ingreso
           ],
           (err) => {
-            if (err && !err.message.includes("UNIQUE constraint")) {
-              console.error("      ⚠️ Error insertando usuario:", err.message);
+            if (!err) this.usuariosCreados++;
+            
+            insertados++;
+            if (insertados % 50 === 0) {
+              console.log(`   ⏳ Progreso: ${insertados}/${usuarios.length}`);
             }
             
-            inserted++;
-            
-            if (inserted === usuarios.length) {
-              console.log(`   ✅ ${usuarios.length} usuarios creados\n`);
-              console.log("   📊 Distribución:");
-              console.log("      • 1 Coordinador Municipal");
-              console.log("      • 10 Encargados SR");
-              console.log("      • 45 Asistentes Técnicos");
-              console.log("      • 100 Auxiliares de Enfermería\n");
+            if (insertados === usuarios.length) {
+              console.log(`\n   ✅ ${this.usuariosCreados} usuarios creados\n`);
               resolve();
             }
           }
@@ -284,69 +323,82 @@ class DataSeeder {
 
   // ===== GENERAR USUARIAS =====
   
-  async seedUsuarias() {
-    console.log("👩 GENERANDO USUARIAS DEL SISTEMA...\n");
+  async generarUsuarias() {
+    console.log("👩 GENERANDO USUARIAS...\n");
     
-    const totalUsuarias = 2000; // Generar 2000 usuarias
     const usuarias = [];
+    const dpisUsados = new Set();
     
-    console.log(`   🎯 Objetivo: ${totalUsuarias} usuarias\n`);
-    console.log("   📝 Generando datos realistas...");
-    
-    for (let i = 1; i <= totalUsuarias; i++) {
-      const comunidad = this.getRandomElement(this.comunidadesIds);
-      const nombres = this.getRandomElement(this.nombresF);
-      const apellidos = `${this.getRandomElement(this.apellidos)} ${this.getRandomElement(this.apellidos)}`;
-      const tiposUsuaria = ["nueva", "reconsulta", "activa"];
+    // Distribuir usuarias por comunidad
+    this.comunidadesData.forEach((comunidad) => {
+      const numUsuarias = this.randomInt(
+        this.config.usuarias.minPorComunidad,
+        this.config.usuarias.maxPorComunidad
+      );
       
-      usuarias.push({
-        dpi: this.generateDPI(),
-        nombres: nombres,
-        apellidos: apellidos,
-        comunidad_id: comunidad.id,
-        fecha_nacimiento: this.generateFechaNacimiento(),
-        telefono: Math.random() > 0.3 ? this.generatePhone() : null, // 70% tiene teléfono
-        tipo_usuaria: this.getRandomElement(tiposUsuaria),
-        fecha_primera_visita: this.generateFechaVisita(2025),
-        activa: 1,
-        creada_por: 1 // Usuario admin
-      });
-    }
+      for (let i = 0; i < numUsuarias; i++) {
+        let dpi;
+        do {
+          dpi = this.generateDPI();
+        } while (dpisUsados.has(dpi));
+        dpisUsados.add(dpi);
+        
+        const nombres = this.random(this.nombresF);
+        const apellidos = `${this.random(this.apellidos)} ${this.random(this.apellidos)}`;
+        const fechaNacimiento = this.generateFechaNacimiento();
+        const fechaPrimeraVisita = this.generateFechaVisita();
+        const telefono = Math.random() > 0.3 ? this.generatePhone() : null;
+        const tipoUsuaria = this.random(["nueva", "reconsulta", "activa"]);
+        
+        // Usuario que registra: Asistente o Auxiliar (rol 3 o 4)
+        const registradoPor = this.randomInt(12, 156); // Rango de asistentes y auxiliares
+        
+        usuarias.push({
+          dpi,
+          nombres,
+          apellidos,
+          comunidad_id: comunidad.id,
+          fecha_nacimiento: fechaNacimiento,
+          telefono,
+          tipo_usuaria: tipoUsuaria,
+          fecha_primera_visita: fechaPrimeraVisita,
+          fecha_ultima_visita: fechaPrimeraVisita,
+          total_visitas: 0,
+          creada_por: registradoPor,
+          activa: 1
+        });
+      }
+    });
     
-    // Insertar usuarias
+    console.log(`   🎯 Total a crear: ${usuarias.length} usuarias\n`);
+    console.log("   ⏳ Insertando en base de datos (esto puede tardar)...\n");
+    
     return new Promise((resolve) => {
-      let inserted = 0;
+      let insertadas = 0;
       
       usuarias.forEach((usuaria) => {
         this.db.run(
-          `INSERT OR IGNORE INTO usuarias (
+          `INSERT INTO usuarias (
             dpi, nombres, apellidos, comunidad_id, fecha_nacimiento,
             telefono, tipo_usuaria, fecha_primera_visita, fecha_ultima_visita,
-            total_visitas, activa, creada_por
+            total_visitas, creada_por, activa
           ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
           [
-            usuaria.dpi,
-            usuaria.nombres,
-            usuaria.apellidos,
-            usuaria.comunidad_id,
-            usuaria.fecha_nacimiento,
-            usuaria.telefono,
-            usuaria.tipo_usuaria,
-            usuaria.fecha_primera_visita,
-            usuaria.fecha_primera_visita,
-            1,
-            usuaria.activa,
-            usuaria.creada_por
+            usuaria.dpi, usuaria.nombres, usuaria.apellidos, usuaria.comunidad_id,
+            usuaria.fecha_nacimiento, usuaria.telefono, usuaria.tipo_usuaria,
+            usuaria.fecha_primera_visita, usuaria.fecha_ultima_visita,
+            usuaria.total_visitas, usuaria.creada_por, usuaria.activa
           ],
           (err) => {
-            if (err && !err.message.includes("UNIQUE constraint")) {
-              console.error("      ⚠️ Error insertando usuaria:", err.message);
+            if (!err) this.usuariasCreadas++;
+            
+            insertadas++;
+            if (insertadas % 500 === 0) {
+              console.log(`   📊 ${insertadas}/${usuarias.length} (${((insertadas/usuarias.length)*100).toFixed(1)}%)`);
             }
             
-            inserted++;
-            
-            if (inserted === usuarias.length) {
-              console.log(`   ✅ ${usuarias.length} usuarias creadas\n`);
+            if (insertadas === usuarias.length) {
+              console.log(`\n   ✅ ${this.usuariasCreadas} usuarias creadas exitosamente\n`);
               resolve();
             }
           }
@@ -357,50 +409,56 @@ class DataSeeder {
 
   // ===== GENERAR VISITAS =====
   
-  async seedVisitas() {
+  async generarVisitas() {
     console.log("📝 GENERANDO VISITAS...\n");
     
     return new Promise((resolve) => {
-      // Primero obtener todas las usuarias
+      // Obtener todas las usuarias
       this.db.all("SELECT id, comunidad_id FROM usuarias", (err, usuarias) => {
-        if (err || !usuarias || usuarias.length === 0) {
-          console.error("   ❌ No se pudieron cargar usuarias");
+        if (err || !usuarias) {
+          console.log("   ⚠️ Error cargando usuarias");
           resolve();
           return;
         }
         
-        console.log(`   👥 ${usuarias.length} usuarias encontradas`);
-        console.log("   📊 Generando visitas (1-5 por usuaria)...\n");
+        console.log(`   🎯 Generando visitas para ${usuarias.length} usuarias...\n`);
         
         const visitas = [];
         
         // Generar visitas para cada usuaria
         usuarias.forEach((usuaria) => {
-          // Cada usuaria tiene entre 1 y 5 visitas
-          const numVisitas = this.getRandomInt(1, 5);
+          const numVisitas = this.randomInt(
+            this.config.visitas.minPorUsuaria,
+            this.config.visitas.maxPorUsuaria
+          );
           
           for (let i = 0; i < numVisitas; i++) {
-            const metodoId = this.getRandomElement(this.metodosIds);
-            const fechaVisita = this.generateFechaVisita(2025);
-            const estados = ["registrado", "validado"];
-            const estado = this.getRandomElement(estados);
+            const metodoId = this.random(this.metodosIds);
+            const fechaVisita = this.generateFechaVisita();
+            const estado = Math.random() > 0.3 ? "validado" : "registrado";
+            
+            // Registrado por: Asistente o Auxiliar
+            const registradoPor = this.randomInt(12, 156);
+            
+            // Validado por: Encargado SR (si está validado)
+            const validadoPor = estado === "validado" ? this.randomInt(2, 11) : null;
             
             visitas.push({
               usuaria_id: usuaria.id,
               metodo_id: metodoId,
               fecha_visita: fechaVisita,
               estado: estado,
-              registrado_por: this.getRandomInt(1, 156), // Cualquier usuario
-              validado_por: estado === "validado" ? this.getRandomInt(1, 56) : null
+              registrado_por: registradoPor,
+              validado_por: validadoPor,
+              fecha_hora_validacion: validadoPor ? new Date().toISOString() : null
             });
           }
         });
         
-        console.log(`   🎯 Total de visitas a crear: ${visitas.length}\n`);
-        console.log("   ⏳ Insertando en la base de datos...");
+        console.log(`   📊 Total de visitas: ${visitas.length}\n`);
+        console.log("   ⏳ Insertando visitas (esto tomará un momento)...\n");
         
-        // Insertar visitas en lotes
-        let inserted = 0;
+        let insertadas = 0;
         
         visitas.forEach((visita) => {
           this.db.run(
@@ -409,28 +467,20 @@ class DataSeeder {
               registrado_por, validado_por, fecha_hora_validacion
             ) VALUES (?, ?, ?, ?, ?, ?, ?)`,
             [
-              visita.usuaria_id,
-              visita.metodo_id,
-              visita.fecha_visita,
-              visita.estado,
-              visita.registrado_por,
-              visita.validado_por,
-              visita.validado_por ? new Date().toISOString() : null
+              visita.usuaria_id, visita.metodo_id, visita.fecha_visita,
+              visita.estado, visita.registrado_por, visita.validado_por,
+              visita.fecha_hora_validacion
             ],
             (err) => {
-              if (err) {
-                console.error("      ⚠️ Error insertando visita:", err.message);
+              if (!err) this.visitasCreadas++;
+              
+              insertadas++;
+              if (insertadas % 1000 === 0) {
+                console.log(`   📊 ${insertadas}/${visitas.length} (${((insertadas/visitas.length)*100).toFixed(1)}%)`);
               }
               
-              inserted++;
-              
-              // Mostrar progreso cada 500 inserciones
-              if (inserted % 500 === 0) {
-                console.log(`      ⏳ ${inserted}/${visitas.length} visitas insertadas...`);
-              }
-              
-              if (inserted === visitas.length) {
-                console.log(`\n   ✅ ${visitas.length} visitas creadas exitosamente\n`);
+              if (insertadas === visitas.length) {
+                console.log(`\n   ✅ ${this.visitasCreadas} visitas creadas exitosamente\n`);
                 resolve();
               }
             }
@@ -440,109 +490,125 @@ class DataSeeder {
     });
   }
 
-  // ===== ASIGNAR USUARIOS A TERRITORIOS =====
+  // ===== ASIGNAR USUARIOS A COMUNIDADES =====
   
-  async assignUsuariosToTerritorios() {
-    console.log("🗺️ ASIGNANDO USUARIOS A COMUNIDADES...\n");
+  async asignarUsuariosAComunidades() {
+    console.log("🗺️  ASIGNANDO PERMISOS COMUNIDAD-USUARIO...\n");
     
     return new Promise((resolve) => {
-      // Obtener auxiliares para asignar a comunidades específicas
-      this.db.all(
-        "SELECT id FROM usuarios WHERE rol_id = 4 ORDER BY id",
-        (err, auxiliares) => {
-          if (err || !auxiliares) {
-            console.log("   ⚠️ No se pudieron cargar auxiliares");
-            resolve();
-            return;
-          }
-          
-          let assigned = 0;
-          
-          // Asignar cada auxiliar a 2-3 comunidades
-          auxiliares.forEach((auxiliar, index) => {
-            const numComunidades = this.getRandomInt(2, 3);
-            
-            for (let i = 0; i < numComunidades; i++) {
-              const comunidad = this.comunidadesIds[(index * 3 + i) % this.comunidadesIds.length];
-              
-              this.db.run(
-                `INSERT OR IGNORE INTO permisos_comunidad (usuario_id, comunidad_id)
-                 VALUES (?, ?)`,
-                [auxiliar.id, comunidad.id],
-                (err) => {
-                  if (!err) assigned++;
-                }
-              );
-            }
-          });
-          
-          setTimeout(() => {
-            console.log(`   ✅ ${assigned} asignaciones comunidad-usuario creadas\n`);
-            resolve();
-          }, 1000);
+      // Obtener auxiliares
+      this.db.all("SELECT id FROM usuarios WHERE rol_id = 4", (err, auxiliares) => {
+        if (err || !auxiliares) {
+          console.log("   ⚠️ No se encontraron auxiliares");
+          resolve();
+          return;
         }
-      );
+        
+        let asignaciones = 0;
+        const totalAsignaciones = auxiliares.length * 3; // 3 comunidades por auxiliar
+        
+        auxiliares.forEach((auxiliar, index) => {
+          // Cada auxiliar tiene 2-3 comunidades asignadas
+          const numComunidades = this.randomInt(2, 3);
+          
+          for (let i = 0; i < numComunidades; i++) {
+            const comunidadIndex = (index * 3 + i) % this.comunidadesData.length;
+            const comunidad = this.comunidadesData[comunidadIndex];
+            
+            this.db.run(
+              `INSERT OR IGNORE INTO permisos_comunidad 
+               (usuario_id, comunidad_id, puede_ver, puede_registrar, puede_editar, activo)
+               VALUES (?, ?, 1, 1, 1, 1)`,
+              [auxiliar.id, comunidad.id],
+              (err) => {
+                if (!err) asignaciones++;
+              }
+            );
+          }
+        });
+        
+        setTimeout(() => {
+          console.log(`   ✅ ${asignaciones} asignaciones creadas\n`);
+          resolve();
+        }, 1500);
+      });
     });
   }
 
-  // ===== GENERAR ESTADÍSTICAS =====
+  // ===== MOSTRAR ESTADÍSTICAS =====
   
-  async generateStatistics() {
-    console.log("📊 GENERANDO ESTADÍSTICAS FINALES...\n");
+  async mostrarEstadisticas() {
+    console.log("📊 ESTADÍSTICAS FINALES\n");
+    console.log("=".repeat(60) + "\n");
     
     return new Promise((resolve) => {
-      // Contar usuarias
-      this.db.get("SELECT COUNT(*) as total FROM usuarias", (err, row1) => {
-        const totalUsuarias = row1?.total || 0;
-        
-        // Contar visitas
-        this.db.get("SELECT COUNT(*) as total FROM visitas", (err, row2) => {
-          const totalVisitas = row2?.total || 0;
+      // Contar por rol
+      this.db.all(
+        `SELECT r.nombre, COUNT(*) as total 
+         FROM usuarios u 
+         JOIN roles r ON u.rol_id = r.id 
+         GROUP BY r.nombre`,
+        (err, roles) => {
+          console.log("👥 USUARIOS DEL SISTEMA:");
+          if (roles) {
+            roles.forEach(r => {
+              console.log(`   • ${r.nombre}: ${r.total}`);
+            });
+          }
+          console.log(`   • TOTAL: ${this.usuariosCreados}\n`);
           
-          // Contar usuarios
-          this.db.get("SELECT COUNT(*) as total FROM usuarios", (err, row3) => {
-            const totalUsuarios = row3?.total || 0;
+          // Contar usuarias
+          this.db.get("SELECT COUNT(*) as total FROM usuarias", (err, row) => {
+            console.log("👩 USUARIAS:");
+            console.log(`   • Total registradas: ${row?.total || 0}`);
+            console.log(`   • Distribuidas en: ${this.comunidadesData.length} comunidades`);
+            console.log(`   • Promedio por comunidad: ${Math.round((row?.total || 0) / this.comunidadesData.length)}\n`);
             
-            // Visitas por estado
+            // Contar visitas
             this.db.all(
-              "SELECT estado, COUNT(*) as total FROM visitas GROUP BY estado",
+              `SELECT estado, COUNT(*) as total FROM visitas GROUP BY estado`,
               (err, estados) => {
-                console.log("   ═══════════════════════════════════════");
-                console.log("   📊 RESUMEN DE DATOS GENERADOS");
-                console.log("   ═══════════════════════════════════════\n");
-                
-                console.log("   👥 USUARIOS DEL SISTEMA:");
-                console.log(`      • Total: ${totalUsuarios}`);
-                console.log("      • 1 Coordinador Municipal");
-                console.log("      • 10 Encargados SR");
-                console.log("      • 45 Asistentes Técnicos");
-                console.log("      • 100 Auxiliares de Enfermería\n");
-                
-                console.log("   👩 USUARIAS:");
-                console.log(`      • Total: ${totalUsuarias} usuarias registradas`);
-                console.log(`      • En ${this.comunidadesIds.length} comunidades`);
-                console.log(`      • Promedio: ${Math.round(totalUsuarias / this.comunidadesIds.length)} usuarias/comunidad\n`);
-                
-                console.log("   📝 VISITAS:");
-                console.log(`      • Total: ${totalVisitas} visitas registradas`);
-                console.log(`      • Promedio: ${(totalVisitas / totalUsuarias).toFixed(1)} visitas/usuaria`);
-                
-                if (estados && estados.length > 0) {
-                  console.log("\n      Distribución por estado:");
-                  estados.forEach((e) => {
-                    const porcentaje = ((e.total / totalVisitas) * 100).toFixed(1);
-                    console.log(`      • ${e.estado}: ${e.total} (${porcentaje}%)`);
+                console.log("📝 VISITAS:");
+                console.log(`   • Total: ${this.visitasCreadas}`);
+                if (estados) {
+                  estados.forEach(e => {
+                    const pct = ((e.total / this.visitasCreadas) * 100).toFixed(1);
+                    console.log(`   • ${e.estado}: ${e.total} (${pct}%)`);
                   });
                 }
+                console.log("");
                 
-                console.log("\n   ═══════════════════════════════════════\n");
-                
-                resolve();
+                // Distribución por método
+                this.db.all(
+                  `SELECT m.nombre_corto, COUNT(*) as total 
+                   FROM visitas v 
+                   JOIN metodos_planificacion m ON v.metodo_id = m.id 
+                   GROUP BY m.nombre_corto 
+                   ORDER BY total DESC 
+                   LIMIT 5`,
+                  (err, metodos) => {
+                    console.log("💊 TOP 5 MÉTODOS MÁS UTILIZADOS:");
+                    if (metodos) {
+                      metodos.forEach((m, idx) => {
+                        console.log(`   ${idx + 1}. ${m.nombre_corto}: ${m.total} visitas`);
+                      });
+                    }
+                    console.log("\n" + "=".repeat(60) + "\n");
+                    
+                    console.log("🔑 CREDENCIALES DE ACCESO:");
+                    console.log("   • Coordinador: coordinador.municipal@mspas.gob.gt / 123456");
+                    console.log("   • Encargados: encargado.sr01-10@mspas.gob.gt / 123456");
+                    console.log("   • Asistentes: asistente.tec01-45@mspas.gob.gt / 123456");
+                    console.log("   • Auxiliares: auxiliar.enf001-100@mspas.gob.gt / 123456\n");
+                    
+                    resolve();
+                  }
+                );
               }
             );
           });
-        });
-      });
+        }
+      );
     });
   }
 
@@ -554,7 +620,7 @@ class DataSeeder {
         if (err) {
           console.error("❌ Error cerrando BD:", err);
         } else {
-          console.log("✅ Conexión a BD cerrada\n");
+          console.log("✅ Conexión cerrada\n");
         }
       });
     }
@@ -564,30 +630,29 @@ class DataSeeder {
 // ===== EJECUCIÓN =====
 
 if (require.main === module) {
-  const seeder = new DataSeeder();
+  const seeder = new MassiveDataSeeder();
+  
+  console.log("\n⚠️  ADVERTENCIA: Este proceso eliminará todos los datos existentes");
+  console.log("   de usuarios, usuarias y visitas.\n");
   
   seeder
     .init()
     .then(() => {
-      console.log("🎉 ¡PROCESO COMPLETADO EXITOSAMENTE!");
-      console.log("\n📋 PRÓXIMOS PASOS:");
-      console.log("   1. Verificar datos en la base de datos");
-      console.log("   2. Probar el sistema con diferentes usuarios");
-      console.log("   3. Validar dashboards y reportes\n");
-      console.log("🔑 CREDENCIALES DE ACCESO:");
-      console.log("   • Coordinador: coordinador@mspas.gob.gt / 123456");
-      console.log("   • Encargados: encargado01-10@mspas.gob.gt / 123456");
-      console.log("   • Asistentes: asist01-45@mspas.gob.gt / 123456");
-      console.log("   • Auxiliares: aux001-100@mspas.gob.gt / 123456\n");
+      console.log("🎉 ¡PROCESO COMPLETADO EXITOSAMENTE!\n");
+      console.log("📋 PRÓXIMOS PASOS:");
+      console.log("   1. Verificar los datos en la base de datos");
+      console.log("   2. Probar el sistema con diferentes roles");
+      console.log("   3. Validar dashboards y reportes");
+      console.log("   4. Revisar la distribución de datos por comunidad\n");
       
       seeder.close();
       process.exit(0);
     })
     .catch((error) => {
-      console.error("❌ Error fatal:", error);
+      console.error("\n❌ ERROR FATAL:", error);
       seeder.close();
       process.exit(1);
     });
 }
 
-module.exports = DataSeeder;
+module.exports = MassiveDataSeeder;
